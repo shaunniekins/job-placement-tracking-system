@@ -1,4 +1,4 @@
-" use client";
+"use client";
 
 import { RootState } from "@/app/reduxUtils/store";
 import useJobApplications from "@/hooks/useJobApplications";
@@ -6,22 +6,8 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Pagination,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Spinner,
-  Input,
-  Textarea,
   Table,
   TableHeader,
   TableBody,
@@ -31,9 +17,9 @@ import {
   SelectItem,
   Select,
 } from "@nextui-org/react";
-import { IoAddCircleSharp } from "react-icons/io5";
 import { formatDate } from "@/utils/compUtils";
 import { updateJobApplication } from "@/app/api/jobApplicationsIUD";
+import { insertNotification } from "@/app/api/notificationsIUD";
 
 const ApplicationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -72,31 +58,32 @@ const ApplicationsComponent = () => {
   ];
 
   return (
-    <>
-      <div className="h-full w-full flex flex-col gap-2">
-        <div
-          className={`${
-            jobApplications.length === 0 ? "justify-end" : "justify-between"
-          } flex items-center`}
-        >
-          <Pagination
-            isCompact
-            showControls
-            showShadow
-            color="default"
-            page={page}
-            total={totalPages}
-            onChange={(newPage) => setPage(newPage)}
-            className={`${jobApplications.length === 0 && "hidden"}`}
-          />
-          <Button className="invisible" />
-        </div>
-        <div className="flex h-full w-full overflow-y-auto relative">
-          {jobApplications.length === 0 && (
-            <div className="h-full w-full flex justify-center items-center -mt-16">
-              <p>No job applications yet.</p>
-            </div>
-          )}
+    <div className="h-full w-full flex flex-col gap-2">
+      <div
+        className={`${
+          jobApplications.length === 0 ? "justify-end" : "justify-between"
+        } flex items-center`}
+      >
+        <Pagination
+          isCompact
+          showControls
+          showShadow
+          color="default"
+          page={page}
+          total={totalPages}
+          onChange={(newPage) => setPage(newPage)}
+          className={`${jobApplications.length === 0 && "hidden"}`}
+        />
+        <Button className="invisible" />
+      </div>
+      <div className="flex h-full w-full overflow-y-auto relative">
+        {jobApplications.length === 0 && (
+          <div className="h-full w-full flex justify-center items-center -mt-16">
+            <p>No job applications yet.</p>
+          </div>
+        )}
+
+        {jobApplications && jobApplications.length > 0 && (
           <div className="h-full">
             <Table
               fullWidth
@@ -156,13 +143,48 @@ const ApplicationsComponent = () => {
                               disallowEmptySelection={true}
                               size="sm"
                               color="success"
-                              // value={item.application_status}
                               defaultSelectedKeys={[item.application_status]}
+                              disabledKeys={
+                                item.application_status !== "pending"
+                                  ? ["pending"]
+                                  : []
+                              }
                               className="max-w-48"
-                              onChange={(e) => {
-                                updateJobApplication(item.job_application_id, {
-                                  application_status: e.target.value,
-                                });
+                              onChange={async (e) => {
+                                const newStatus = e.target.value;
+                                const response = await updateJobApplication(
+                                  item.job_application_id,
+                                  {
+                                    application_status: newStatus,
+                                  }
+                                );
+
+                                if (response) {
+                                  let message = "";
+                                  switch (newStatus) {
+                                    case "accepted":
+                                      message = `Congratulations! Your application for the job posting: ${item.job_title} has been accepted.`;
+                                      break;
+                                    case "rejected":
+                                      message = `We are sorry to inform you that your application for the job posting: ${item.job_title} has been rejected.`;
+                                      break;
+                                    case "interview":
+                                      message = `The agency has decided to move forward with your application for the job posting: ${item.job_title} and would like to schedule an interview.`;
+                                      break;
+                                    default:
+                                      message = "";
+                                  }
+
+                                  if (message) {
+                                    await insertNotification(
+                                      {
+                                        receiver_id: item.applicant_id,
+                                        message: message,
+                                      },
+                                      item.applicant_email
+                                    );
+                                  }
+                                }
                               }}
                             >
                               <SelectItem
@@ -209,9 +231,9 @@ const ApplicationsComponent = () => {
               </TableBody>
             </Table>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

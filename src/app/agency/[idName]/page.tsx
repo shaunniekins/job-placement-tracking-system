@@ -2,6 +2,7 @@
 
 import ApplicationsComponent from "@/components/agencyComponents/Applications";
 import ManageJobPostingsComponent from "@/components/agencyComponents/ManageJobPostings";
+import NotificationsComponent from "@/components/Notifications";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -17,11 +18,11 @@ export default function AgencySlugPage() {
     } else if (pathname.startsWith("/agency/applicants")) {
       setDisplay(<ApplicationsComponent />);
     } else if (pathname.startsWith("/agency/notifications")) {
-      setDisplay("Notifications");
+      setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/agency/profile")) {
       setDisplay("Profile");
-    } else if (pathname.startsWith("/agency/settings")) {
-      setDisplay("Settings");
+    // } else if (pathname.startsWith("/agency/settings")) {
+    //   setDisplay("Settings");
     } else {
       setDisplay("No page found");
     }

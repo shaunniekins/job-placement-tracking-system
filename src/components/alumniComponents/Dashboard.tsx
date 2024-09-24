@@ -27,12 +27,17 @@ import {
   checkIfApplied,
   insertJobApplication,
 } from "@/app/api/jobApplicationsIUD";
+import { insertNotification } from "@/app/api/notificationsIUD";
 
 const AlumniDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
 
   const [page, setPage] = useState(1);
   const rowsPerPage = 100;
+
+  // useEffect(() => {
+  //   console.log("user", user);
+  // }, [user]);
 
   const {
     jobPostings,
@@ -81,6 +86,8 @@ const AlumniDashboardComponent = () => {
                     key={job.job_posting_id}
                     job={job}
                     userId={user?.id}
+                    userEmail={user?.email}
+                    userName={`${user?.user_metadata.first_name} ${user?.user_metadata.last_name}`}
                   />
                 ))}
               </div>
@@ -97,7 +104,17 @@ const AlumniDashboardComponent = () => {
   );
 };
 
-const JobPostingDetails = ({ job, userId }: { job: any; userId: string }) => {
+const JobPostingDetails = ({
+  job,
+  userId,
+  userEmail,
+  userName,
+}: {
+  job: any;
+  userId: string;
+  userEmail: string;
+  userName: string;
+}) => {
   const [visible, setVisible] = useState(false);
   const [isApplied, setIsApplied] = useState<boolean | null>(null);
 
@@ -125,6 +142,24 @@ const JobPostingDetails = ({ job, userId }: { job: any; userId: string }) => {
     const response = await insertJobApplication(newJobApplication);
 
     if (response) {
+      // notify agency
+      await insertNotification(
+        {
+          receiver_id: job.agency_id,
+          message: `New application for job posting: ${job.job_title} by ${userName}.`,
+        },
+        job.agency_email
+      );
+
+      // notify user
+      await insertNotification(
+        {
+          receiver_id: userId,
+          message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
+        },
+        userEmail
+      );
+
       setIsApplied(true);
     }
   };

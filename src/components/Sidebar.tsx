@@ -106,7 +106,7 @@ const SidebarComponent = ({
     },
     { path: "/agency/notifications", label: "Notifications", icon: <FaBell /> },
     { path: "/agency/profile", label: "Profile", icon: <FaUser /> },
-    { path: "/agency/settings", label: "Settings", icon: <FaCog /> },
+    // { path: "/agency/settings", label: "Settings", icon: <FaCog /> },
   ];
 
   const alumniItems: MenuItem[] = [
@@ -118,7 +118,7 @@ const SidebarComponent = ({
     { path: "/alumni/placement", label: "Placement", icon: <FaBriefcase /> },
     { path: "/alumni/notifications", label: "Notifications", icon: <FaBell /> },
     { path: "/alumni/profile", label: "Profile", icon: <FaUser /> },
-    { path: "/alumni/settings", label: "Settings", icon: <FaCog /> },
+    // { path: "/alumni/settings", label: "Settings", icon: <FaCog /> },
   ];
 
   useEffect(() => {

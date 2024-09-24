@@ -143,7 +143,7 @@ const useJobApplications = (
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") {
           setErrorJobApplications("Error subscribing to real-time updates");
-          console.error("Error subscribing to channel:", status);
+          // console.error("Error subscribing to channel:", status);
         }
       });
 
