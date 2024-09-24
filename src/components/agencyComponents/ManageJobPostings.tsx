@@ -49,7 +49,7 @@ const ManageJobPostingsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
-  const rowsPerPage = 4;
+  const rowsPerPage = 12;
 
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState<"insert" | "update">("insert");
@@ -378,7 +378,10 @@ const JobPostingDetails = ({
         </div>
       </CardBody>
       <CardFooter className="flex justify-between items-center pt-0">
-        <p>{formatDate(job.date_posted)}</p>
+        <p className="flex flex-col items-center">
+          {formatDate(job.date_posted)}
+          <span className="text-xs text-gray-500">Data Posted</span>
+        </p>
         <Button
           color={`${
             job.job_status === "active"

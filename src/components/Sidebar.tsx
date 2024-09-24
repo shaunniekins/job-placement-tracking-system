@@ -233,7 +233,7 @@ const NavItem = ({
     <li
       onClick={handleNavigation}
       className={classNames(
-        "flex items-center gap-5 px-5 lg:text-xl rounded-lg cursor-pointer hover:bg-[#00503D] hover:text-white",
+        "flex items-center gap-5 px-5 lg:text-xl rounded-lg cursor-pointer hover:bg-[#00503D]",
         {
           "bg-[#F4FFFC] text-black hover:bg-[#F4FFFC] hover:text-black":
             isActive,

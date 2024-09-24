@@ -37,7 +37,7 @@ export default function SuperAdminSlugLayout({
         >
           <div
             className={`${
-              isSidebarOpen ? "z-10 flex lg:block" : "hidden lg:hidden"
+              isSidebarOpen ? "z-50 flex lg:block" : "hidden lg:hidden"
             } fixed inset-y-0 left-0 w-4/5 bg-white lg:relative lg:w-auto lg:bg-transparent`}
           >
             <SidebarComponent

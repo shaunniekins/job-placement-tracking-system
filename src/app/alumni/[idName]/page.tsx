@@ -1,5 +1,6 @@
 "use client";
 
+import AlumniDashboardComponent from "@/components/alumniComponents/Dashboard";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -9,7 +10,7 @@ export default function AlumniSlugPage() {
 
   useEffect(() => {
     if (pathname.startsWith("/alumni/dashboard")) {
-      setDisplay("Dashboard");
+      setDisplay(<AlumniDashboardComponent />);
     } else if (pathname.startsWith("/alumni/placement")) {
       setDisplay("Placement");
     } else if (pathname.startsWith("/alumni/notifications")) {
@@ -23,5 +24,5 @@ export default function AlumniSlugPage() {
     }
   }, [pathname]);
 
-  return <div className="h-full w-full">{display}</div>;
+  return <>{display}</>;
 }

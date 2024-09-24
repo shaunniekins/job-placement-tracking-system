@@ -79,6 +79,10 @@ export async function middleware(request: NextRequest) {
     );
   }
 
+  if (request.nextUrl.pathname === "/signup") {
+    return NextResponse.redirect(new URL("/ident/signup", request.url));
+  }
+
   if (
     request.nextUrl.pathname === "/ident/signup" &&
     !request.nextUrl.searchParams.has("usertype")

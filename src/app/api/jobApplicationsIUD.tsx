@@ -1,5 +1,20 @@
 import { supabase } from "@/utils/supabase";
 
+export const checkIfApplied = async (userId: string, jobPostingId: number) => {
+  const { data, error } = await supabase
+    .from("ViewJobApplicationsWithDetails")
+    .select("*")
+    .eq("applicant_id", userId)
+    .eq("job_posting_id", jobPostingId);
+
+  if (error) {
+    console.error("Error checking application status:", error);
+    return false;
+  }
+
+  return data.length > 0;
+};
+
 export const insertJobApplication = async (newJobApplication: any) => {
   try {
     const response = await supabase

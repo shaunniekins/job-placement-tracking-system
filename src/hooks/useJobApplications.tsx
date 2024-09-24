@@ -63,6 +63,8 @@ const useJobApplications = (
       return null;
     }
 
+    // i think instead of job_posting_id, it should be job_application_id
+    // double check this
     try {
       const { data, error } = await supabase
         .from("ViewJobApplicationsWithDetails")
