@@ -50,3 +50,41 @@ export const insertNotification = async (
     return null;
   }
 };
+
+export const markNotificationAsSeen = async (
+  notificationId: number,
+  currentStatus: string
+) => {
+  try {
+    if (!notificationId) return;
+
+    const { error } = await supabase
+      .from("Notifications")
+      .update({ seen: !currentStatus })
+      .eq("notification_id", notificationId);
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error("Error marking notifications as seen:", err);
+  }
+};
+
+// export const markNotificationsAsSeen = async (userId: string) => {
+//   try {
+//     if (!userId) return;
+
+//     const { error } = await supabase
+//       .from("Notifications")
+//       .update({ seen: true })
+//       .eq("receiver_id", userId)
+//       .eq("seen", false); // Only update unseen notifications
+
+//     if (error) {
+//       throw error;
+//     }
+//   } catch (err) {
+//     console.error("Error marking notifications as seen:", err);
+//   }
+// };

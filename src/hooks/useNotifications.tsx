@@ -73,6 +73,12 @@ const useNotifications = (
                   (notification) =>
                     notification.notification_id !== oldRecord.notification_id
                 );
+              case "UPDATE":
+                return prevNotifications.map((notification) =>
+                  notification.notification_id === newRecord.notification_id
+                    ? newRecord
+                    : notification
+                );
               default:
                 return prevNotifications;
             }

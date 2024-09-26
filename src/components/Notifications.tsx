@@ -19,6 +19,8 @@ import {
 } from "@nextui-org/react";
 import { formatDate, formatDateSuffix } from "@/utils/compUtils";
 import useNotifications from "@/hooks/useNotifications";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { markNotificationAsSeen } from "@/app/api/notificationsIUD";
 
 const NotificationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -41,6 +43,12 @@ const NotificationsComponent = () => {
 
   const totalPages = Math.ceil(totalNotifications / rowsPerPage);
 
+  const columns = [
+    { key: "message", label: "Message" },
+    { key: "created_at", label: "Date" },
+    { key: "seen", label: "Seen Status" },
+  ];
+
   if (loadingNotifications) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -48,11 +56,6 @@ const NotificationsComponent = () => {
       </div>
     );
   }
-
-  const columns = [
-    { key: "message", label: "Message" },
-    { key: "created_at", label: "Date" },
-  ];
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
@@ -96,7 +99,9 @@ const NotificationsComponent = () => {
                 {(column) => (
                   <TableColumn
                     key={column.key}
-                    className="bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap"
+                    className={`${column.key === "seen" && "lg:w-36"}
+                     ${column.key === "message" && "w-32 lg:w-auto"} 
+                    bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap`}
                   >
                     {column.label}
                   </TableColumn>
@@ -113,10 +118,40 @@ const NotificationsComponent = () => {
                     className="text-center hover:bg-green-100"
                   >
                     {(columnKey) => {
+                      if (columnKey === "message") {
+                        return (
+                          <TableCell
+                            className={`text-center ${
+                              !item.seen && "text-purple-800"
+                            }`}
+                          >
+                            {item.message}
+                          </TableCell>
+                        );
+                      }
+
                       if (columnKey === "created_at") {
                         return (
-                          <TableCell className="text-center">
+                          <TableCell className="text-center text-sm">
                             {formatDateSuffix(item.created_at)}
+                          </TableCell>
+                        );
+                      }
+
+                      if (columnKey === "seen") {
+                        return (
+                          <TableCell className="flex m-0 justify-center items-center lg:w-36">
+                            <Button
+                              isIconOnly
+                              onPress={() =>
+                                markNotificationAsSeen(
+                                  item.notification_id,
+                                  item.seen
+                                )
+                              }
+                            >
+                              {item.seen ? <FaEye /> : <FaEyeSlash />}
+                            </Button>
                           </TableCell>
                         );
                       }
