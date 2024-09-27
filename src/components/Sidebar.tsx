@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
+import { Avatar, Button } from "@nextui-org/react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   FaBars,
@@ -46,6 +46,9 @@ const SidebarComponent = ({
   const [items, setItems] = useState<MenuItem[]>([]);
   const [name, setName] = useState("");
   const [userType, setUserType] = useState("");
+  const [displayImage, setDisplayImage] = useState({
+    profile_picture: "",
+  });
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
@@ -123,9 +126,19 @@ const SidebarComponent = ({
 
   useEffect(() => {
     if (user && user.user_metadata) {
-      const { user_type, first_name, last_name } = user.user_metadata;
-      setName(`${first_name} ${last_name}`);
+      const { profile_picture, user_type, first_name, last_name, companyName } =
+        user.user_metadata;
+
+      if (user_type === "agency" && companyName) {
+        setName(companyName);
+      } else {
+        setName(`${first_name} ${last_name}`);
+      }
+
       setUserType(user_type);
+      setDisplayImage({
+        profile_picture: profile_picture || "",
+      });
 
       switch (user_type) {
         case "admin":
@@ -175,7 +188,15 @@ const SidebarComponent = ({
         } items-center justify-center text-9xl`}
       >
         <div className="flex flex-col justify-center items-center gap-2">
-          <FaUserCircle />
+          {displayImage.profile_picture ? (
+            <Avatar
+              src={displayImage.profile_picture}
+              alt="Profile"
+              className="w-32 h-32 rounded-full object-cover cursor-pointer"
+            />
+          ) : (
+            <FaUserCircle />
+          )}
           <span className="text-lg">{name}</span>
         </div>
       </div>
