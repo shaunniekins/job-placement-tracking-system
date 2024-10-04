@@ -1,5 +1,6 @@
 "use client";
 
+import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import UserComponent from "@/components/superAdminComponents/Users";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -26,7 +27,7 @@ export default function SuperAdminSlugPage() {
     } else if (pathname.startsWith("/superadmin/profile")) {
       setDisplay("Profile");
     } else if (pathname.startsWith("/superadmin/orgchart")) {
-      setDisplay("Org Chart");
+      setDisplay(<OrgChartComponent />);
     } else if (pathname.startsWith("/superadmin/calendar")) {
       setDisplay("Calendar");
     } else {

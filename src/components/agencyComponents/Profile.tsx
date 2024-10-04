@@ -156,14 +156,14 @@ const ProfileComponent = () => {
 
   const handleAgencyEditToggle = () => {
     if (isAgencyEditing) {
-      // If canceling, revert to tempUserInfo
+      // If canceling, revert to old info
       setTempAgencyInfo(agencyInfo);
       setTempLoginInfo(loginInfo);
 
       setIsAgencyChanged(false);
       setIsLoginChanged(false);
     } else {
-      // If starting to edit, save current userInfo to tempUserInfo
+      // If starting to edit, save current info to temp
       setTempAgencyInfo(agencyInfo);
       setTempLoginInfo(loginInfo);
     }

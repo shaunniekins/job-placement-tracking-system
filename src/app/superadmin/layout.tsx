@@ -3,6 +3,7 @@
 import HeaderComponent from "@/components/Header";
 import SidebarComponent from "@/components/Sidebar";
 import { Spinner } from "@nextui-org/react";
+import React from "react";
 import { Suspense, useState } from "react";
 
 export default function SuperAdminSlugLayout({
@@ -45,7 +46,7 @@ export default function SuperAdminSlugLayout({
               setIsSidebarOpen={setIsSidebarOpen}
             />
           </div>
-          <div className="h-full flex flex-col w-full relative">
+          <div className="h-full flex flex-col w-full relative overflow-hidden">
             <div className="flex">
               <HeaderComponent
                 isSidebarOpen={isSidebarOpen}
@@ -61,7 +62,7 @@ export default function SuperAdminSlugLayout({
               }
             >
               <div
-                className="h-full flex flex-1 bg-[#F4FFFC] justify-center items-center p-5 lg:p-10"
+                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 lg:p-10"
                 onClick={handleContentClick}
               >
                 {children}

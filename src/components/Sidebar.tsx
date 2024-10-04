@@ -131,14 +131,24 @@ const SidebarComponent = ({
 
       if (user_type === "agency" && companyName) {
         setName(companyName);
-      } else {
+      } else if (user_type === "alumni" || user_type === "admin") {
         setName(`${first_name} ${last_name}`);
+      } else if (user_type === "superadmin") {
+        if (first_name || last_name) {
+          setName(`${first_name} ${last_name}`);
+        } else {
+          setName("Superadmin");
+        }
+      } else {
+        setName("Superadmin");
       }
 
-      setUserType(user_type);
+      setUserType(user_type ? user_type : "superadmin");
       setDisplayImage({
         profile_picture: profile_picture || "",
       });
+
+      console.log("user_type", user_type ? user_type : "superadmin");
 
       switch (user_type) {
         case "admin":
