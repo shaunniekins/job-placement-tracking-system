@@ -1,7 +1,6 @@
 "use client";
 
 import { RootState } from "@/app/reduxUtils/store";
-import useJobApplications from "@/hooks/useJobApplications";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -14,10 +13,8 @@ import {
   TableRow,
   TableColumn,
   TableCell,
-  SelectItem,
-  Select,
 } from "@nextui-org/react";
-import { formatDate, formatDateSuffix } from "@/utils/compUtils";
+import { formatDateSuffix } from "@/utils/compUtils";
 import useNotifications from "@/hooks/useNotifications";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { markNotificationAsSeen } from "@/app/api/notificationsIUD";
@@ -26,7 +23,7 @@ const NotificationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
-  const rowsPerPage = 15;
+  const rowsPerPage = 13;
 
   useEffect(() => {
     if (user) {
@@ -34,12 +31,8 @@ const NotificationsComponent = () => {
     }
   }, [user]);
 
-  const {
-    notifications,
-    totalNotifications,
-    loadingNotifications,
-    errorNotifications,
-  } = useNotifications(rowsPerPage, page, userId);
+  const { notifications, totalNotifications, loadingNotifications } =
+    useNotifications(rowsPerPage, page, userId);
 
   const totalPages = Math.ceil(totalNotifications / rowsPerPage);
 
@@ -59,11 +52,7 @@ const NotificationsComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
-      <div
-        className={`${
-          notifications.length === 0 ? "justify-end" : "justify-between"
-        } flex items-center`}
-      >
+      <div className="flex justify-end items-center">
         <Pagination
           isCompact
           showControls
@@ -72,102 +61,90 @@ const NotificationsComponent = () => {
           page={page}
           total={totalPages}
           onChange={(newPage) => setPage(newPage)}
-          className={`${notifications.length === 0 && "hidden"}`}
         />
-        <Button className="invisible" />
       </div>
       <div className="flex h-full w-full overflow-y-auto relative">
-        {notifications.length === 0 && (
-          <div className="h-full w-full flex justify-center items-center -mt-16">
-            <p>No new notifications yet.</p>
-          </div>
-        )}
-
-        {notifications && notifications.length > 0 && (
-          <div className="h-full">
-            <Table
-              fullWidth
-              layout="fixed"
-              isHeaderSticky={true}
-              aria-label="Job Applications Table"
-              classNames={{
-                wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
-              }}
-              className="h-full w-full flex items-center justify-center"
-            >
-              <TableHeader columns={columns}>
-                {(column) => (
-                  <TableColumn
-                    key={column.key}
-                    className={`${column.key === "seen" && "lg:w-36"}
+        <Table
+          fullWidth
+          layout="auto"
+          isHeaderSticky={true}
+          aria-label="Job Applications Table"
+          classNames={{
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+          }}
+          className="h-full w-full flex items-center justify-center"
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn
+                key={column.key}
+                className={`${column.key === "seen" && "lg:w-36"}
                      ${column.key === "message" && "w-32 lg:w-auto"} 
                     bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap`}
-                  >
-                    {column.label}
-                  </TableColumn>
-                )}
-              </TableHeader>
-              <TableBody
-                items={notifications}
-                emptyContent={"No notifications to display."}
-                loadingContent={<Spinner color="success" />}
               >
-                {(item) => (
-                  <TableRow
-                    key={item.notification_id}
-                    className="text-center hover:bg-green-100"
-                  >
-                    {(columnKey) => {
-                      if (columnKey === "message") {
-                        return (
-                          <TableCell
-                            className={`text-center ${
-                              !item.seen && "text-purple-800"
-                            }`}
-                          >
-                            {item.message}
-                          </TableCell>
-                        );
-                      }
+                {column.label}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            items={notifications}
+            emptyContent={"No notifications to display."}
+            loadingContent={<Spinner color="success" />}
+          >
+            {(item) => (
+              <TableRow
+                key={item.notification_id}
+                className="text-center hover:bg-green-100"
+              >
+                {(columnKey) => {
+                  if (columnKey === "message") {
+                    return (
+                      <TableCell
+                        className={`text-center ${
+                          !item.seen && "text-purple-800"
+                        }`}
+                      >
+                        {item.message}
+                      </TableCell>
+                    );
+                  }
 
-                      if (columnKey === "created_at") {
-                        return (
-                          <TableCell className="text-center text-sm">
-                            {formatDateSuffix(item.created_at)}
-                          </TableCell>
-                        );
-                      }
+                  if (columnKey === "created_at") {
+                    return (
+                      <TableCell className="text-center text-sm">
+                        {formatDateSuffix(item.created_at)}
+                      </TableCell>
+                    );
+                  }
 
-                      if (columnKey === "seen") {
-                        return (
-                          <TableCell className="flex m-0 justify-center items-center lg:w-36">
-                            <Button
-                              isIconOnly
-                              onPress={() =>
-                                markNotificationAsSeen(
-                                  item.notification_id,
-                                  item.seen
-                                )
-                              }
-                            >
-                              {item.seen ? <FaEye /> : <FaEyeSlash />}
-                            </Button>
-                          </TableCell>
-                        );
-                      }
+                  if (columnKey === "seen") {
+                    return (
+                      <TableCell className="flex m-0 justify-center items-center lg:w-36">
+                        <Button
+                          isIconOnly
+                          onPress={() =>
+                            markNotificationAsSeen(
+                              item.notification_id,
+                              item.seen
+                            )
+                          }
+                        >
+                          {item.seen ? <FaEye /> : <FaEyeSlash />}
+                        </Button>
+                      </TableCell>
+                    );
+                  }
 
-                      return (
-                        <TableCell className="text-center">
-                          {item[columnKey as keyof typeof item]}
-                        </TableCell>
-                      );
-                    }}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                  return (
+                    <TableCell className="text-center">
+                      {item[columnKey as keyof typeof item]}
+                    </TableCell>
+                  );
+                }}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

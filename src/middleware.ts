@@ -2,6 +2,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { persistor } from "./app/reduxUtils/store";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -94,6 +95,21 @@ export async function middleware(request: NextRequest) {
 
   if (user) {
     const user_type = user.user_metadata.user_type;
+    const user_status = user.user_metadata.account_status;
+
+    if (
+      (user_type === "admin" ||
+        user_type === "agency" ||
+        user_type === "alumni") &&
+      user_status !== "approved"
+    ) {
+      const { error } = await supabase.auth.signOut();
+
+      if (!error) {
+        persistor.purge();
+      }
+      return NextResponse.redirect(new URL("/ident/confirmation", request.url));
+    }
 
     // Redirect users to their respective dashboards based on role
     if (request.nextUrl.pathname === "/") {
@@ -121,6 +137,19 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(`/${user_type}`, request.url));
       } else {
         // Assuming any other role (like superadmin) should go to /superadmin/dashboard
+        return NextResponse.redirect(
+          new URL("/superadmin/dashboard", request.url)
+        );
+      }
+    }
+    if (request.nextUrl.pathname.startsWith("/ident/confirmation")) {
+      if (user_type === "admin" && user_status === "approved") {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      } else if (user_type === "agency") {
+        return NextResponse.redirect(new URL("/agency", request.url));
+      } else if (user_type === "alumni") {
+        return NextResponse.redirect(new URL("/alumni", request.url));
+      } else {
         return NextResponse.redirect(
           new URL("/superadmin/dashboard", request.url)
         );

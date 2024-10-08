@@ -94,7 +94,7 @@ export const JobPostingDetails = ({
         <p>{formatDate(job.date_posted)}</p>
         <Button
           color={`${
-            job.job_status === "active"
+            job.job_status === "approved"
               ? "success"
               : job.job_status === "inactive"
               ? "danger"

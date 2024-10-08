@@ -35,16 +35,12 @@ const AlumniDashboardComponent = () => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 100;
 
-  // useEffect(() => {
-  //   console.log("user", user);
-  // }, [user]);
-
   const {
     jobPostings,
     totalJobPostings,
     loadingJobPostings,
     errorJobPostings,
-  } = useJobPostings(rowsPerPage, page);
+  } = useJobPostings(rowsPerPage, page, undefined, "approved");
 
   const totalPages = Math.ceil(totalJobPostings / rowsPerPage);
 

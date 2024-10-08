@@ -5,7 +5,8 @@ import { PostgrestResponse } from "@supabase/supabase-js";
 const useJobPostings = (
   rowsPerPage: number,
   currentPage: number,
-  agencyId?: string
+  agencyId?: string,
+  jobStatusFilter?: string
 ) => {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [totalJobPostings, setTotalJobPostings] = useState(0);
@@ -25,6 +26,10 @@ const useJobPostings = (
 
       if (agencyId) {
         query = query.eq("agency_id", agencyId);
+      }
+
+      if (jobStatusFilter) {
+        query = query.eq("job_status", jobStatusFilter);
       }
 
       const response: PostgrestResponse<any> = await query.range(
@@ -47,7 +52,7 @@ const useJobPostings = (
     } finally {
       setLoadingJobPostings(false);
     }
-  }, [rowsPerPage, currentPage, agencyId]);
+  }, [rowsPerPage, currentPage, agencyId, jobStatusFilter]);
 
   const fetchFullJobPosting = async (jobPostingId: number) => {
     if (!jobPostingId) {
@@ -83,60 +88,71 @@ const useJobPostings = (
           schema: "public",
           table: "JobPostings",
         },
-        (payload) => {
+        async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
-          setJobPostings((prev) => {
-            switch (eventType) {
-              case "INSERT":
-                if (!agencyId || newRecord.agency_id === agencyId) {
-                  fetchFullJobPosting(newRecord.job_posting_id).then(
-                    (fullJobPosting) => {
-                      if (fullJobPosting) {
-                        setJobPostings([...prev, fullJobPosting]);
-                      }
-                    }
+          switch (eventType) {
+            case "INSERT":
+              if (
+                (!agencyId || newRecord.agency_id === agencyId) &&
+                (!jobStatusFilter || newRecord.job_status === jobStatusFilter)
+              ) {
+                const fullJobPosting = await fetchFullJobPosting(
+                  newRecord.job_posting_id
+                );
+                if (fullJobPosting) {
+                  setJobPostings((prev) => [...prev, fullJobPosting]);
+                }
+              }
+              break;
+            case "UPDATE":
+              if (
+                (!agencyId || newRecord.agency_id === agencyId) &&
+                (!jobStatusFilter || newRecord.job_status === jobStatusFilter)
+              ) {
+                const fullJobPosting = await fetchFullJobPosting(
+                  newRecord.job_posting_id
+                );
+                if (fullJobPosting) {
+                  setJobPostings((prev) =>
+                    prev.map((item) =>
+                      item.job_posting_id === newRecord.job_posting_id
+                        ? fullJobPosting
+                        : item
+                    )
                   );
                 }
-                break;
-              case "UPDATE":
-                fetchFullJobPosting(newRecord.job_posting_id).then(
-                  (fullJobPosting) => {
-                    if (fullJobPosting) {
-                      setJobPostings(
-                        prev.map((item) =>
-                          item.job_posting_id === newRecord.job_posting_id
-                            ? fullJobPosting
-                            : item
-                        )
-                      );
-                    }
-                  }
+              } else {
+                // Remove the job posting if it no longer matches the filter
+                setJobPostings((prev) =>
+                  prev.filter(
+                    (item) => item.job_posting_id !== newRecord.job_posting_id
+                  )
                 );
-                break;
-              case "DELETE":
-                return prev.filter(
-                  (message) =>
-                    message.job_posting_id !== oldRecord.job_posting_id
-                );
-              default:
-                return prev;
-            }
-            return prev;
-          });
+              }
+              break;
+            case "DELETE":
+              setJobPostings((prev) =>
+                prev.filter(
+                  (item) => item.job_posting_id !== oldRecord.job_posting_id
+                )
+              );
+              break;
+            default:
+              break;
+          }
         }
       )
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") {
           setErrorJobPostings("Error subscribing to real-time updates");
-          // console.error("Error subscribing to channel:", status);
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agencyId]);
+  }, [agencyId, jobStatusFilter]);
 
   useEffect(() => {
     fetchJobPostings(); // Fetch initial data
@@ -153,6 +169,7 @@ const useJobPostings = (
     totalJobPostings,
     loadingJobPostings,
     errorJobPostings,
+    fetchJobPostings,
   };
 };
 

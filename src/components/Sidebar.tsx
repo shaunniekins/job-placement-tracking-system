@@ -126,11 +126,11 @@ const SidebarComponent = ({
 
   useEffect(() => {
     if (user && user.user_metadata) {
-      const { profile_picture, user_type, first_name, last_name, companyName } =
+      const { profile_picture, user_type, first_name, last_name, company_name } =
         user.user_metadata;
 
-      if (user_type === "agency" && companyName) {
-        setName(companyName);
+      if (user_type === "agency" && company_name) {
+        setName(company_name);
       } else if (user_type === "alumni" || user_type === "admin") {
         setName(`${first_name} ${last_name}`);
       } else if (user_type === "superadmin") {
@@ -148,7 +148,7 @@ const SidebarComponent = ({
         profile_picture: profile_picture || "",
       });
 
-      console.log("user_type", user_type ? user_type : "superadmin");
+      // console.log("user_type", user_type ? user_type : "superadmin");
 
       switch (user_type) {
         case "admin":

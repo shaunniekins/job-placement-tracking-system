@@ -83,7 +83,7 @@ import { supabaseAdmin } from "@/utils/supabase";
 //           first_name: item_data.first_name,
 //           last_name: item_data.last_name,
 //           middle_name: item_data.middle_name,
-//           mobile_number: item_data.mobile_number,
+//           contact_number: item_data.contact_number,
 //           birth_date: item_data.birth_date,
 //           address: item_data.address,
 //         },
@@ -142,7 +142,7 @@ import { supabaseAdmin } from "@/utils/supabase";
 //   const TechnicianColumns = [
 //     { key: "first_name", label: "FIRST NAME" },
 //     { key: "last_name", label: "LAST NAME" },
-//     { key: "mobile_number", label: "MOBILE" },
+//     { key: "contact_number", label: "MOBILE" },
 //     { key: "email", label: "EMAIL" },
 //     { key: "license_number", label: "LICENSE NUMBER" },
 //     { key: "specialization", label: "SPECIALIZATION" },
@@ -152,7 +152,7 @@ import { supabaseAdmin } from "@/utils/supabase";
 //   const FarmerColumns = [
 //     { key: "first_name", label: "FIRST NAME" },
 //     { key: "last_name", label: "LAST NAME" },
-//     { key: "mobile_number", label: "MOBILE" },
+//     { key: "contact_number", label: "MOBILE" },
 //     { key: "email", label: "EMAIL" },
 //   ];
 

@@ -2,6 +2,7 @@
 
 "use client";
 
+import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseAdmin } from "@/utils/supabase";
@@ -13,6 +14,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Spinner,
 } from "@nextui-org/react";
 import { EyeSlashFilledIcon } from "../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../public/icons/EyeFilledIcon";
@@ -33,7 +35,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [middleName, setMiddleName] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
 
   // exlusive for ageny
   const [validId, setValidId] = useState("");
@@ -70,28 +72,38 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
       password: password,
       email_confirm: true,
       user_metadata: {
+        account_status: "pending",
+        profile_picture: "",
         email: email,
         password: password,
         user_type: userType,
         first_name: firstName,
         last_name: lastName,
         middle_name: middleName,
-        mobile_number: mobileNumber,
+        contact_number: contactNumber,
         ...(userType === "agency" && {
-          validId: validId,
-          companyName: companyName,
-          companyType: companyType,
+          valid_id: validId,
+          company_name: companyName,
+          company_type: companyType,
           address: companyAddress,
         }),
-        ...(userType === "alumni" && { college: college }),
+        ...(userType === "alumni" && {
+          birth_date: "",
+          address: alumniAddress,
+          batch_year: batchYear,
+          id_number: idNumber,
+          college: college,
+          program: program,
+        }),
       },
     });
 
     if (error) {
       console.error("Error signing up:", error.message);
+      alert(error.message);
       setSignUpPending(false);
     } else {
-      router.push(`/ident/signin?usertype=${userType}`);
+      router.push(`/ident/confirmation`);
       return;
     }
   };
@@ -140,226 +152,281 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
         </ModalContent>
       </Modal>
       <div className="w-full h-full flex flex-col justify-center items-center relative">
-        <form
-          className="animate-in h-full flex flex-col w-full justify-center items-center gap-2 px-3 md:px-12 2xl:px-80"
-          onSubmit={handleSubmit}
-        >
-          <div className="w-full overflow-y-auto flex flex-col justify-center items-center rounded-md shadow-sm gap-3 ">
-            <h4 className="absolute top-16 lg:top-32 self-center lg:self-start font-semibold text-xl">
-              {userType !== "superadmin" && userType.toUpperCase()} REGISTER
-            </h4>
-            {currentViewInput === 1 && (
-              <>
-                <div className="w-full flex flex-col lg:flex-row gap-2">
-                  <Input
-                    type="text"
-                    label="First Name"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    label="Middle Name"
-                    variant="bordered"
-                    color="success"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    label="Last Name"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </div>
-                <div className="w-full flex flex-col lg:flex-row gap-2">
-                  <Input
-                    type="email"
-                    label="Email"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <Input
-                    type={isInputUserPasswordVisible ? "text" : "password"}
-                    label="Password"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    endContent={
-                      <button
-                        className="focus:outline-none"
-                        type="button"
-                        onClick={() =>
-                          setIsInputUserPasswordVisible(
-                            !isInputUserPasswordVisible
-                          )
-                        }
-                      >
-                        {isInputUserPasswordVisible ? (
-                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        ) : (
-                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                        )}
-                      </button>
-                    }
-                  />
-                </div>
-              </>
-            )}
-
-            {userType === "agency" && currentViewInput === 2 && (
-              <>
-                <div className="w-full flex flex-col lg:flex-row gap-2">
-                  <Input
-                    type="text"
-                    label="Valid ID"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={validId}
-                    onChange={(e) => setValidId(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    label="Company Name"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    label="Company Type"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={companyType}
-                    onChange={(e) => setCompanyType(e.target.value)}
-                  />
-                </div>
-
-                <div className="w-full flex flex-col lg:flex-row gap-2">
-                  <Input
-                    type="text"
-                    label="Company Address"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={companyAddress}
-                    onChange={(e) => setCompanyAddress(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    label="Mobile Number"
-                    variant="bordered"
-                    color="success"
-                    isRequired
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
-            {userType === "alumni" && currentViewInput === 2 && (
-              <div className="w-full flex flex-col lg:flex-row gap-2">
-                <Input
-                  type="text"
-                  label="Mobile Number"
-                  variant="bordered"
-                  color="success"
-                  isRequired
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  label="College"
-                  variant="bordered"
-                  color="success"
-                  isRequired
-                  value={college}
-                  onChange={(e) => setCollege(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="w-full flex gap-2">
-              <Button
-                fullWidth
-                color="warning"
-                size="lg"
-                startContent={<IoIosArrowBack />}
-                onClick={() => {
-                  setCurrentViewInput(1);
-                }}
-                className={`${
-                  (currentViewInput === 1 || signupPending) && "hidden"
-                } text-white mt-3`}
-              >
-                Back
-              </Button>
-              <Button
-                fullWidth
-                type="submit"
-                color="success"
-                size="lg"
-                endContent={currentViewInput === 1 && <IoIosArrowForward />}
-                disabled={signupPending}
-                isDisabled={
-                  currentViewInput === 1
-                    ? !(email && password.length >= 8 && firstName && lastName)
-                    : currentViewInput === 2
-                    ? !(
-                        email &&
-                        password.length >= 8 &&
-                        firstName &&
-                        lastName &&
-                        mobileNumber &&
-                        (userType !== "agency" ||
-                          (validId &&
-                            companyName &&
-                            companyType &&
-                            companyAddress)) &&
-                        (userType !== "alumni" || college)
-                      )
-                    : true
-                }
-                className="text-white mt-3"
-              >
-                {signupPending
-                  ? "Signing Up..."
-                  : currentViewInput === 1
-                  ? "Next"
-                  : "Sign Up"}
-              </Button>
-            </div>
+        {signupPending && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Spinner color="success" />
           </div>
-        </form>
-        <Button
-          type="submit"
-          variant="ghost"
-          isDisabled={userType === "superadmin" || userType === "admin"}
-          color="success"
-          onClick={() => {
-            return router.push(`/ident/signin?usertype=${userType}`);
-          }}
-          className="absolute bottom-5"
-        >
-          Already Have An Account
-        </Button>
+        )}
+        {!signupPending && (
+          <>
+            <form
+              className="animate-in h-full flex flex-col w-full justify-center items-center gap-2 px-3 md:px-12 2xl:px-80"
+              onSubmit={handleSubmit}
+            >
+              <div className="w-full overflow-y-auto flex flex-col justify-center items-center rounded-md shadow-sm gap-3 ">
+                <h4 className="absolute top-16 lg:top-32 self-center lg:self-start font-semibold text-xl">
+                  {userType !== "superadmin" && userType.toUpperCase()} REGISTER
+                </h4>
+                {currentViewInput === 1 && (
+                  <>
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="text"
+                        label="First Name"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Middle Name"
+                        variant="bordered"
+                        color="success"
+                        value={middleName}
+                        onChange={(e) => setMiddleName(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Last Name"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="email"
+                        label="Email"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      <Input
+                        type={isInputUserPasswordVisible ? "text" : "password"}
+                        label="Password"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        endContent={
+                          <button
+                            className="focus:outline-none"
+                            type="button"
+                            onClick={() =>
+                              setIsInputUserPasswordVisible(
+                                !isInputUserPasswordVisible
+                              )
+                            }
+                          >
+                            {isInputUserPasswordVisible ? (
+                              <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                            ) : (
+                              <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                            )}
+                          </button>
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+
+                {userType === "agency" && currentViewInput === 2 && (
+                  <>
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="text"
+                        label="Valid ID"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={validId}
+                        onChange={(e) => setValidId(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Company Name"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Company Type"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={companyType}
+                        onChange={(e) => setCompanyType(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="text"
+                        label="Company Address"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={companyAddress}
+                        onChange={(e) => setCompanyAddress(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Contact Number"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={contactNumber}
+                        onChange={(e) => setContactNumber(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {userType === "alumni" && currentViewInput === 2 && (
+                  <>
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="text"
+                        label="ID Number"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={idNumber}
+                        onChange={(e) => setIdNumber(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Address"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={alumniAddress}
+                        onChange={(e) => setAlumniAddress(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Contact Number"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={contactNumber}
+                        onChange={(e) => setContactNumber(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="text"
+                        label="College"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={college}
+                        onChange={(e) => setCollege(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Program"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={program}
+                        onChange={(e) => setProgram(e.target.value)}
+                      />
+                      <Input
+                        type="text"
+                        label="Batch Year"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={batchYear}
+                        onChange={(e) => setBatchYear(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="w-full flex gap-2">
+                  <Button
+                    fullWidth
+                    color="warning"
+                    size="lg"
+                    startContent={<IoIosArrowBack />}
+                    onClick={() => {
+                      setCurrentViewInput(1);
+                    }}
+                    className={`${
+                      (currentViewInput === 1 || signupPending) && "hidden"
+                    } text-white mt-3`}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    fullWidth
+                    type="submit"
+                    color="success"
+                    size="lg"
+                    endContent={currentViewInput === 1 && <IoIosArrowForward />}
+                    disabled={signupPending}
+                    isDisabled={
+                      currentViewInput === 1
+                        ? !(
+                            email &&
+                            password.length >= 8 &&
+                            firstName &&
+                            lastName
+                          )
+                        : currentViewInput === 2
+                        ? !(
+                            email &&
+                            password.length >= 8 &&
+                            firstName &&
+                            lastName &&
+                            contactNumber &&
+                            (userType !== "agency" ||
+                              (validId &&
+                                companyName &&
+                                companyType &&
+                                companyAddress)) &&
+                            (userType !== "alumni" || college)
+                          )
+                        : true
+                    }
+                    className="text-white mt-3"
+                  >
+                    {signupPending
+                      ? "Signing Up..."
+                      : currentViewInput === 1
+                      ? "Next"
+                      : "Sign Up"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+            <Button
+              type="submit"
+              variant="ghost"
+              isDisabled={userType === "superadmin" || userType === "admin"}
+              color="success"
+              onClick={() => {
+                return router.push(`/ident/signin?usertype=${userType}`);
+              }}
+              className="absolute bottom-5"
+            >
+              Already Have An Account
+            </Button>
+          </>
+        )}
       </div>
     </>
   );

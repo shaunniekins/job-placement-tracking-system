@@ -1,7 +1,10 @@
 "use client";
 
+import ProfileComponent from "@/components/agencyComponents/Profile";
+import NotificationsComponent from "@/components/Notifications";
 import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import UserComponent from "@/components/superAdminComponents/Users";
+import ValidationComponent from "@/components/superAdminComponents/Validation";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -15,9 +18,9 @@ export default function SuperAdminSlugPage() {
     } else if (pathname.startsWith("/superadmin/jobinteraction")) {
       setDisplay("Job Interaction");
     } else if (pathname.startsWith("/superadmin/validation")) {
-      setDisplay("Validation");
+      setDisplay(<ValidationComponent />);
     } else if (pathname.startsWith("/superadmin/notifications")) {
-      setDisplay("Notifications");
+      setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/superadmin/users")) {
       setDisplay(<UserComponent />);
     } else if (pathname.startsWith("/superadmin/manage")) {
@@ -25,7 +28,7 @@ export default function SuperAdminSlugPage() {
     } else if (pathname.startsWith("/superadmin/history")) {
       setDisplay("History");
     } else if (pathname.startsWith("/superadmin/profile")) {
-      setDisplay("Profile");
+      setDisplay(<ProfileComponent />);
     } else if (pathname.startsWith("/superadmin/orgchart")) {
       setDisplay(<OrgChartComponent />);
     } else if (pathname.startsWith("/superadmin/calendar")) {

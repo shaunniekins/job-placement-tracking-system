@@ -167,6 +167,7 @@ const useJobApplications = (
     totalJobApplications,
     loadingJobApplications,
     errorJobApplications,
+    fetchJobApplications,
   };
 };
 

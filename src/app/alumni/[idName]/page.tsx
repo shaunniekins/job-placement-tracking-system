@@ -19,12 +19,12 @@ export default function AlumniSlugPage() {
       setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/alumni/profile")) {
       setDisplay("Profile");
-    // } else if (pathname.startsWith("/alumni/settings")) {
-    //   setDisplay("Settings");
+      // } else if (pathname.startsWith("/alumni/settings")) {
+      //   setDisplay("Settings");
     } else {
       setDisplay("No page found");
     }
   }, [pathname]);
 
-  return <>{display}</>;
+  return <div className="h-full w-full">{display}</div>;
 }

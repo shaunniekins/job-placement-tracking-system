@@ -38,10 +38,10 @@ const ProfileComponent = () => {
     first_name: "",
     last_name: "",
     middle_name: "",
-    mobile_number: "",
-    companyName: "",
-    companyType: "",
-    validId: "",
+    contact_number: "",
+    company_name: "",
+    company_type: "",
+    valid_id: "",
   });
 
   const [tempAgencyInfo, setTempAgencyInfo] = useState(agencyInfo);
@@ -76,10 +76,10 @@ const ProfileComponent = () => {
         first_name,
         last_name,
         middle_name,
-        mobile_number,
-        companyName,
-        companyType,
-        validId,
+        contact_number,
+        company_name,
+        company_type,
+        valid_id,
       } = user.user_metadata;
 
       setAgencyInfo({
@@ -87,10 +87,10 @@ const ProfileComponent = () => {
         first_name: first_name || "",
         last_name: last_name || "",
         middle_name: middle_name || "",
-        mobile_number: mobile_number || "",
-        companyName: companyName || "",
-        companyType: companyType || "",
-        validId: validId || "",
+        contact_number: contact_number || "",
+        company_name: company_name || "",
+        company_type: company_type || "",
+        valid_id: valid_id || "",
       });
 
       setTempAgencyInfo({
@@ -98,10 +98,10 @@ const ProfileComponent = () => {
         first_name: first_name || "",
         last_name: last_name || "",
         middle_name: middle_name || "",
-        mobile_number: mobile_number || "",
-        companyName: companyName || "",
-        companyType: companyType || "",
-        validId: validId || "",
+        contact_number: contact_number || "",
+        company_name: company_name || "",
+        company_type: company_type || "",
+        valid_id: valid_id || "",
       });
 
       setLoginInfo({
@@ -371,7 +371,7 @@ const ProfileComponent = () => {
               <div className="col-span-1 flex justify-center">
                 <Popover
                   showArrow
-                  placement="right"
+                  // placement="right"
                   isOpen={displayImageOpen}
                   onOpenChange={(open) =>
                     isAgencyEditing && setDisplayImageOpen(open)
@@ -422,20 +422,20 @@ const ProfileComponent = () => {
               {/* Agency info fields */}
               <Input
                 label="Company Name"
-                name="companyName"
+                name="company_name"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.companyName}
+                value={tempAgencyInfo.company_name}
                 onChange={handleAgencyInputChange}
                 readOnly={!isAgencyEditing}
                 // className="col-span-2"
               />
               <Input
                 label="Company Type"
-                name="companyType"
+                name="company_type"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.companyType}
+                value={tempAgencyInfo.company_type}
                 onChange={handleAgencyInputChange}
                 readOnly={!isAgencyEditing}
               />
@@ -470,10 +470,10 @@ const ProfileComponent = () => {
 
               <Input
                 label="Mobile Number"
-                name="mobile_number"
+                name="contact_number"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.mobile_number}
+                value={tempAgencyInfo.contact_number}
                 onChange={handleAgencyInputChange}
                 readOnly={!isAgencyEditing}
               />
@@ -489,10 +489,10 @@ const ProfileComponent = () => {
 
               <Input
                 label="Valid ID"
-                name="validId"
+                name="valid_id"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.validId}
+                value={tempAgencyInfo.valid_id}
                 onChange={handleAgencyInputChange}
                 readOnly={!isAgencyEditing}
               />
