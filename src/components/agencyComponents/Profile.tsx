@@ -30,23 +30,36 @@ const ProfileComponent = () => {
   const dispatch = useDispatch();
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUserType, setCurrentUserType] = useState("");
   const handleLogout = useHandleLogout();
 
-  // Agency info state
-  const [agencyInfo, setAgencyInfo] = useState({
-    address: "",
+  // User info state
+  const [userInfo, setUserInfo] = useState({
+    profile_picture: "",
     first_name: "",
-    last_name: "",
     middle_name: "",
+    last_name: "",
     contact_number: "",
+    address: "",
+
+    // admin / superadmin
+    gender: "",
+
+    // agency
     company_name: "",
     company_type: "",
     valid_id: "",
+
+    // alumni
+    birth_date: "",
+    college: "",
+    program: "",
+    batch_year: "",
   });
 
-  const [tempAgencyInfo, setTempAgencyInfo] = useState(agencyInfo);
-  const [isAgencyEditing, setIsAgencyEditing] = useState(false);
-  const [isAgencyChanged, setIsAgencyChanged] = useState(false);
+  const [tempUserInfo, setTempUserInfo] = useState(userInfo);
+  const [isUserEditing, setIsUserEditing] = useState(false);
+  const [isUserChanged, setIsUserChanged] = useState(false);
 
   // Login info state
   const [loginInfo, setLoginInfo] = useState({
@@ -69,40 +82,86 @@ const ProfileComponent = () => {
   useEffect(() => {
     if (user) {
       const {
-        profile_picture,
         email,
         password,
-        address,
+        profile_picture,
         first_name,
-        last_name,
         middle_name,
+        last_name,
         contact_number,
+        address,
+        gender,
         company_name,
         company_type,
         valid_id,
+        birth_date,
+        college,
+        program,
+        batch_year,
       } = user.user_metadata;
 
-      setAgencyInfo({
-        address: address || "",
-        first_name: first_name || "",
-        last_name: last_name || "",
-        middle_name: middle_name || "",
-        contact_number: contact_number || "",
-        company_name: company_name || "",
-        company_type: company_type || "",
-        valid_id: valid_id || "",
-      });
+      setCurrentUserType(
+        user.user_metadata.user_type
+          ? user.user_metadata.user_type
+          : "superadmin"
+      );
 
-      setTempAgencyInfo({
-        address: address || "",
+      const commonUserInfo = {
+        profile_picture: profile_picture || "",
         first_name: first_name || "",
-        last_name: last_name || "",
         middle_name: middle_name || "",
+        last_name: last_name || "",
         contact_number: contact_number || "",
-        company_name: company_name || "",
-        company_type: company_type || "",
-        valid_id: valid_id || "",
-      });
+        address: address || "",
+        gender: gender || "",
+        company_name: "",
+        company_type: "",
+        valid_id: "",
+        birth_date: "",
+        college: "",
+        program: "",
+        batch_year: "",
+      };
+
+      if (user.user_metadata.user_type === "agency") {
+        setUserInfo({
+          ...commonUserInfo,
+          company_name: company_name || "",
+          company_type: company_type || "",
+          valid_id: valid_id || "",
+        });
+
+        setTempUserInfo({
+          ...commonUserInfo,
+          company_name: company_name || "",
+          company_type: company_type || "",
+          valid_id: valid_id || "",
+        });
+      } else if (user.user_metadata.user_type === "alumni") {
+        setUserInfo({
+          ...commonUserInfo,
+          birth_date: birth_date || "",
+          college: college || "",
+          program: program || "",
+          batch_year: batch_year || "",
+        });
+
+        setTempUserInfo({
+          ...commonUserInfo,
+          birth_date: birth_date || "",
+          college: college || "",
+          program: program || "",
+          batch_year: batch_year || "",
+        });
+      } else {
+        setUserInfo({
+          ...commonUserInfo,
+        });
+
+        setTempUserInfo({
+          ...commonUserInfo,
+        });
+      }
 
       setLoginInfo({
         email: email || user.email || "",
@@ -147,44 +206,44 @@ const ProfileComponent = () => {
     }
   };
 
-  // Handlers for agency info
-  const handleAgencyInputChange = (e: any) => {
+  // Handlers for user info
+  const handleUserInputChange = (e: any) => {
     const { name, value } = e.target;
-    setTempAgencyInfo((prevState) => ({ ...prevState, [name]: value }));
-    setIsAgencyChanged(true);
+    setTempUserInfo((prevState) => ({ ...prevState, [name]: value }));
+    setIsUserChanged(true);
   };
 
-  const handleAgencyEditToggle = () => {
-    if (isAgencyEditing) {
+  const handleUserEditToggle = () => {
+    if (isUserEditing) {
       // If canceling, revert to old info
-      setTempAgencyInfo(agencyInfo);
+      setTempUserInfo(userInfo);
       setTempLoginInfo(loginInfo);
 
-      setIsAgencyChanged(false);
+      setIsUserChanged(false);
       setIsLoginChanged(false);
     } else {
       // If starting to edit, save current info to temp
-      setTempAgencyInfo(agencyInfo);
+      setTempUserInfo(userInfo);
       setTempLoginInfo(loginInfo);
     }
-    setIsAgencyEditing(!isAgencyEditing);
+    setIsUserEditing(!isUserEditing);
     setIsLoginEditing(false);
   };
 
-  const handleAgencySave = async () => {
+  const handleUserSave = async () => {
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
-          ...tempAgencyInfo,
+          ...tempUserInfo,
         },
       });
       if (error) throw error;
 
       reloadUser();
-      setIsAgencyEditing(false);
-      setIsAgencyChanged(false);
+      setIsUserEditing(false);
+      setIsUserChanged(false);
     } catch (error) {
-      console.error("Error updating agency information:", error);
+      console.error("Error updating user information:", error);
     }
   };
 
@@ -223,9 +282,9 @@ const ProfileComponent = () => {
       setIsLoginEditing(false);
       setIsLoginChanged(false);
 
-      // also disable agency since login is dependent on agency view
-      setIsAgencyEditing(false);
-      setIsAgencyChanged(false);
+      // also disable user since login is dependent on user view
+      setIsUserEditing(false);
+      setIsUserChanged(false);
     } catch (error) {
       console.error("Error updating login information:", error);
     }
@@ -338,34 +397,34 @@ const ProfileComponent = () => {
         >
           Delete Account
         </Button>
-
         <Button
-          startContent={isAgencyEditing ? <MdCancel /> : <MdModeEditOutline />}
+          startContent={isUserEditing ? <MdCancel /> : <MdModeEditOutline />}
           color="secondary"
-          onClick={handleAgencyEditToggle}
+          onClick={handleUserEditToggle}
         >
-          {isAgencyEditing ? "Cancel" : "Edit Agency Info"}
+          {isUserEditing ? "Cancel" : `Edit ${currentUserType} Info`}
         </Button>
-
         <Button
           startContent={<MdSave />}
-          className={`${!isAgencyChanged && "hidden"} bg-[#007057] text-white`}
+          className={`${
+            !isUserChanged && "hidden"
+          } bg-[#007057] capitalize text-white`}
           onClick={() => {
-            if (isAgencyChanged) {
-              handleAgencySave();
+            if (isUserChanged) {
+              handleUserSave();
             }
           }}
         >
-          Save Agency Info
+          {` Save ${currentUserType} Info`}
         </Button>
       </div>
 
-      <div className="flex h-full w-full overflow-y-auto relative">
+      <div className={`${currentUserType === 'agency' || currentUserType === 'alumni' && 'mb-24 lg:mb-0'} flex h-full w-full overflow-y-auto relative`}>
         {user && (
-          <div className="h-full w-full border-2 border-[#007057] rounded-xl p-4">
-            <div className="w-full grid lg:grid-cols-3 items-center gap-4">
-              <h1 className="text-xl font-semibold col-span-3">
-                Agency Information
+          <div className="h-full w-full border-2 border-[#007057] rounded-xl p-4 overflow-y-auto ">
+            <div className="w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
+              <h1 className="text-xl font-semibold col-span-3 capitalize">
+                {`  ${currentUserType} Information`}
               </h1>
               {/* Image field */}
               <div className="col-span-1 flex justify-center">
@@ -374,7 +433,7 @@ const ProfileComponent = () => {
                   // placement="right"
                   isOpen={displayImageOpen}
                   onOpenChange={(open) =>
-                    isAgencyEditing && setDisplayImageOpen(open)
+                    isUserEditing && setDisplayImageOpen(open)
                   }
                 >
                   <PopoverTrigger>
@@ -419,149 +478,216 @@ const ProfileComponent = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              {/* Agency info fields */}
-              <Input
-                label="Company Name"
-                name="company_name"
-                color="success"
-                variant="bordered"
-                value={tempAgencyInfo.company_name}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
-                // className="col-span-2"
-              />
-              <Input
-                label="Company Type"
-                name="company_type"
-                color="success"
-                variant="bordered"
-                value={tempAgencyInfo.company_type}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
-              />
+              {/* User info fields */}
+              {currentUserType === "agency" && (
+                <>
+                  <Input
+                    label="Company Name"
+                    name="company_name"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.company_name}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                    // className="col-span-2"
+                  />
+                  <Input
+                    label="Company Type"
+                    name="company_type"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.company_type}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                </>
+              )}
               <hr className="col-span-3" />
               <Input
                 label="First Name"
                 name="first_name"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.first_name}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
+                value={tempUserInfo.first_name}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
               />
               <Input
                 label="Last Name"
                 name="last_name"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.last_name}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
+                value={tempUserInfo.last_name}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
               />
               <Input
                 label="Middle Name"
                 name="middle_name"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.middle_name}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
+                value={tempUserInfo.middle_name}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
               />
 
               <Input
-                label="Mobile Number"
+                label="Contact Number"
                 name="contact_number"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.contact_number}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
+                value={tempUserInfo.contact_number}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
               />
               <Input
                 label="Address"
                 name="address"
                 color="success"
                 variant="bordered"
-                value={tempAgencyInfo.address}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
+                value={tempUserInfo.address}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
               />
 
-              <Input
-                label="Valid ID"
-                name="valid_id"
-                color="success"
-                variant="bordered"
-                value={tempAgencyInfo.valid_id}
-                onChange={handleAgencyInputChange}
-                readOnly={!isAgencyEditing}
-              />
-              <hr className="col-span-3" />
-              <h1 className="text-xl font-semibold col-span-3">
-                Account Login Information
-              </h1>
+              {(currentUserType === "admin" ||
+                currentUserType === "superadmin") && (
+                <Input
+                  label="Gender"
+                  name="gender"
+                  color="success"
+                  variant="bordered"
+                  value={tempUserInfo.gender}
+                  onChange={handleUserInputChange}
+                  readOnly={!isUserEditing}
+                />
+              )}
 
-              <Input
-                label="Email"
-                name="email"
-                color="success"
-                variant="bordered"
-                value={tempLoginInfo.email}
-                onChange={handleLoginInputChange}
-                readOnly={!isLoginEditing}
-              />
-              <Input
-                type={isInputUserPasswordVisible ? "text" : "password"}
-                label="Password"
-                name="password"
-                color="success"
-                variant="bordered"
-                value={tempLoginInfo.password}
-                onChange={handleLoginInputChange}
-                readOnly={!isLoginEditing}
-                endContent={
-                  <button
-                    className="focus:outline-none"
-                    type="button"
-                    onClick={() =>
-                      setIsInputUserPasswordVisible(!isInputUserPasswordVisible)
+              {currentUserType === "admin" && (
+                <Input
+                  label="Valid ID"
+                  name="valid_id"
+                  color="success"
+                  variant="bordered"
+                  value={tempUserInfo.valid_id}
+                  onChange={handleUserInputChange}
+                  readOnly={!isUserEditing}
+                />
+              )}
+
+              {currentUserType === "alumni" && (
+                <>
+                  <Input
+                    label="Birth Date"
+                    name="birth_date"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.birth_date}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <Input
+                    label="College"
+                    name="college"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.college}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <Input
+                    label="Program"
+                    name="program"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.program}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <Input
+                    label="Batch Year"
+                    name="batch_year"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.batch_year}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                </>
+              )}
+
+              {currentUserType !== "superadmin" && (
+                <>
+                  <hr className="col-span-3" />
+                  <h1 className="text-xl font-semibold col-span-3">
+                    Account Login Information
+                  </h1>
+
+                  <Input
+                    label="Email"
+                    name="email"
+                    color="success"
+                    variant="bordered"
+                    value={tempLoginInfo.email}
+                    onChange={handleLoginInputChange}
+                    readOnly={!isLoginEditing}
+                  />
+                  <Input
+                    type={isInputUserPasswordVisible ? "text" : "password"}
+                    label="Password"
+                    name="password"
+                    color="success"
+                    variant="bordered"
+                    value={tempLoginInfo.password}
+                    onChange={handleLoginInputChange}
+                    readOnly={!isLoginEditing}
+                    endContent={
+                      <button
+                        className="focus:outline-none"
+                        type="button"
+                        onClick={() =>
+                          setIsInputUserPasswordVisible(
+                            !isInputUserPasswordVisible
+                          )
+                        }
+                      >
+                        {isInputUserPasswordVisible ? (
+                          <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        ) : (
+                          <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        )}
+                      </button>
                     }
-                  >
-                    {isInputUserPasswordVisible ? (
-                      <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                    ) : (
-                      <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
-                    )}
-                  </button>
-                }
-              />
+                  />
 
-              <div
-                className={`${
-                  !isAgencyEditing && "hidden"
-                } flex justify-center items-center gap-4`}
-              >
-                <Button
-                  fullWidth
-                  startContent={
-                    isLoginEditing ? <MdCancel /> : <MdModeEditOutline />
-                  }
-                  color="secondary"
-                  onClick={handleLoginEditToggle}
-                >
-                  {isLoginEditing ? "Cancel" : "Edit Login Info"}
-                </Button>
-                <Button
-                  fullWidth
-                  startContent={<MdSave />}
-                  className={`${
-                    !isLoginChanged && "hidden"
-                  } bg-[#007057] text-white`}
-                  onClick={handleLoginSave}
-                >
-                  Save Login Info
-                </Button>
-              </div>
+                  <div
+                    className={`${
+                      !isUserEditing && "hidden"
+                    } flex justify-center items-center gap-4`}
+                  >
+                    <Button
+                      fullWidth
+                      startContent={
+                        isLoginEditing ? <MdCancel /> : <MdModeEditOutline />
+                      }
+                      color="secondary"
+                      onClick={handleLoginEditToggle}
+                    >
+                      {isLoginEditing ? "Cancel" : "Edit Login Info"}
+                    </Button>
+                    <Button
+                      fullWidth
+                      startContent={<MdSave />}
+                      className={`${
+                        !isLoginChanged && "hidden"
+                      } bg-[#007057] text-white`}
+                      onClick={handleLoginSave}
+                    >
+                      Save Login Info
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

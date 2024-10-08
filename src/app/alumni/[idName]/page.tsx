@@ -1,5 +1,6 @@
 "use client";
 
+import ProfileComponent from "@/components/agencyComponents/Profile";
 import AlumniDashboardComponent from "@/components/alumniComponents/Dashboard";
 import PlacementComponent from "@/components/alumniComponents/Placement";
 import NotificationsComponent from "@/components/Notifications";
@@ -18,7 +19,7 @@ export default function AlumniSlugPage() {
     } else if (pathname.startsWith("/alumni/notifications")) {
       setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/alumni/profile")) {
-      setDisplay("Profile");
+      setDisplay(<ProfileComponent />);
       // } else if (pathname.startsWith("/alumni/settings")) {
       //   setDisplay("Settings");
     } else {
