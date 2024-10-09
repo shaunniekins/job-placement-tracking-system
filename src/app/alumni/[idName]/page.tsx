@@ -4,6 +4,7 @@ import ProfileComponent from "@/components/agencyComponents/Profile";
 import AlumniDashboardComponent from "@/components/alumniComponents/Dashboard";
 import PlacementComponent from "@/components/alumniComponents/Placement";
 import NotificationsComponent from "@/components/Notifications";
+import CalendarComponent from "@/components/superAdminComponents/Calendar";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -22,6 +23,8 @@ export default function AlumniSlugPage() {
       setDisplay(<ProfileComponent />);
       // } else if (pathname.startsWith("/alumni/settings")) {
       //   setDisplay("Settings");
+    } else if (pathname.startsWith("/alumni/calendar")) {
+      setDisplay(<CalendarComponent />);
     } else {
       setDisplay("No page found");
     }

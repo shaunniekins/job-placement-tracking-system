@@ -2,6 +2,8 @@
 
 import ProfileComponent from "@/components/agencyComponents/Profile";
 import NotificationsComponent from "@/components/Notifications";
+import CalendarComponent from "@/components/superAdminComponents/Calendar";
+import ManageEvents from "@/components/superAdminComponents/ManageActivities";
 import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import UserComponent from "@/components/superAdminComponents/Users";
 import ValidationComponent from "@/components/superAdminComponents/Validation";
@@ -24,7 +26,7 @@ export default function SuperAdminSlugPage() {
     } else if (pathname.startsWith("/superadmin/users")) {
       setDisplay(<UserComponent />);
     } else if (pathname.startsWith("/superadmin/manage")) {
-      setDisplay("Manage");
+      setDisplay(<ManageEvents />);
     } else if (pathname.startsWith("/superadmin/history")) {
       setDisplay("History");
     } else if (pathname.startsWith("/superadmin/profile")) {
@@ -32,7 +34,7 @@ export default function SuperAdminSlugPage() {
     } else if (pathname.startsWith("/superadmin/orgchart")) {
       setDisplay(<OrgChartComponent />);
     } else if (pathname.startsWith("/superadmin/calendar")) {
-      setDisplay("Calendar");
+      setDisplay(<CalendarComponent />);
     } else {
       setDisplay("No page found");
     }

@@ -137,7 +137,7 @@ const HeaderComponent = ({
             size={isMdOrAbove ? "sm" : "md"}
             isIconOnly={!isMdOrAbove}
             startContent={<FaCalendarAlt />}
-            className={`${userType !== "agency" && userType !== "alumni" ? "hidden" : ""}`}
+            className={`${userType !== "alumni" ? "hidden" : ""}`}
             onClick={() => userType && router.push(`/${userType}/calendar`)}
           >
             {isMdOrAbove && "Calendar"}

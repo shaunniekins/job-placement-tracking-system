@@ -380,7 +380,7 @@ const JobPostingDetails = ({
       <CardFooter className="flex justify-between items-center pt-0">
         <p className="flex flex-col items-center">
           {formatDate(job.date_posted)}
-          <span className="text-xs text-gray-500">Data Posted</span>
+          <span className="text-xs text-gray-500">Date Posted</span>
         </p>
         <Button
           color={`${
