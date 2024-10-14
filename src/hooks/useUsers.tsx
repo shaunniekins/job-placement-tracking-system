@@ -6,7 +6,10 @@ const useUsers = (
   rowsPerPage: number,
   currentPage: number,
   userType: string,
-  filter?: string
+  accountStatusfilter?: string,
+  collegeFilter?: string,
+  searchQuery?: string,
+  batchYearFilter?: string
 ) => {
   const [usersData, setUsersData] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(true);
@@ -14,7 +17,8 @@ const useUsers = (
 
   const fetchAndSubscribeUsers = useCallback(async () => {
     if (!userType) return;
-    if (userType !== "agency" && userType !== "alumni") return;
+    if (userType !== "agency" && userType !== "alumni" && userType !== "admin")
+      return;
 
     const offset = (currentPage - 1) * rowsPerPage;
 
@@ -27,8 +31,28 @@ const useUsers = (
       if (userType) {
         query = query.eq("meta_data->>user_type", userType);
 
-        if (filter) {
-          query = query.eq("meta_data->>account_status", filter);
+        if (accountStatusfilter) {
+          query = query.eq("meta_data->>account_status", accountStatusfilter);
+        }
+
+        if (userType === "admin" || userType === "alumni") {
+          if (collegeFilter && collegeFilter !== "all") {
+            query = query.eq("meta_data->>college", collegeFilter);
+          }
+
+          if (
+            batchYearFilter &&
+            batchYearFilter !== "All" &&
+            batchYearFilter.length === 4
+          ) {
+            query = query.eq("meta_data->>batch_year", batchYearFilter);
+          }
+        }
+
+        if (searchQuery) {
+          query = query.or(
+            `meta_data->>email.ilike.%${searchQuery}%,meta_data->>company_name.ilike.%${searchQuery}%,meta_data->>company_type.ilike.%${searchQuery}%,meta_data->>first_name.ilike.%${searchQuery}%,meta_data->>last_name.ilike.%${searchQuery}%`
+          );
         }
       }
 
@@ -50,7 +74,15 @@ const useUsers = (
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [rowsPerPage, currentPage, userType, filter]);
+  }, [
+    rowsPerPage,
+    currentPage,
+    userType,
+    accountStatusfilter,
+    collegeFilter,
+    searchQuery,
+    batchYearFilter,
+  ]);
 
   const subscribeToChanges = useCallback(() => {
     const channel = supabase
@@ -70,7 +102,8 @@ const useUsers = (
           const isMatchingUserType =
             payload.new.meta_data?.user_type === userType;
           const isMatchingFilter =
-            !filter || payload.new.meta_data?.account_status === filter;
+            !accountStatusfilter ||
+            payload.new.meta_data?.account_status === accountStatusfilter;
 
           if (!isMatchingUserType || !isMatchingFilter) {
             return;
@@ -106,7 +139,15 @@ const useUsers = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [rowsPerPage, currentPage, userType, filter]);
+  }, [
+    rowsPerPage,
+    currentPage,
+    userType,
+    accountStatusfilter,
+    collegeFilter,
+    searchQuery,
+    batchYearFilter,
+  ]);
 
   useEffect(() => {
     fetchAndSubscribeUsers();

@@ -253,11 +253,12 @@ const ValidationComponent = () => {
             />
           </Tabs>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="w-full flex items-center justify-center lg:justify-end gap-3">
           <Select
             label="Status Filter"
             disallowEmptySelection={true}
             size="sm"
+            className="max-w-32" 
             defaultSelectedKeys={["pending"]}
             selectedKeys={new Set([statusFilter])}
             onSelectionChange={(keys) => {

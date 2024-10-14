@@ -198,14 +198,11 @@ const ManageActivities = () => {
                     onChange={handleInputChange}
                     className="col-span-2"
                   >
-                    <SelectItem key={"news"} value={"news"}>
-                      News
-                    </SelectItem>
                     <SelectItem key={"event"} value={"event"}>
                       Event
                     </SelectItem>
                     <SelectItem key={"job_fair"} value={"job"}>
-                      Job
+                      Job Fair
                     </SelectItem>
                   </Select>
                   <Input

@@ -192,7 +192,7 @@ const OrgChartComponent = () => {
         )}
 
         {data.length > 0 && (
-          <div className="h-full w-full flex justify-center">
+          <div className="h-full w-full flex justify-center px-96">
             {data.map((node) => renderNode(node))}
           </div>
         )}

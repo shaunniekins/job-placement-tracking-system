@@ -1,5 +1,9 @@
 "use client";
 
+import { RootState } from "@/app/reduxUtils/store";
+import useJobApplications from "@/hooks/useJobApplications";
+import { Key, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Table,
   TableHeader,
@@ -12,281 +16,307 @@ import {
   Select,
   Button,
   Spinner,
+  Tabs,
+  Tab,
+  Input,
 } from "@nextui-org/react";
-import { useState, useEffect } from "react";
+import useUsers from "@/hooks/useUsers";
 import { supabaseAdmin } from "@/utils/supabase";
-
-// const UserComponent = () => {
-//   const {
-//     technicianUsers,
-//     isLoadingTechnicianUsers,
-//     totalTechnicianEntries,
-//     fetchAndSubscribeTechnicianUsers,
-//     updateTechnicianUser,
-//   } = useTechnicianUsers();
-
-//   const {
-//     farmerUsers,
-//     isLoadingFarmerUsers,
-//     totalFarmerEntries,
-//     fetchAndSubscribeFarmerUsers,
-//   } = useFarmerUsers();
-
-//   const [page, setPage] = useState(1);
-//   const [statusFilter, setStatusFilter] = useState("pending");
-//   const rowsPerPage = 10;
-
-//   const [userType, setUserType] = useState("technician");
-
-//   useEffect(() => {
-//     setPage(1);
-//   }, [userType]);
-
-//   useEffect(() => {
-//     if (userType === "farmer") {
-//       fetchAndSubscribeFarmerUsers(rowsPerPage, page);
-//     } else if (userType === "technician") {
-//       fetchAndSubscribeTechnicianUsers(rowsPerPage, page, statusFilter);
-//     }
-//   }, [
-//     userType,
-//     rowsPerPage,
-//     page,
-//     statusFilter,
-//     fetchAndSubscribeFarmerUsers,
-//     fetchAndSubscribeTechnicianUsers,
-//   ]);
-
-//   const totalPages =
-//     userType === "farmer"
-//       ? Math.ceil(totalFarmerEntries / rowsPerPage)
-//       : Math.ceil(totalTechnicianEntries / rowsPerPage);
-
-//   if (
-//     (userType === "farmer" && isLoadingFarmerUsers) ||
-//     (userType === "technician" && isLoadingTechnicianUsers)
-//   ) {
-//     return <div className="h-full w-full">Loading...</div>;
-//   }
-
-//   const handleAction = async (user_id: any, action: string, item_data: any) => {
-//     // console.log(item_data);
-//     if (action === "accepted") {
-//       const { data } = await supabaseAdmin.auth.admin.createUser({
-//         email: item_data.email,
-//         password: item_data.password,
-//         email_confirm: true,
-//         user_metadata: {
-//           email: item_data.email,
-//           password: item_data.password,
-//           user_type: "technician",
-//           first_name: item_data.first_name,
-//           last_name: item_data.last_name,
-//           middle_name: item_data.middle_name,
-//           contact_number: item_data.contact_number,
-//           birth_date: item_data.birth_date,
-//           address: item_data.address,
-//         },
-//       });
-
-//       if (data) {
-//         await updateTechnicianUser(user_id, {
-//           auth_user_id: data.user?.id,
-//           account_status: "accepted",
-//         });
-
-//         const email = item_data.email;
-//         const recipient_name = `${item_data.first_name} ${item_data.last_name}`;
-//         const subject = "Account Approved";
-//         const message = `
-// Greetings!
-
-// We are pleased to inform you that your account associated with the email ${email} has been approved. You can now sign in and access your account.
-
-// Thank you!
-
-// Best regards,
-// JPTS Team`;
-
-//         try {
-//           const response = await fetch("/api/send-email", {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({ email, recipient_name, subject, message }),
-//           });
-
-//           let data;
-//           try {
-//             data = await response.json();
-//           } catch (error) {
-//             data = null;
-//           }
-
-//           if (response.ok) {
-//             console.log("Email sent successfully!");
-//           } else {
-//             console.log(
-//               `Failed to send email: ${data?.error || "Unknown error"}`
-//             );
-//           }
-//         } catch (error) {
-//           console.error("Error sending email:", error);
-//         }
-//       }
-//       return;
-//     }
-
-//     await updateTechnicianUser(user_id, { account_status: action });
-//   };
-
-//   const TechnicianColumns = [
-//     { key: "first_name", label: "FIRST NAME" },
-//     { key: "last_name", label: "LAST NAME" },
-//     { key: "contact_number", label: "MOBILE" },
-//     { key: "email", label: "EMAIL" },
-//     { key: "license_number", label: "LICENSE NUMBER" },
-//     { key: "specialization", label: "SPECIALIZATION" },
-//     { key: "actions", label: "ACTIONS" },
-//   ];
-
-//   const FarmerColumns = [
-//     { key: "first_name", label: "FIRST NAME" },
-//     { key: "last_name", label: "LAST NAME" },
-//     { key: "contact_number", label: "MOBILE" },
-//     { key: "email", label: "EMAIL" },
-//   ];
-
-//   const columns = userType === "technician" ? TechnicianColumns : FarmerColumns;
-//   const data = userType === "technician" ? technicianUsers : farmerUsers;
-
-//   return (
-//     <div className="h-full w-full flex flex-col gap-2">
-//       <div className="flex justify-end gap-2">
-//         <Select
-//           label="Filter by Status"
-//           disallowEmptySelection={true}
-//           size="sm"
-//           className={`${userType !== "technician" && "hidden"} max-w-48`}
-//           defaultSelectedKeys={["pending"]}
-//           value={statusFilter}
-//           onChange={(e) => setStatusFilter(e.target.value)}
-//         >
-//           <SelectItem key="pending" value="pending">
-//             Pending
-//           </SelectItem>
-//           <SelectItem key="accepted" value="accepted">
-//             Accepted
-//           </SelectItem>
-//           <SelectItem key="rejected" value="rejected">
-//             Rejected
-//           </SelectItem>
-//         </Select>
-//         <Select
-//           label="User Type"
-//           disallowEmptySelection={true}
-//           size="sm"
-//           className="max-w-48"
-//           defaultSelectedKeys={["technician"]}
-//           value={userType}
-//           onChange={(e) => setUserType(e.target.value)}
-//         >
-//           <SelectItem key="technician" value="technician">
-//             Technician
-//           </SelectItem>
-//           <SelectItem key="farmer" value="farmer">
-//             Farmer
-//           </SelectItem>
-//         </Select>
-//       </div>
-//       <Table
-//         fullWidth
-//         layout="fixed"
-//         isHeaderSticky={true}
-//         aria-label="Users Table with Pagination"
-//         bottomContent={
-//           <div className="flex w-full justify-center">
-//             <Pagination
-//               isCompact
-//               showControls
-//               showShadow
-//               color="success"
-//               page={page}
-//               total={totalPages}
-//               onChange={(newPage) => setPage(newPage)}
-//             />
-//           </div>
-//         }
-//         classNames={{
-//           wrapper: "min-h-[222px] h-full",
-//         }}
-//         className="h-full w-full flex items-center justify-center"
-//       >
-//         <TableHeader columns={columns}>
-//           {(column) => (
-//             <TableColumn
-//               key={column.key}
-//               className="bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap"
-//             >
-//               {column.label}
-//             </TableColumn>
-//           )}
-//         </TableHeader>
-//         <TableBody
-//           items={data}
-//           emptyContent={"No rows to display."}
-//           loadingContent={<Spinner color="success" />}
-//         >
-//           {(item) => (
-//             <TableRow key={item.user_id} className="text-center">
-//               {(columnKey) => {
-//                 if (columnKey === "actions" && userType === "technician") {
-//                   return (
-//                     <TableCell>
-//                       <div className="flex gap-2 justify-center">
-//                         <Button
-//                           color="success"
-//                           isDisabled={item.account_status === "accepted"}
-//                           className="text-white"
-//                           onClick={() =>
-//                             handleAction(item.user_id, "accepted", item)
-//                           }
-//                         >
-//                           {item.account_status === "accepted"
-//                             ? "Active"
-//                             : "Accept"}
-//                         </Button>
-//                         <Button
-//                           color="danger"
-//                           className={`${
-//                             item.account_status !== "pending" && "hidden"
-//                           }`}
-//                           onClick={() =>
-//                             handleAction(item.user_id, "rejected", item)
-//                           }
-//                         >
-//                           Reject
-//                         </Button>
-//                       </div>
-//                     </TableCell>
-//                   );
-//                 }
-
-//                 return (
-//                   <TableCell className="text-center">
-//                     {item[columnKey as keyof typeof item]}
-//                   </TableCell>
-//                 );
-//               }}
-//             </TableRow>
-//           )}
-//         </TableBody>
-//       </Table>
-//     </div>
-//   );
-// };
+import useBatchYears from "@/hooks/useBatchYears";
 
 const UserComponent = () => {
-  return "UserComponent";
+  const user = useSelector((state: RootState) => state.user.user);
+  const [userId, setUserId] = useState("");
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 13;
+  const [currentView, setCurrentView] = useState("agency");
+  const [currenViewContent, setCurrentViewContent] = useState<any[]>([]);
+  const [collegeFilter, setCollegeFilter] = useState("all");
+  const [batchYearFilter, setBatchYearFilter] = useState("All");
+  const [searchInput, setSearchInput] = useState("");
+  const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      setUserId(user.id);
+    }
+  }, [user]);
+
+  const handleTabSelectionChange = (key: Key) => {
+    const keyString = key.toString();
+    if (keyString !== currentView) {
+      setCurrentView(keyString);
+    }
+  };
+
+  const {
+    usersData,
+    totalUserEntries,
+    isLoadingUsers,
+    fetchAndSubscribeUsers,
+  } = useUsers(
+    rowsPerPage,
+    page,
+    currentView,
+    "approved",
+    collegeFilter,
+    searchInput,
+    batchYearFilter
+  );
+
+  const { batchYears, isBatchYearsLoading } = useBatchYears();
+
+  const agencyColumns = [
+    { key: "company_name", label: "Company Name" },
+    { key: "company_type", label: "Company Type" },
+    { key: "latest_profile_update", label: "Latest Profile Update" },
+    { key: "action", label: "Action" },
+  ];
+
+  const otherColumns = [
+    { key: "name", label: "Name" },
+    { key: "college", label: "College" },
+    { key: "latest_profile_update", label: "Latest Profile Update" },
+    { key: "action", label: "Action" },
+  ];
+
+  const [currentColumns, setCurrentColumns] = useState(agencyColumns);
+
+  useEffect(() => {
+    setPage(1);
+    setCurrentColumns([]);
+    setCurrentViewContent([]);
+    setTotalPages(0);
+
+    if (currentView === "agency") {
+      setCurrentColumns(agencyColumns);
+    } else {
+      setCurrentColumns(otherColumns);
+    }
+    setCurrentViewContent(usersData);
+    setTotalPages(Math.ceil(totalUserEntries / rowsPerPage));
+
+    // setCurrentViewContent(usersData);
+  }, [currentView, usersData, totalUserEntries, collegeFilter, searchInput]);
+
+  if (isLoadingUsers) {
+    return (
+      <div className="h-full w-full flex justify-center items-center">
+        <Spinner color="success" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full w-full flex flex-col gap-2">
+      <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
+        <div className="flex gap-3">
+          <Tabs
+            aria-label="Tab Options"
+            selectedKey={currentView}
+            color="success"
+            size="lg"
+            fullWidth={true}
+            variant="underlined"
+            onSelectionChange={handleTabSelectionChange}
+          >
+            <Tab
+              key="agency"
+              title={
+                <div className="flex items-center space-x-2">
+                  <span>Agency</span>
+                </div>
+              }
+            />
+            <Tab
+              key="alumni"
+              title={
+                <div className="flex items-center space-x-2">
+                  <span>Alumni</span>
+                </div>
+              }
+            />
+            <Tab
+              key="admin"
+              title={
+                <div className="flex items-center space-x-2">
+                  <span>Admin</span>
+                </div>
+              }
+            />
+          </Tabs>
+        </div>
+        <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-end gap-3">
+          <Select
+            label="College Filter"
+            disallowEmptySelection={true}
+            size="sm"
+            className={`${currentView === "agency" && "hidden"} max-w-32`}
+            defaultSelectedKeys={["all"]}
+            selectedKeys={new Set([collegeFilter])}
+            onSelectionChange={(keys) => {
+              if (keys !== "all" && keys instanceof Set) {
+                const selectedKey = Array.from(keys)[0]; // Assuming single selection
+                if (typeof selectedKey === "string") {
+                  setCollegeFilter(selectedKey);
+                }
+              }
+            }}
+          >
+            <SelectItem key={"all"}>All</SelectItem>
+            <SelectItem key={"CA"}>CA</SelectItem>
+            <SelectItem key={"CAS"}>CAS</SelectItem>
+            <SelectItem key={"CBA"}>CBA</SelectItem>
+            <SelectItem key={"CCIS"}>CCIS</SelectItem>
+            <SelectItem key={"CEIT"}>CEIT</SelectItem>
+            <SelectItem key={"CTE"}>CTE</SelectItem>
+          </Select>
+
+          <Input
+            size="sm"
+            className={`${currentView === "agency" && "hidden"} max-w-32`}
+            label="Batch Year"
+            placeholder="YYYY"
+            value={batchYearFilter}
+            onChange={(e) => setBatchYearFilter(e.target.value)}
+          />
+
+          <Input
+            size="sm"
+            className="max-w-32"
+            label="Search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+
+          <Pagination
+            isCompact
+            showControls
+            showShadow
+            color="default"
+            page={page}
+            total={totalPages}
+            onChange={(newPage) => setPage(newPage)}
+          />
+        </div>
+      </div>
+      <div className="flex h-full w-full overflow-y-auto relative">
+        <Table
+          fullWidth
+          layout="auto"
+          isHeaderSticky={true}
+          aria-label="Job Applications Table"
+          classNames={{
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+          }}
+          className="h-full w-full flex items-center justify-center"
+        >
+          <TableHeader columns={currentColumns}>
+            {(column) => (
+              <TableColumn
+                key={column.key}
+                className={`${column.key === "seen" && "lg:w-36"}
+                     ${column.key === "message" && "w-32 lg:w-auto"} 
+                    bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap`}
+              >
+                {column.label}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            items={currenViewContent}
+            emptyContent={"No data to display."}
+            loadingContent={<Spinner color="success" />}
+          >
+            {(item) => (
+              <TableRow
+                key={item.id}
+                className="text-center hover:bg-green-100"
+              >
+                {(columnKey) => {
+                  if (currentView === "agency") {
+                    if (columnKey === "company_name") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.company_name}
+                        </TableCell>
+                      );
+                    }
+
+                    if (columnKey === "company_type") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.company_type}
+                        </TableCell>
+                      );
+                    }
+                  }
+
+                  if (currentView === "alumni" || currentView === "admin") {
+                    if (columnKey === "name") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.first_name} {item.meta_data.last_name}
+                        </TableCell>
+                      );
+                    }
+
+                    if (columnKey === "college") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.college}
+                        </TableCell>
+                      );
+                    }
+                  }
+
+                  if (columnKey === "latest_profile_update") {
+                    return (
+                      <TableCell className="text-center">
+                        {new Date(item.updated_at).toLocaleString()}
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "action") {
+                    return (
+                      <TableCell className="flex items-center justify-center gap-4">
+                        <Button size="sm" color="success" onClick={() => {}}>
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="warning"
+                          onClick={async () => {
+                            const confirmed = window.confirm(
+                              "Are you sure you want to delete this user?"
+                            );
+                            if (confirmed) {
+                              await supabaseAdmin.auth.admin.deleteUser(
+                                item.id
+                              );
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    );
+                  }
+
+                  return (
+                    <TableCell className="text-center">
+                      {item[columnKey as keyof typeof item]}
+                    </TableCell>
+                  );
+                }}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
 };
 
 export default UserComponent;

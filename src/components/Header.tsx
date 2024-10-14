@@ -58,8 +58,6 @@ const HeaderComponent = ({
     display = "Users";
   } else if (pathname === "/superadmin/manage") {
     display = "Manage";
-  } else if (pathname === "/superadmin/history") {
-    display = "History";
   } else if (pathname === "/superadmin/profile") {
     display = "Profile";
   } else if (pathname === "/superadmin/orgchart") {

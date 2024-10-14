@@ -81,7 +81,6 @@ const SidebarComponent = ({
     },
     { path: "/superadmin/users", label: "Users", icon: <FaUsers /> },
     { path: "/superadmin/manage", label: "Manage", icon: <FaCog /> },
-    { path: "/superadmin/history", label: "History", icon: <FaHistory /> },
     { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
     { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     {

@@ -27,8 +27,6 @@ export default function SuperAdminSlugPage() {
       setDisplay(<UserComponent />);
     } else if (pathname.startsWith("/superadmin/manage")) {
       setDisplay(<ManageEvents />);
-    } else if (pathname.startsWith("/superadmin/history")) {
-      setDisplay("History");
     } else if (pathname.startsWith("/superadmin/profile")) {
       setDisplay(<ProfileComponent />);
     } else if (pathname.startsWith("/superadmin/orgchart")) {
