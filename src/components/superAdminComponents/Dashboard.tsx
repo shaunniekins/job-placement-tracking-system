@@ -305,8 +305,6 @@ const SelectedCollegeView = ({
     selectedCollege.toString().toLowerCase()
   );
 
-  if (!selectedCollege) return;
-
   const columns = [
     { key: "college", label: "College" },
     { key: "graduates", label: "Graduates" },
@@ -442,8 +440,6 @@ const SelectedProgramView = ({
     selectedCollege.toString().toLowerCase(),
     selectedProgram.toString().toLowerCase()
   );
-
-  if (!selectedCollege && !selectedProgram) return;
 
   const columns = [
     { key: "graduates", label: "Graduates" },
