@@ -42,8 +42,7 @@ const useUsers = (
 
           if (
             batchYearFilter &&
-            batchYearFilter !== "All" &&
-            batchYearFilter.length === 4
+            batchYearFilter !== "all"
           ) {
             query = query.eq("meta_data->>batch_year", batchYearFilter);
           }

@@ -3,6 +3,7 @@
 import ProfileComponent from "@/components/agencyComponents/Profile";
 import NotificationsComponent from "@/components/Notifications";
 import CalendarComponent from "@/components/superAdminComponents/Calendar";
+import DashboardComponent from "@/components/superAdminComponents/Dashboard";
 import ManageEvents from "@/components/superAdminComponents/ManageActivities";
 import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import UserComponent from "@/components/superAdminComponents/Users";
@@ -16,7 +17,7 @@ export default function SuperAdminSlugPage() {
 
   useEffect(() => {
     if (pathname.startsWith("/superadmin/dashboard")) {
-      setDisplay("Dashboard");
+      setDisplay(<DashboardComponent />);
     } else if (pathname.startsWith("/superadmin/jobinteraction")) {
       setDisplay("Job Interaction");
     } else if (pathname.startsWith("/superadmin/validation")) {

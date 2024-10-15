@@ -11,6 +11,8 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import { supabase, supabaseAdmin } from "@/utils/supabase";
 import { useHandleLogout } from "@/utils/authUtils";
@@ -24,6 +26,11 @@ import {
 import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { FaUserCircle } from "react-icons/fa";
+import {
+  colleges,
+  programs,
+  scholarships,
+} from "@/app/api/collegeAndProgramData";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -54,7 +61,10 @@ const ProfileComponent = () => {
     birth_date: "",
     college: "",
     program: "",
+    scholarship: "",
     batch_year: "",
+    is_currently_employed: "",
+    is_course_aligned_with_job: "",
   });
 
   const [tempUserInfo, setTempUserInfo] = useState(userInfo);
@@ -97,7 +107,10 @@ const ProfileComponent = () => {
         birth_date,
         college,
         program,
+        scholarship,
         batch_year,
+        is_currently_employed,
+        is_course_aligned_with_job,
       } = user.user_metadata;
 
       setCurrentUserType(
@@ -120,7 +133,10 @@ const ProfileComponent = () => {
         birth_date: "",
         college: "",
         program: "",
+        scholarship: "",
         batch_year: "",
+        is_currently_employed: "",
+        is_course_aligned_with_job: "",
       };
 
       if (user.user_metadata.user_type === "agency") {
@@ -143,7 +159,10 @@ const ProfileComponent = () => {
           birth_date: birth_date || "",
           college: college || "",
           program: program || "",
+          scholarship: scholarship || "",
           batch_year: batch_year || "",
+          is_currently_employed: is_currently_employed || "",
+          is_course_aligned_with_job: is_course_aligned_with_job || "",
         });
 
         setTempUserInfo({
@@ -151,7 +170,10 @@ const ProfileComponent = () => {
           birth_date: birth_date || "",
           college: college || "",
           program: program || "",
+          scholarship: scholarship || "",
           batch_year: batch_year || "",
+          is_currently_employed: is_currently_employed || "",
+          is_course_aligned_with_job: is_course_aligned_with_job || "",
         });
       } else {
         setUserInfo({
@@ -419,7 +441,12 @@ const ProfileComponent = () => {
         </Button>
       </div>
 
-      <div className={`${currentUserType === 'agency' || currentUserType === 'alumni' && 'mb-24 lg:mb-0'} flex h-full w-full overflow-y-auto relative`}>
+      <div
+        className={`${
+          currentUserType === "agency" ||
+          (currentUserType === "alumni" && "mb-24 lg:mb-0")
+        } flex h-full w-full overflow-y-auto relative`}
+      >
         {user && (
           <div className="h-full w-full border-2 border-[#007057] rounded-xl p-4 overflow-y-auto ">
             <div className="w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
@@ -500,6 +527,47 @@ const ProfileComponent = () => {
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
                   />
+                </>
+              )}
+              {currentUserType === "alumni" && (
+                <>
+                  <Select
+                    label="Are you currently Employed?"
+                    name='is_currently_employed'
+                    variant="bordered"
+                    color="success"
+                    isRequired
+                    isDisabled={!isUserEditing}
+                    defaultSelectedKeys={[
+                      tempUserInfo.is_currently_employed
+                        ? tempUserInfo.is_currently_employed
+                        : "no",
+                    ]}
+                    value={tempUserInfo.is_currently_employed}
+                    onChange={handleUserInputChange}
+                  >
+                    <SelectItem key={"yes"}>Yes</SelectItem>
+                    <SelectItem key={"no"}>No</SelectItem>
+                  </Select>
+
+                  <Select
+                    label="Is your job aligned with your course?"
+                    name="is_course_aligned_with_job"
+                    variant="bordered"
+                    color="success"
+                    isRequired
+                    isDisabled={!isUserEditing}
+                    defaultSelectedKeys={[
+                      tempUserInfo.is_course_aligned_with_job
+                        ? tempUserInfo.is_course_aligned_with_job
+                        : "no",
+                    ]}
+                    value={tempUserInfo.is_course_aligned_with_job}
+                    onChange={handleUserInputChange}
+                  >
+                    <SelectItem key={"yes"}>Yes</SelectItem>
+                    <SelectItem key={"no"}>No</SelectItem>
+                  </Select>
                 </>
               )}
               <hr className="col-span-3" />
@@ -586,24 +654,51 @@ const ProfileComponent = () => {
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
                   />
-                  <Input
+                  <Select
+                    items={colleges}
                     label="College"
-                    name="college"
-                    color="success"
                     variant="bordered"
+                    color="success"
+                    isRequired
+                    isDisabled={!isUserEditing}
+                    defaultSelectedKeys={[tempUserInfo.college]}
                     value={tempUserInfo.college}
                     onChange={handleUserInputChange}
-                    readOnly={!isUserEditing}
-                  />
-                  <Input
+                  >
+                    {colleges.map((item) => (
+                      <SelectItem key={item.key}>{item.label}</SelectItem>
+                    ))}
+                  </Select>
+                  <Select
+                    items={programs}
                     label="Program"
-                    name="program"
-                    color="success"
                     variant="bordered"
+                    color="success"
+                    isRequired
+                    isDisabled={!isUserEditing}
+                    defaultSelectedKeys={[tempUserInfo.program]}
                     value={tempUserInfo.program}
                     onChange={handleUserInputChange}
-                    readOnly={!isUserEditing}
-                  />
+                  >
+                    {programs.map((item) => (
+                      <SelectItem key={item.key}>{item.label}</SelectItem>
+                    ))}
+                  </Select>
+                  <Select
+                    items={scholarships}
+                    label="Scholarship"
+                    variant="bordered"
+                    color="success"
+                    isRequired
+                    isDisabled={!isUserEditing}
+                    defaultSelectedKeys={[tempUserInfo.scholarship]}
+                    value={tempUserInfo.scholarship}
+                    onChange={handleUserInputChange}
+                  >
+                    {scholarships.map((item) => (
+                      <SelectItem key={item.key}>{item.label}</SelectItem>
+                    ))}
+                  </Select>
                   <Input
                     label="Batch Year"
                     name="batch_year"

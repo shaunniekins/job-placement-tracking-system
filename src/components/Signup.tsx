@@ -14,12 +14,19 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Select,
+  SelectItem,
   Spinner,
 } from "@nextui-org/react";
 import { EyeSlashFilledIcon } from "../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../public/icons/EyeFilledIcon";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { FaCheck } from "react-icons/fa";
+import {
+  colleges,
+  programs,
+  scholarships,
+} from "@/app/api/collegeAndProgramData";
 
 interface SignupComponentProps {
   userType: string;
@@ -48,6 +55,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
   const [alumniAddress, setAlumniAddress] = useState("");
   const [college, setCollege] = useState("");
   const [program, setProgram] = useState("");
+  const [scholarship, setScholarship] = useState("");
   const [batchYear, setBatchYear] = useState("");
   const [idNumber, setIdNumber] = useState("");
 
@@ -94,6 +102,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
           id_number: idNumber,
           college: college,
           program: program,
+          scholarship: scholarship,
         }),
       },
     });
@@ -164,7 +173,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
               onSubmit={handleSubmit}
             >
               <div className="w-full overflow-y-auto flex flex-col justify-center items-center rounded-md shadow-sm gap-3 ">
-                <h4 className="absolute top-16 lg:top-32 self-center lg:self-start font-semibold text-xl">
+                <h4 className="absolute top-10 lg:top-32 self-center lg:self-start font-semibold text-xl">
                   {userType !== "superadmin" && userType.toUpperCase()} REGISTER
                 </h4>
                 {currentViewInput === 1 && (
@@ -324,25 +333,52 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                       />
                     </div>
 
-                    <div className="w-full flex flex-col lg:flex-row gap-2">
-                      <Input
-                        type="text"
+                    <div className="w-full flex flex-col lg:grid lg:grid-cols-3 gap-2">
+                      <Select
+                        items={colleges}
                         label="College"
                         variant="bordered"
                         color="success"
                         isRequired
                         value={college}
+                        className="col-span-3"
                         onChange={(e) => setCollege(e.target.value)}
-                      />
-                      <Input
-                        type="text"
+                      >
+                        {colleges.map((item) => (
+                          <SelectItem key={item.key}>{item.label}</SelectItem>
+                        ))}
+                      </Select>
+                      <Select
+                        items={programs}
                         label="Program"
                         variant="bordered"
                         color="success"
                         isRequired
                         value={program}
+                        className={`${!college && "hidden"} col-span-3`}
                         onChange={(e) => setProgram(e.target.value)}
-                      />
+                      >
+                        {programs
+                          .filter((program) => program.college === college)
+                          .map((item) => (
+                            <SelectItem key={item.key} value={item.key}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                      </Select>
+                      <Select
+                        items={scholarships}
+                        label="Scholarship"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        value={scholarship}
+                        onChange={(e) => setScholarship(e.target.value)}
+                      >
+                        {scholarships.map((item) => (
+                          <SelectItem key={item.key}>{item.label}</SelectItem>
+                        ))}
+                      </Select>
                       <Input
                         type="text"
                         label="Batch Year"

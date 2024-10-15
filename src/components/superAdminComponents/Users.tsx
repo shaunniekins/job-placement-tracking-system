@@ -32,7 +32,8 @@ const UserComponent = () => {
   const [currentView, setCurrentView] = useState("agency");
   const [currenViewContent, setCurrentViewContent] = useState<any[]>([]);
   const [collegeFilter, setCollegeFilter] = useState("all");
-  const [batchYearFilter, setBatchYearFilter] = useState("All");
+  const [batchYearFilter, setBatchYearFilter] = useState("all");
+  const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [totalPages, setTotalPages] = useState(0);
 
@@ -65,6 +66,19 @@ const UserComponent = () => {
   );
 
   const { batchYears, isBatchYearsLoading } = useBatchYears();
+
+  useEffect(() => {
+    // Transform the batchYears data
+    const formattedData = batchYears.map((item: any) => ({
+      key: item.batch_year.toString(),
+      label: item.batch_year.toString(),
+    }));
+
+    // Append the "all" option
+    formattedData.unshift({ key: "all", label: "All" });
+
+    setBatchYearFormatted(formattedData);
+  }, [batchYears]);
 
   const agencyColumns = [
     { key: "company_name", label: "Company Name" },
@@ -172,14 +186,29 @@ const UserComponent = () => {
             <SelectItem key={"CTE"}>CTE</SelectItem>
           </Select>
 
-          <Input
+          {/* <Input
             size="sm"
-            className={`${currentView === "agency" && "hidden"} max-w-32`}
+            className={`${currentView !== "alumni" && "hidden"} max-w-32`}
             label="Batch Year"
             placeholder="YYYY"
             value={batchYearFilter}
             onChange={(e) => setBatchYearFilter(e.target.value)}
-          />
+          /> */}
+
+          <Select
+            items={batchYearFormatted}
+            label="Year"
+            disallowEmptySelection={true}
+            size="sm"
+            className={`${currentView !== "alumni" && "hidden"} max-w-32`}
+            defaultSelectedKeys={["all"]}
+            value={batchYearFilter}
+            onChange={(e) => setBatchYearFilter(e.target.value)}
+          >
+            {batchYearFormatted.map((item) => (
+              <SelectItem key={item.key}>{item.label}</SelectItem>
+            ))}
+          </Select>
 
           <Input
             size="sm"
@@ -263,7 +292,7 @@ const UserComponent = () => {
 
                     if (columnKey === "college") {
                       return (
-                        <TableCell className="text-center">
+                        <TableCell className="text-center uppercase">
                           {item.meta_data.college}
                         </TableCell>
                       );
