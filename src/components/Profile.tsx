@@ -13,6 +13,11 @@ import {
   PopoverContent,
   Select,
   SelectItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import { supabase, supabaseAdmin } from "@/utils/supabase";
 import { useHandleLogout } from "@/utils/authUtils";
@@ -23,14 +28,18 @@ import {
   MdModeEditOutline,
   MdSave,
 } from "react-icons/md";
-import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
-import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
+import { EyeSlashFilledIcon } from "../../public/icons/EyeSlashFilledIcon";
+import { EyeFilledIcon } from "../../public/icons/EyeFilledIcon";
 import { FaUserCircle } from "react-icons/fa";
+import { RiProfileLine, RiQuestionnaireLine } from "react-icons/ri";
 import {
   colleges,
   programs,
   scholarships,
 } from "@/app/api/collegeAndProgramData";
+import GTSComponent from "./alumniComponents/GTS";
+import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
+import { deletePOEFile, insertPOEFile } from "@/app/api/poeIUD";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -39,6 +48,11 @@ const ProfileComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserType, setCurrentUserType] = useState("");
   const handleLogout = useHandleLogout();
+
+  const [openGPTSModal, setOpenGPTSModal] = useState(false);
+
+  const [POEFile, setPOEFile] = useState<File | null>(null);
+  const [isPOEModalOpen, setIsPOEModalOpen] = useState(false);
 
   // User info state
   const [userInfo, setUserInfo] = useState({
@@ -65,6 +79,7 @@ const ProfileComponent = () => {
     batch_year: "",
     is_currently_employed: "",
     is_course_aligned_with_job: "",
+    profile_of_employment: "",
   });
 
   const [tempUserInfo, setTempUserInfo] = useState(userInfo);
@@ -111,6 +126,7 @@ const ProfileComponent = () => {
         batch_year,
         is_currently_employed,
         is_course_aligned_with_job,
+        profile_of_employment,
       } = user.user_metadata;
 
       setCurrentUserType(
@@ -121,6 +137,7 @@ const ProfileComponent = () => {
 
       const commonUserInfo = {
         profile_picture: profile_picture || "",
+        email: email || "",
         first_name: first_name || "",
         middle_name: middle_name || "",
         last_name: last_name || "",
@@ -137,6 +154,7 @@ const ProfileComponent = () => {
         batch_year: "",
         is_currently_employed: "",
         is_course_aligned_with_job: "",
+        profile_of_employment: "",
       };
 
       if (user.user_metadata.user_type === "agency") {
@@ -163,6 +181,7 @@ const ProfileComponent = () => {
           batch_year: batch_year || "",
           is_currently_employed: is_currently_employed || "",
           is_course_aligned_with_job: is_course_aligned_with_job || "",
+          profile_of_employment: profile_of_employment || "",
         });
 
         setTempUserInfo({
@@ -174,6 +193,7 @@ const ProfileComponent = () => {
           batch_year: batch_year || "",
           is_currently_employed: is_currently_employed || "",
           is_course_aligned_with_job: is_course_aligned_with_job || "",
+          profile_of_employment: profile_of_employment || "",
         });
       } else {
         setUserInfo({
@@ -218,6 +238,7 @@ const ProfileComponent = () => {
     if (!confirmed) return;
 
     try {
+      await deleteGraduateTracerStudy(user.id);
       const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
       if (error) throw error;
 
@@ -411,7 +432,125 @@ const ProfileComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
-      <div className="justify-start gap-4 flex items-center">
+      <GTSComponent
+        userInfo={tempUserInfo}
+        openGPTSModal={openGPTSModal}
+        setOpenGPTSModal={setOpenGPTSModal}
+      />
+      <Modal size="xl" isOpen={isPOEModalOpen} onOpenChange={setIsPOEModalOpen}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Profile of Employment</ModalHeader>
+              <ModalBody className="flex flex-col gap-2">
+                {tempUserInfo.profile_of_employment && (
+                  <>
+                    <iframe
+                      src={tempUserInfo.profile_of_employment}
+                      className="w-full h-96"
+                      title="POE File"
+                    />
+                  </>
+                )}
+
+                {!tempUserInfo.profile_of_employment && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      fullWidth
+                      size="sm"
+                      color="success"
+                      type="file"
+                      label="Profile of Employment"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setPOEFile(e.target.files[0]);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter className="flex justify-between gap-2">
+                <Button
+                  color="secondary"
+                  variant="flat"
+                  className={`${
+                    tempUserInfo.profile_of_employment ? "block" : "hidden"
+                  }`}
+                  onClick={() =>
+                    window.open(tempUserInfo.profile_of_employment, "_blank")
+                  }
+                >
+                  View
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    className={`${
+                      tempUserInfo.profile_of_employment ? "block" : "hidden"
+                    }`}
+                    onClick={async () => {
+                      await deletePOEFile(user.id);
+
+                      const { error } = await supabase.auth.updateUser({
+                        data: {
+                          profile_of_employment: "",
+                        },
+                      });
+                      if (error) throw error;
+
+                      reloadUser();
+                    }}
+                  >
+                    Delete
+                  </Button>
+
+                  <Button
+                    color="primary"
+                    variant="flat"
+                    isDisabled={!POEFile}
+                    className={`${
+                      tempUserInfo.profile_of_employment && "hidden"
+                    }`}
+                    onClick={async () => {
+                      let url: any = "";
+
+                      if (tempUserInfo.profile_of_employment) {
+                        await deletePOEFile(user.id);
+                        url = await insertPOEFile(user.id, POEFile);
+                      } else {
+                        url = await insertPOEFile(user.id, POEFile);
+                      }
+                      const { error } = await supabase.auth.updateUser({
+                        data: {
+                          profile_of_employment: url,
+                        },
+                      });
+                      if (error) throw error;
+
+                      reloadUser();
+                    }}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    color="warning"
+                    variant="flat"
+                    onClick={() => {
+                      setIsPOEModalOpen(false);
+                      setPOEFile(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+      <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-start lg:items-center lg:gap-4">
         <Button
           startContent={<MdDeleteOutline />}
           color="danger"
@@ -430,7 +569,7 @@ const ProfileComponent = () => {
           startContent={<MdSave />}
           className={`${
             !isUserChanged && "hidden"
-          } bg-[#007057] capitalize text-white`}
+          } bg-[#008B47] capitalize text-white`}
           onClick={() => {
             if (isUserChanged) {
               handleUserSave();
@@ -438,6 +577,23 @@ const ProfileComponent = () => {
           }}
         >
           {` Save ${currentUserType} Info`}
+        </Button>
+        <Button
+          startContent={<RiQuestionnaireLine />}
+          className={`${
+            currentUserType !== "alumni" && "hidden"
+          } bg-[#008B47] text-white`}
+          onClick={() => setOpenGPTSModal(true)}
+        >
+          GTS
+        </Button>
+
+        <Button
+          startContent={<RiProfileLine />}
+          color="primary"
+          onClick={() => setIsPOEModalOpen(true)}
+        >
+          POE
         </Button>
       </div>
 
@@ -457,7 +613,6 @@ const ProfileComponent = () => {
               <div className="col-span-1 flex justify-center">
                 <Popover
                   showArrow
-                  // placement="right"
                   isOpen={displayImageOpen}
                   onOpenChange={(open) =>
                     isUserEditing && setDisplayImageOpen(open)
@@ -531,9 +686,19 @@ const ProfileComponent = () => {
               )}
               {currentUserType === "alumni" && (
                 <>
+                  <Input
+                    label="Are you currently Employed?"
+                    name="is_currently_employed"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.is_currently_employed}
+                    readOnly
+                    className={`${isUserEditing && "hidden"}`}
+                  />
+
                   <Select
                     label="Are you currently Employed?"
-                    name='is_currently_employed'
+                    name="is_currently_employed"
                     variant="bordered"
                     color="success"
                     isRequired
@@ -545,10 +710,21 @@ const ProfileComponent = () => {
                     ]}
                     value={tempUserInfo.is_currently_employed}
                     onChange={handleUserInputChange}
+                    className={`${!isUserEditing && "hidden"}`}
                   >
                     <SelectItem key={"yes"}>Yes</SelectItem>
                     <SelectItem key={"no"}>No</SelectItem>
                   </Select>
+
+                  <Input
+                    label="Is your job aligned with your course?"
+                    name="is_course_aligned_with_job"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.is_course_aligned_with_job}
+                    readOnly
+                    className={`${isUserEditing && "hidden"}`}
+                  />
 
                   <Select
                     label="Is your job aligned with your course?"
@@ -564,6 +740,7 @@ const ProfileComponent = () => {
                     ]}
                     value={tempUserInfo.is_course_aligned_with_job}
                     onChange={handleUserInputChange}
+                    className={`${!isUserEditing && "hidden"}`}
                   >
                     <SelectItem key={"yes"}>Yes</SelectItem>
                     <SelectItem key={"no"}>No</SelectItem>
@@ -654,6 +831,15 @@ const ProfileComponent = () => {
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
                   />
+
+                  <Input
+                    label="College"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.college.toLocaleUpperCase()}
+                    readOnly
+                    className={`${isUserEditing && "hidden"}`}
+                  />
                   <Select
                     items={colleges}
                     label="College"
@@ -664,11 +850,21 @@ const ProfileComponent = () => {
                     defaultSelectedKeys={[tempUserInfo.college]}
                     value={tempUserInfo.college}
                     onChange={handleUserInputChange}
+                    className={`${!isUserEditing && "hidden"}`}
                   >
                     {colleges.map((item) => (
                       <SelectItem key={item.key}>{item.label}</SelectItem>
                     ))}
                   </Select>
+
+                  <Input
+                    label="Program"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.program.toLocaleUpperCase()}
+                    readOnly
+                    className={`${isUserEditing && "hidden"}`}
+                  />
                   <Select
                     items={programs}
                     label="Program"
@@ -679,11 +875,21 @@ const ProfileComponent = () => {
                     defaultSelectedKeys={[tempUserInfo.program]}
                     value={tempUserInfo.program}
                     onChange={handleUserInputChange}
+                    className={`${!isUserEditing && "hidden"}`}
                   >
                     {programs.map((item) => (
                       <SelectItem key={item.key}>{item.label}</SelectItem>
                     ))}
                   </Select>
+
+                  <Input
+                    label="Scholarship"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.scholarship.toLocaleUpperCase()}
+                    readOnly
+                    className={`${isUserEditing && "hidden"}`}
+                  />
                   <Select
                     items={scholarships}
                     label="Scholarship"
@@ -694,6 +900,7 @@ const ProfileComponent = () => {
                     defaultSelectedKeys={[tempUserInfo.scholarship]}
                     value={tempUserInfo.scholarship}
                     onChange={handleUserInputChange}
+                    className={`${!isUserEditing && "hidden"}`}
                   >
                     {scholarships.map((item) => (
                       <SelectItem key={item.key}>{item.label}</SelectItem>
@@ -775,7 +982,7 @@ const ProfileComponent = () => {
                       startContent={<MdSave />}
                       className={`${
                         !isLoginChanged && "hidden"
-                      } bg-[#007057] text-white`}
+                      } bg-[#008B47] text-white`}
                       onClick={handleLoginSave}
                     >
                       Save Login Info

@@ -116,7 +116,7 @@ const HeaderComponent = ({
 
   return (
     <div className="w-full flex flex-col">
-      <div className="h-14 w-full bg-[#007057] text-white flex justify-between items-center px-3">
+      <div className="h-14 w-full bg-[#008B47] text-white flex justify-between items-center px-3">
         <div className="flex items-center gap-2 z-0">
           <Image
             src="/images/asscat-logo.png"

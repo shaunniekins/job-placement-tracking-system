@@ -1,6 +1,6 @@
 "use client";
 
-import ProfileComponent from "@/components/agencyComponents/Profile";
+import ProfileComponent from "@/components/Profile";
 import AlumniDashboardComponent from "@/components/alumniComponents/Dashboard";
 import PlacementComponent from "@/components/alumniComponents/Placement";
 import NotificationsComponent from "@/components/Notifications";

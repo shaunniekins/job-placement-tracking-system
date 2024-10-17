@@ -303,7 +303,7 @@ const ValidationComponent = () => {
                 key={column.key}
                 className={`${column.key === "seen" && "lg:w-36"}
                      ${column.key === "message" && "w-32 lg:w-auto"} 
-                    bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap`}
+                    bg-[#008B47] text-white text-center whitespace-nowrap flex-nowrap`}
               >
                 {column.label}
               </TableColumn>

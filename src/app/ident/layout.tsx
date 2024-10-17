@@ -7,7 +7,7 @@ export default function IdentSlugLayout({
 }>) {
   return (
     <>
-      <main className="min-h-[100svh] grid lg:grid-cols-[1fr_2fr] items-center bg-[#007057]">
+      <main className="min-h-[100svh] grid lg:grid-cols-[1fr_2fr] items-center bg-[#008B47]">
         <div className="hidden lg:block h-full relative">
           {/* <img
               src="/images/grass.jpg"
@@ -23,7 +23,7 @@ export default function IdentSlugLayout({
 }
 
 {
-  /* <main className="h-[100svh] grid lg:grid-cols-[1fr_3fr_1fr] items-center bg-[#007057]"> */
+  /* <main className="h-[100svh] grid lg:grid-cols-[1fr_3fr_1fr] items-center bg-[#008B47]"> */
 }
 
 // export default function IdentSlugLayout({
@@ -33,8 +33,8 @@ export default function IdentSlugLayout({
 // }>) {
 //   return (
 //     <>
-//       <main className="h-[100svh] flex flex-col items-center bg-[#007057]">
-//         {/* <main className="min-h-[100svh] grid lg:grid-cols-[1fr_2fr] items-center bg-[#007057]"> */}
+//       <main className="h-[100svh] flex flex-col items-center bg-[#008B47]">
+//         {/* <main className="min-h-[100svh] grid lg:grid-cols-[1fr_2fr] items-center bg-[#008B47]"> */}
 //         {/* <div className="hidden lg:block h-full relative">
 //           <img
 //               src="/images/grass.jpg"

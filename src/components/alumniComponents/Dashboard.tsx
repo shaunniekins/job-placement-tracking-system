@@ -13,9 +13,6 @@ import {
   ModalFooter,
   ModalHeader,
   Pagination,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Spinner,
 } from "@nextui-org/react";
 import { capitalizeFirstLetter, formatDate } from "@/utils/compUtils";
@@ -28,23 +25,40 @@ import {
   insertJobApplication,
 } from "@/app/api/jobApplicationsIUD";
 import { insertNotification } from "@/app/api/notificationsIUD";
+import useActivities from "@/hooks/useActivities";
 
 const AlumniDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
 
-  const [page, setPage] = useState(1);
-  const rowsPerPage = 100;
+  const [jobPostingPage, setJobPostingPage] = useState(1);
+  const jobPostingRowsPerPage = 15;
 
-  const {
-    jobPostings,
-    totalJobPostings,
-    loadingJobPostings,
-    errorJobPostings,
-  } = useJobPostings(rowsPerPage, page, undefined, "approved");
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const activitiesRowsPerPage = 15;
 
-  const totalPages = Math.ceil(totalJobPostings / rowsPerPage);
+  const [currentView, setCurrentView] = useState("jobPostings");
 
-  if (loadingJobPostings) {
+  const { jobPostings, totalJobPostings, loadingJobPostings } = useJobPostings(
+    jobPostingRowsPerPage,
+    jobPostingPage,
+    undefined,
+    "approved"
+  );
+
+  const jobPostingTotalPages = Math.ceil(
+    totalJobPostings / jobPostingRowsPerPage
+  );
+
+  const { activities, totalActivities, loadingActivities } = useActivities(
+    activitiesRowsPerPage,
+    activitiesPage
+  );
+
+  const activitiesTotalPages = Math.ceil(
+    totalActivities / activitiesRowsPerPage
+  );
+
+  if (loadingJobPostings || loadingActivities) {
     return (
       <div className="h-full w-full flex justify-center items-center">
         <Spinner color="success" />
@@ -54,20 +68,34 @@ const AlumniDashboardComponent = () => {
 
   return (
     <>
-      <div className="h-full w-full flex flex-1 gap-2">
-        <div className="h-full w-full flex flex-col gap-2">
-          <div className="flex items-center">
+      <div className="h-full w-full grid lg:grid-cols-[1.3fr_1fr] gap-6">
+        {/* job postings */}
+        <div
+          className={`${
+            currentView !== "jobPostings" && "hidden lg:block"
+          } h-full w-full flex flex-col gap-2 overflow-y-auto`}
+        >
+          <div className="flex justify-between items-center gap-2">
             <Pagination
               isCompact
               showControls
               showShadow
               color="default"
-              page={page}
-              total={totalPages}
-              onChange={(newPage) => setPage(newPage)}
+              page={jobPostingPage}
+              total={jobPostingTotalPages}
+              onChange={(newPage) => setJobPostingPage(newPage)}
               className={`${jobPostings.length === 0 && "hidden"}`}
             />
+            <Button
+              color="success"
+              size="sm"
+              className="lg:hidden text-white"
+              onClick={() => setCurrentView("activities")}
+            >
+              View Activities
+            </Button>
           </div>
+
           <div className="h-full flex-1 w-full overflow-y-auto relative">
             {jobPostings.length === 0 && (
               <div className="h-full w-full flex justify-center items-center -mt-16">
@@ -89,10 +117,87 @@ const AlumniDashboardComponent = () => {
               </div>
             )}
           </div>
+
+          <div
+            className={`${
+              jobPostings && jobPostings.length > 10 ? "block" : "hidden"
+            } flex items-center`}
+          >
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="default"
+              page={jobPostingPage}
+              total={jobPostingTotalPages}
+              onChange={(newPage) => setJobPostingPage(newPage)}
+              className={`${jobPostings.length === 0 && "hidden"}`}
+            />
+          </div>
         </div>
-        <div className="h-full w-full bg-green-50">
-          <div className="h-full w-full flex items-center justify-center">
-            SOON
+
+        {/* activities */}
+        <div
+          className={`${
+            currentView !== "activities" && "hidden lg:block"
+          } h-full w-full flex flex-col gap-2 overflow-y-auto`}
+        >
+          <div className="flex justify-between items-center gap-2">
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="default"
+              page={activitiesPage}
+              total={activitiesTotalPages}
+              onChange={(newPage) => setActivitiesPage(newPage)}
+              className={`${activities.length === 0 && "hidden"}`}
+            />
+
+            <Button
+              color="success"
+              size="sm"
+              className="lg:hidden text-white"
+              onClick={() => setCurrentView("jobPostings")}
+            >
+              View Job Postings
+            </Button>
+          </div>
+
+          <div className="h-full flex-1 w-full overflow-y-auto relative">
+            {activities.length === 0 && (
+              <div className="h-full w-full flex justify-center items-center -mt-16">
+                <p>No activities yet.</p>
+              </div>
+            )}
+
+            {activities && activities.length > 0 && (
+              <div className="flex flex-col gap-4 mb-24">
+                {activities.map((activity) => (
+                  <ActivityDetails
+                    key={activity.activity_id}
+                    activity={activity}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`${
+              activities && activities.length > 10 ? "block" : "hidden"
+            } flex items-center`}
+          >
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="default"
+              page={activitiesPage}
+              total={activitiesTotalPages}
+              onChange={(newPage) => setActivitiesPage(newPage)}
+              className={`${activities.length === 0 && "hidden"}`}
+            />
           </div>
         </div>
       </div>
@@ -222,7 +327,7 @@ const JobPostingDetails = ({
           </p>
           <div className="flex flex-col gap-2 mt-4">
             <h2 className="font-bold text-lg">About the Job</h2>
-            <div className="h-28 w-full text-justify">
+            <div className="w-full text-justify">
               {/* truncate */}
               <p className="text-sm text-ellipsis">{job.job_description}</p>
             </div>
@@ -249,3 +354,45 @@ const JobPostingDetails = ({
 };
 
 export default AlumniDashboardComponent;
+
+const ActivityDetails = ({ activity }: { activity: any }) => {
+  return (
+    <Card>
+      <CardHeader className="flex justify-between items-center pb-0">
+        <div className="flex flex-col">
+          <h2 className="text-2xl font-bold">{activity.activity_title}</h2>
+          <div className="flex gap-2 items-center">
+            <p className="text-xs text-gray-600">{activity.activity_date}</p>
+            <span>|</span>
+            {activity.activity_type && (
+              <>
+                <p className="text-xs text-gray-600">
+                  {activity.activity_type}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardBody className="whitespace-pre-wrap overflow-hidden">
+        {activity.activity_location && (
+          <p>
+            <strong>Activity Location:</strong> {activity.activity_location}
+          </p>
+        )}
+        <div className="flex flex-col gap-2 mt-4">
+          <h2 className="font-bold text-lg">About the Activity</h2>
+          <div className="overflow-y-auto">
+            <p className="text-sm">{activity.activity_description}</p>
+          </div>
+        </div>
+      </CardBody>
+      <CardFooter className="flex justify-center items-center pt-0">
+        <p className="flex flex-col items-center">
+          {formatDate(activity.created_at)}
+          <span className="text-xs text-gray-500">Date Posted</span>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+};

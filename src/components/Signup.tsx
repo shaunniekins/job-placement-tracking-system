@@ -103,6 +103,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
           college: college,
           program: program,
           scholarship: scholarship,
+          profile_of_employment: "",
         }),
       },
     });
@@ -137,7 +138,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
               </ModalHeader>
               <ModalBody>
                 <div className="w-full flex flex-col items-center justify-center gap-4">
-                  <div className="bg-[#007057] text-white p-5 rounded-full">
+                  <div className="bg-[#008B47] text-white p-5 rounded-full">
                     <FaCheck size={"2rem"} />
                   </div>
                   <p className="text-center">
@@ -148,7 +149,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
               </ModalBody>
               <ModalFooter>
                 <Button
-                  className="bg-[#007057] text-white self-center"
+                  className="bg-[#008B47] text-white self-center"
                   onClick={() =>
                     router.push(`/ident/signin?usertype=${userType}`)
                   }

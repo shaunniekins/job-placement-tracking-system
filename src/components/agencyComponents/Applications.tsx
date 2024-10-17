@@ -99,7 +99,7 @@ const ApplicationsComponent = () => {
                 {(column) => (
                   <TableColumn
                     key={column.key}
-                    className="bg-[#007057] text-white text-center whitespace-nowrap flex-nowrap"
+                    className="bg-[#008B47] text-white text-center whitespace-nowrap flex-nowrap"
                   >
                     {column.label}
                   </TableColumn>

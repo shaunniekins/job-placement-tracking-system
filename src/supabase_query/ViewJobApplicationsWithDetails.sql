@@ -26,10 +26,10 @@ SELECT
     -- Agency details extracted from JSON
     ag.id AS agency_id,
     ag.email AS agency_email,
-    ag.raw_user_meta_data->>'company_name' AS agency_company_name,
-    ag.raw_user_meta_data->>'company_type' AS agency_company_type,
     ag.raw_user_meta_data->>'address' AS agency_address,
-    ag.raw_user_meta_data->>'contact_number' AS agency_mobile_number
+    ag.raw_user_meta_data->>'contact_number' AS agency_mobile_number,
+    ag.raw_user_meta_data->>'company_name' AS agency_company_name,
+    ag.raw_user_meta_data->>'company_type' AS agency_company_type
     
 FROM
     "JobApplications" ja

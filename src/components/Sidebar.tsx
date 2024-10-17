@@ -19,6 +19,7 @@ import {
   FaUserGraduate,
   FaUserAlt,
   FaUserCircle,
+  FaTools,
 } from "react-icons/fa";
 
 import classNames from "classnames";
@@ -64,30 +65,32 @@ const SidebarComponent = ({
       label: "Dashboard",
       icon: <FaTachometerAlt />,
     },
-    {
-      path: "/superadmin/jobinteraction",
-      label: "Job Interaction",
-      icon: <FaComments />,
-    },
+    { path: "/superadmin/manage", label: "Manage Post", icon: <FaCog /> },
     {
       path: "/superadmin/validation",
       label: "Validation",
       icon: <FaChartBar />,
     },
     {
+      path: "/superadmin/jobinteraction",
+      label: "Job Interaction",
+      icon: <FaComments />,
+    },
+
+    {
       path: "/superadmin/notifications",
       label: "Notifications",
       icon: <FaBell />,
     },
     { path: "/superadmin/users", label: "Users", icon: <FaUsers /> },
-    { path: "/superadmin/manage", label: "Manage", icon: <FaCog /> },
-    { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
-    { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     {
       path: "/superadmin/calendar",
       label: "Calendar",
       icon: <FaCalendarAlt />,
     },
+    { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
+    { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
+    {path: "/superadmin/settings", label: "Settings", icon: <FaTools />},
   ];
 
   const agencyItems: MenuItem[] = [
@@ -125,8 +128,13 @@ const SidebarComponent = ({
 
   useEffect(() => {
     if (user && user.user_metadata) {
-      const { profile_picture, user_type, first_name, last_name, company_name } =
-        user.user_metadata;
+      const {
+        profile_picture,
+        user_type,
+        first_name,
+        last_name,
+        company_name,
+      } = user.user_metadata;
 
       if (user_type === "agency" && company_name) {
         setName(company_name);
@@ -188,7 +196,7 @@ const SidebarComponent = ({
   }, [setIsSidebarOpen]);
 
   return (
-    <div className="bg-[#007057] text-white h-full w-full flex flex-col justify-center select-none relative">
+    <div className="bg-[#008B47] text-white h-full w-full flex flex-col justify-center select-none relative">
       <div
         className={`${
           userType === "superadmin"

@@ -286,7 +286,7 @@ const ManageActivities = () => {
           {activities && activities.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-24">
               {activities.map((activity) => (
-                <JobPostingDetails
+                <ActivityDetails
                   key={activity.activity_id}
                   activity={activity}
                   openPopoverActivityId={openPopoverActivityId}
@@ -306,7 +306,7 @@ const ManageActivities = () => {
   );
 };
 
-const JobPostingDetails = ({
+const ActivityDetails = ({
   activity,
   openPopoverActivityId,
   togglePopover,
@@ -375,7 +375,7 @@ const JobPostingDetails = ({
         )}
         <div className="flex flex-col gap-2 mt-4">
           <h2 className="font-bold text-lg">About the Activity</h2>
-          <div className="h-56 overflow-y-auto">
+          <div className="overflow-y-auto">
             <p className="text-sm">{activity.activity_description}</p>
           </div>
         </div>

@@ -27,7 +27,7 @@ export default function Home() {
     <>
       <div className="bg-[#F4FFFC] h-[100svh] w-screen flex justify-center items-center">
         <Card className="w-96 h-96 mx-3">
-          <CardHeader className="bg-[#007057] flex justify-center items-center">
+          <CardHeader className="bg-[#008B47] flex justify-center items-center">
             <p className="text-center text-white text-lg font-semibold">
               Select User Type
             </p>
@@ -83,10 +83,10 @@ export default function Home() {
           </CardBody>
           <CardFooter className="flex justify-center items-center">
             <Button
+              fullWidth
               radius="full"
-              size="sm"
               isDisabled={!selectedUserType}
-              className="text-white self-center bg-[#007057]"
+              className="text-white self-center bg-[#008B47]"
               onClick={handleChoose}
             >
               Choose

@@ -85,7 +85,7 @@ export const JobPostingDetails = ({
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <h2 className="font-bold text-lg">About the Job</h2>
-          <div className="h-56 overflow-y-auto">
+          <div className="overflow-y-auto">
             <p className="p text-sm">{job.job_description}</p>
           </div>
         </div>

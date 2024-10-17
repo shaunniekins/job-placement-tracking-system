@@ -2,7 +2,7 @@
 
 import ApplicationsComponent from "@/components/agencyComponents/Applications";
 import ManageJobPostingsComponent from "@/components/agencyComponents/ManageJobPostings";
-import ProfileComponent from "@/components/agencyComponents/Profile";
+import ProfileComponent from "@/components/Profile";
 import NotificationsComponent from "@/components/Notifications";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
