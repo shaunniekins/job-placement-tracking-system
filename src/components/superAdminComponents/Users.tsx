@@ -19,10 +19,19 @@ import {
   Tabs,
   Tab,
   Input,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import useUsers from "@/hooks/useUsers";
 import { supabaseAdmin } from "@/utils/supabase";
 import useBatchYears from "@/hooks/useBatchYears";
+import { IoAdd, IoAddOutline } from "react-icons/io5";
+import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
+import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
+import { colleges } from "@/app/api/collegeAndProgramData";
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -113,6 +122,16 @@ const UserComponent = () => {
     // setCurrentViewContent(usersData);
   }, [currentView, usersData, totalUserEntries, collegeFilter, searchInput]);
 
+  const [isAddNewAdminModalOpen, setIsAddNewAdminModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isInputUserPasswordVisible, setIsInputUserPasswordVisible] =
+    useState(false);
+  const [facultyType, setFacultyType] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [college, setCollege] = useState("");
+
   if (isLoadingUsers) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -123,6 +142,139 @@ const UserComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
+      <Modal
+        size="xl"
+        isOpen={isAddNewAdminModalOpen}
+        onOpenChange={setIsAddNewAdminModalOpen}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>New Administrator</ModalHeader>
+              <ModalBody>
+                <Input
+                  label="First Name"
+                  variant="bordered"
+                  color="success"
+                  isRequired
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <Input
+                  label="Last Name"
+                  variant="bordered"
+                  color="success"
+                  isRequired
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+
+                <Select
+                  items={colleges}
+                  label="College"
+                  variant="bordered"
+                  color="success"
+                  isRequired
+                  defaultSelectedKeys={[college]}
+                  value={college}
+                  className="col-span-3"
+                  onChange={(e) => setCollege(e.target.value)}
+                >
+                  {colleges.map((item) => (
+                    <SelectItem key={item.key}>{item.label}</SelectItem>
+                  ))}
+                </Select>
+                <Input
+                  type="email"
+                  label="Email"
+                  variant="bordered"
+                  color="success"
+                  isRequired
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Input
+                  type={isInputUserPasswordVisible ? "text" : "password"}
+                  label="Temporary Password"
+                  variant="bordered"
+                  color="success"
+                  isRequired
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  endContent={
+                    <button
+                      className="focus:outline-none"
+                      type="button"
+                      onClick={() =>
+                        setIsInputUserPasswordVisible(
+                          !isInputUserPasswordVisible
+                        )
+                      }
+                    >
+                      {isInputUserPasswordVisible ? (
+                        <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  }
+                />
+                <Select
+                  label="Faculty Type"
+                  color="success"
+                  variant="bordered"
+                  required
+                  defaultSelectedKeys={[facultyType]}
+                  value={facultyType}
+                  onChange={(e) => setFacultyType(e.target.value)}
+                >
+                  <SelectItem key={"Dean"}>Dean</SelectItem>
+                  <SelectItem key={"ARO"}>ARO</SelectItem>
+                  <SelectItem key={"Program Chair"}>Program Chair</SelectItem>
+                </Select>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color="success"
+                  className="text-white"
+                  onClick={async () => {
+                    const { error } = await supabaseAdmin.auth.admin.createUser(
+                      {
+                        email,
+                        password,
+                        email_confirm: true,
+                        user_metadata: {
+                          account_status: "approved",
+                          profile_picture: "",
+                          email: email,
+                          password: password,
+                          first_name: firstName,
+                          last_name: lastName,
+                          college: college,
+                          faculty_type: facultyType,
+                          user_type: "admin",
+                        },
+                      }
+                    );
+                    if (error) {
+                      alert(error.message);
+                      return;
+                    }
+                    setIsAddNewAdminModalOpen(false);
+                    fetchAndSubscribeUsers();
+                  }}
+                  isDisabled={!email || !password || !facultyType}
+                >
+                  Add
+                </Button>
+                <Button color="warning" onClick={onClose}>
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
       <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex gap-3">
           <Tabs
@@ -161,6 +313,14 @@ const UserComponent = () => {
           </Tabs>
         </div>
         <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-end gap-3">
+          <Button
+            color="success"
+            startContent={<IoAddOutline />}
+            className={`${currentView !== "admin" && "hidden"} text-white`}
+            onClick={() => setIsAddNewAdminModalOpen(true)}
+          >
+            Add New Admin
+          </Button>
           <Select
             label="College Filter"
             disallowEmptySelection={true}
@@ -325,6 +485,7 @@ const UserComponent = () => {
                                 item.id
                               );
                             }
+                            fetchAndSubscribeUsers();
                           }}
                         >
                           Delete
