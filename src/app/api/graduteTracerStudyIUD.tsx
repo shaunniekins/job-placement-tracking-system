@@ -33,7 +33,7 @@ export const insertGraduateTracerStudy = async (newGTS: any) => {
 };
 
 export const updateGraduateTracerStudy = async (
-  userId: number,
+  userId: string,
   updatedGTS: any
 ) => {
   try {

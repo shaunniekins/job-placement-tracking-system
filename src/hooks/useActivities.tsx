@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
-import { format, parse } from "date-fns";
 
 type Activity = {
   activity_id: string;

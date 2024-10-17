@@ -61,7 +61,7 @@ const DashboardComponent = () => {
             key={index}
             className={`flex flex-col items-center rounded-xl p-2 border-2 ${
               selectedCollege === college.name
-                ? "border-[#007057]"
+                ? "border-[#008B47]"
                 : "border-[#F4FFFC]"
             }`}
             onClick={() => handleImageClick(college.name)}
@@ -194,7 +194,7 @@ const DefaultView = () => {
           isHeaderSticky={true}
           aria-label="College Stats Table"
           classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
           }}
           className="h-full w-full flex items-center justify-center"
         >
@@ -360,7 +360,7 @@ const SelectedCollegeView = ({
           isHeaderSticky={true}
           aria-label="Specific College Stats Table"
           classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
           }}
           className="h-full w-full flex items-center justify-center"
         >
@@ -508,7 +508,7 @@ const SelectedProgramView = ({
           isHeaderSticky={true}
           aria-label="Specific Program and College Stats Table"
           classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
           }}
           className="h-full w-full flex items-center justify-center"
         >

@@ -26,6 +26,7 @@ import {
 } from "@/app/api/jobApplicationsIUD";
 import { insertNotification } from "@/app/api/notificationsIUD";
 import useActivities from "@/hooks/useActivities";
+import { insertApplicationStatus } from "@/app/api/applicationStatusIUD";
 
 const AlumniDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -243,6 +244,11 @@ const JobPostingDetails = ({
     const response = await insertJobApplication(newJobApplication);
 
     if (response) {
+      await insertApplicationStatus({
+        job_application_id: response[0].job_application_id,
+        date_applied: new Date().toISOString(),
+      });
+
       // notify agency
       await insertNotification(
         {

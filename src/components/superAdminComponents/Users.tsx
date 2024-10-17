@@ -236,7 +236,7 @@ const UserComponent = () => {
           isHeaderSticky={true}
           aria-label="Job Applications Table"
           classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#007057]",
+            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
           }}
           className="h-full w-full flex items-center justify-center"
         >

@@ -36,7 +36,7 @@ export default function Home() {
             <div className="flex flex-col justify-around gap-2 px-2">
               <div
                 className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "superadmin" ? "border-[#007057]" : ""
+                  selectedUserType === "superadmin" ? "border-[#008B47]" : ""
                 }`}
                 onClick={() => handleSelect("superadmin")}
               >
@@ -48,7 +48,7 @@ export default function Home() {
 
               <div
                 className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "administrator" ? "border-[#007057]" : ""
+                  selectedUserType === "administrator" ? "border-[#008B47]" : ""
                 }`}
                 onClick={() => handleSelect("administrator")}
               >
@@ -58,7 +58,7 @@ export default function Home() {
 
               <div
                 className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "agency" ? "border-[#007057]" : ""
+                  selectedUserType === "agency" ? "border-[#008B47]" : ""
                 }`}
                 onClick={() => handleSelect("agency")}
               >
@@ -70,7 +70,7 @@ export default function Home() {
 
               <div
                 className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "alumni" ? "border-[#007057]" : ""
+                  selectedUserType === "alumni" ? "border-[#008B47]" : ""
                 }`}
                 onClick={() => handleSelect("alumni")}
               >

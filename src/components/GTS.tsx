@@ -1,9 +1,7 @@
 "use client";
 
-import { RootState } from "@/app/reduxUtils/store";
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import {
   Input,
   Radio,
@@ -60,16 +58,19 @@ interface JobLevels {
 
 interface GTSComponentProps {
   userInfo: any;
+  currentUserId: string;
   openGPTSModal: boolean;
   setOpenGPTSModal: (isOpen: boolean) => void;
+  isReadOnly?: boolean;
 }
 
 const GTSComponent: React.FC<GTSComponentProps> = ({
   userInfo,
+  currentUserId,
   openGPTSModal,
   setOpenGPTSModal,
+  isReadOnly = false,
 }) => {
-  const user = useSelector((state: RootState) => state.user.user);
   const [currentView, setCurrentView] = useState("A");
 
   const [formData, setFormData] = useState({
@@ -122,7 +123,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     suggestions: "",
   });
 
-  const { gts, loadingGTS, errorGTS } = useGTS(user.id);
+  const { gts, loadingGTS, errorGTS } = useGTS(currentUserId);
 
   useEffect(() => {
     if (gts.length > 0) {
@@ -533,14 +534,17 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const cleanedFormData = { ...formData, alumni_id: user.id };
+      const cleanedFormData = { ...formData, alumni_id: currentUserId };
 
-      const dataAlreadyCreated = await checkIfExistingGTS(user.id);
+      const dataAlreadyCreated = await checkIfExistingGTS(currentUserId);
       let response;
 
       // Call the insertGraduateTracerStudy or updateGraduateTracerStudy function with formData
       if (dataAlreadyCreated) {
-        response = await updateGraduateTracerStudy(user.id, cleanedFormData);
+        response = await updateGraduateTracerStudy(
+          currentUserId,
+          cleanedFormData
+        );
       } else {
         response = await insertGraduateTracerStudy(cleanedFormData);
       }
@@ -612,6 +616,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     variant="bordered"
                     value={formData.contact_numbers}
                     onChange={handleChange}
+                    readOnly={isReadOnly}
                   />
 
                   {/* Mobile Number */}
@@ -626,41 +631,69 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
 
                   {/* Civil Status */}
                   <div>
-                    <label className="text-xs font-medium text-green-500">
-                      6. Civil Status
-                    </label>
-                    <RadioGroup
-                      color="success"
-                      orientation="horizontal"
-                      value={formData.civil_status}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRadioChange("civil_status", e.target.value)
-                      }
-                    >
-                      <Radio value="Single">Single</Radio>
-                      <Radio value="Married">Married</Radio>
-                      <Radio value="Separated">Separated</Radio>
-                      <Radio value="Single Parent">Single Parent</Radio>
-                      <Radio value="Widowed">Widow or Widower</Radio>
-                    </RadioGroup>
+                    {!isReadOnly ? (
+                      <>
+                        <label className="text-xs font-medium text-green-500">
+                          6. Civil Status
+                        </label>
+                        <RadioGroup
+                          color="success"
+                          orientation="horizontal"
+                          value={formData.civil_status}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleRadioChange("civil_status", e.target.value)
+                          }
+                        >
+                          <Radio value="Single">Single</Radio>
+                          <Radio value="Married">Married</Radio>
+                          <Radio value="Separated">Separated</Radio>
+                          <Radio value="Single Parent">Single Parent</Radio>
+                          <Radio value="Widowed">Widow or Widower</Radio>
+                        </RadioGroup>
+                      </>
+                    ) : (
+                      <Input
+                        label="6.Civil Status"
+                        name="civil_status"
+                        color="success"
+                        variant="bordered"
+                        value={formData.civil_status}
+                        onChange={handleChange}
+                        readOnly
+                      />
+                    )}
                   </div>
 
                   {/* Sex */}
                   <div>
-                    <label className="text-xs font-medium text-green-500">
-                      7. Sex
-                    </label>
-                    <RadioGroup
-                      color="success"
-                      orientation="horizontal"
-                      value={formData.sex}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRadioChange("sex", e.target.value)
-                      }
-                    >
-                      <Radio value="Male">Male</Radio>
-                      <Radio value="Female">Female</Radio>
-                    </RadioGroup>
+                    {!isReadOnly ? (
+                      <>
+                        <label className="text-xs font-medium text-green-500">
+                          7. Sex
+                        </label>
+                        <RadioGroup
+                          color="success"
+                          orientation="horizontal"
+                          value={formData.sex}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleRadioChange("sex", e.target.value)
+                          }
+                        >
+                          <Radio value="Male">Male</Radio>
+                          <Radio value="Female">Female</Radio>
+                        </RadioGroup>
+                      </>
+                    ) : (
+                      <Input
+                        label="7. Sex"
+                        name="sex"
+                        color="success"
+                        variant="bordered"
+                        value={formData.sex}
+                        onChange={handleChange}
+                        readOnly
+                      />
+                    )}
                   </div>
 
                   {/* Birthday */}
@@ -676,65 +709,99 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
 
                   {/* Region of Origin */}
                   <div>
-                    <Select
-                      label="9. Region of Origin"
-                      variant="bordered"
-                      color="success"
-                      defaultSelectedKeys={[formData.region]}
-                      value={formData.region}
-                      onChange={(e) =>
-                        setFormData({ ...formData, region: e.target.value })
-                      }
-                    >
-                      <SelectItem key={"NCR"}>{"NCR"}</SelectItem>
-                      <SelectItem key={"CAR"}>{"CAR"}</SelectItem>
-                      <SelectItem key={"ARMM"}>{"ARMM"}</SelectItem>
-                      <SelectItem key={"CARAGA"}>{"CARAGA"}</SelectItem>
-                      <SelectItem key={"Region 1"}>{"Region 1"}</SelectItem>
-                      <SelectItem key={"Region 2"}>{"Region 2"}</SelectItem>
-                      <SelectItem key={"Region 3"}>{"Region 3"}</SelectItem>
-                      <SelectItem key={"Region 4"}>{"Region 4"}</SelectItem>
-                      <SelectItem key={"Region 5"}>{"Region 5"}</SelectItem>
-                      <SelectItem key={"Region 6"}>{"Region 6"}</SelectItem>
-                      <SelectItem key={"Region 7"}>{"Region 7"}</SelectItem>
-                      <SelectItem key={"Region 8"}>{"Region 8"}</SelectItem>
-                      <SelectItem key={"Region 9"}>{"Region 9"}</SelectItem>
-                      <SelectItem key={"Region 10"}>{"Region 10"}</SelectItem>
-                      <SelectItem key={"Region 11"}>{"Region 11"}</SelectItem>
-                      <SelectItem key={"Region 12"}>{"Region 12"}</SelectItem>
-                    </Select>
+                    {!isReadOnly ? (
+                      <>
+                        <Select
+                          label="9. Region of Origin"
+                          variant="bordered"
+                          color="success"
+                          defaultSelectedKeys={[formData.region]}
+                          value={formData.region}
+                          onChange={(e) =>
+                            setFormData({ ...formData, region: e.target.value })
+                          }
+                        >
+                          <SelectItem key={"NCR"}>{"NCR"}</SelectItem>
+                          <SelectItem key={"CAR"}>{"CAR"}</SelectItem>
+                          <SelectItem key={"ARMM"}>{"ARMM"}</SelectItem>
+                          <SelectItem key={"CARAGA"}>{"CARAGA"}</SelectItem>
+                          <SelectItem key={"Region 1"}>{"Region 1"}</SelectItem>
+                          <SelectItem key={"Region 2"}>{"Region 2"}</SelectItem>
+                          <SelectItem key={"Region 3"}>{"Region 3"}</SelectItem>
+                          <SelectItem key={"Region 4"}>{"Region 4"}</SelectItem>
+                          <SelectItem key={"Region 5"}>{"Region 5"}</SelectItem>
+                          <SelectItem key={"Region 6"}>{"Region 6"}</SelectItem>
+                          <SelectItem key={"Region 7"}>{"Region 7"}</SelectItem>
+                          <SelectItem key={"Region 8"}>{"Region 8"}</SelectItem>
+                          <SelectItem key={"Region 9"}>{"Region 9"}</SelectItem>
+                          <SelectItem key={"Region 10"}>
+                            {"Region 10"}
+                          </SelectItem>
+                          <SelectItem key={"Region 11"}>
+                            {"Region 11"}
+                          </SelectItem>
+                          <SelectItem key={"Region 12"}>
+                            {"Region 12"}
+                          </SelectItem>
+                        </Select>
+                      </>
+                    ) : (
+                      <Input
+                        label="9. Region of Origin"
+                        name="region"
+                        color="success"
+                        variant="bordered"
+                        value={formData.region}
+                        onChange={handleChange}
+                        readOnly
+                      />
+                    )}
                   </div>
 
                   {/* Province */}
                   <Input
                     label="10. Province"
-                    placeholder="Enter your province"
                     name="province"
                     color="success"
                     variant="bordered"
                     value={formData.province}
                     onChange={handleChange}
+                    readOnly={isReadOnly}
                   />
 
                   {/* Location of Residence */}
                   <div>
-                    <label className="text-xs font-medium text-green-500">
-                      11. Location of Residence
-                    </label>
-                    <RadioGroup
-                      color="success"
-                      orientation="horizontal"
-                      value={formData.location_of_residence}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRadioChange(
-                          "location_of_residence",
-                          e.target.value
-                        )
-                      }
-                    >
-                      <Radio value="City">City</Radio>
-                      <Radio value="Municipality">Municipality</Radio>
-                    </RadioGroup>
+                    {!isReadOnly ? (
+                      <>
+                        <label className="text-xs font-medium text-green-500">
+                          11. Location of Residence
+                        </label>
+                        <RadioGroup
+                          color="success"
+                          orientation="horizontal"
+                          value={formData.location_of_residence}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleRadioChange(
+                              "location_of_residence",
+                              e.target.value
+                            )
+                          }
+                        >
+                          <Radio value="City">City</Radio>
+                          <Radio value="Municipality">Municipality</Radio>
+                        </RadioGroup>
+                      </>
+                    ) : (
+                      <Input
+                        label="11. Location of Residence"
+                        name="location_of_residence"
+                        color="success"
+                        variant="bordered"
+                        value={formData.location_of_residence}
+                        onChange={handleChange}
+                        readOnly
+                      />
+                    )}
                   </div>
                 </>
               </ModalBody>
@@ -753,7 +820,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     </label>
                     <Button
                       color="success"
-                      className="text-white"
+                      className={`${isReadOnly && "hidden"} text-white`}
                       size="sm"
                       startContent={<IoAddOutline />}
                       onClick={addEducation}
@@ -772,6 +839,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           color="danger"
                           size="sm"
                           variant="light"
+                          className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
                           // className="absolute -top-2 -right-2"
                           onClick={() => removeEducation(index)}
@@ -788,6 +856,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         onChange={(e) =>
                           handleEducationChange(index, "degree", e.target.value)
                         }
+                        isReadOnly={isReadOnly}
                       />
                       <Input
                         label="College/University"
@@ -802,6 +871,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        isReadOnly={isReadOnly}
                       />
                       <Input
                         label="Year Graduated"
@@ -816,6 +886,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        isReadOnly={isReadOnly}
                       />
                       <Input
                         label="Honors/Awards Received"
@@ -826,6 +897,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         onChange={(e) =>
                           handleEducationChange(index, "honors", e.target.value)
                         }
+                        isReadOnly={isReadOnly}
                       />
                     </div>
                   ))}
@@ -836,8 +908,8 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     </label>
                     <Button
                       color="success"
-                      className="text-white"
                       size="sm"
+                      className={`${isReadOnly && "hidden"} text-white`}
                       startContent={<IoAddOutline />}
                       onClick={addProfessional}
                     >
@@ -855,6 +927,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           color="danger"
                           size="sm"
                           variant="light"
+                          className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
                           // className="absolute -top-2 -right-2"
                           onClick={() => removeProfessional(index)}
@@ -876,6 +949,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        isReadOnly={isReadOnly}
                       />
                       <Input
                         label="Date Taken"
@@ -890,6 +964,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        isReadOnly={isReadOnly}
                       />
                       <Input
                         label="Rating"
@@ -904,6 +979,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        isReadOnly={isReadOnly}
                       />
                     </div>
                   ))}
@@ -924,6 +1000,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <Checkbox
                           key={`ug-${index}`}
                           color="success"
+                          isReadOnly={isReadOnly}
                           isSelected={formData.course_reasons.undergraduate.includes(
                             reason
                           )}
@@ -946,6 +1023,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           )
                         }
                         className="mt-2"
+                        isReadOnly={isReadOnly}
                       />
                     </div>
                     <div>
@@ -956,6 +1034,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <Checkbox
                           key={`g-${index}`}
                           color="success"
+                          isReadOnly={isReadOnly}
                           isSelected={formData.course_reasons.graduate.includes(
                             reason
                           )}
@@ -975,6 +1054,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           handleOtherReasonChange("graduate", e.target.value)
                         }
                         className="mt-2"
+                        isReadOnly={isReadOnly}
                       />
                     </div>
                   </div>
@@ -997,7 +1077,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     </label>
                     <Button
                       color="success"
-                      className="text-white"
+                      className={`${isReadOnly && "hidden"} text-white`}
                       size="sm"
                       startContent={<IoAddOutline />}
                       onClick={addTraining}
@@ -1016,6 +1096,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           color="danger"
                           size="sm"
                           variant="light"
+                          className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
                           // className="absolute -top-2 -right-2"
                           onClick={() => removeTraining(index)}
@@ -1029,16 +1110,19 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         variant="bordered"
                         size="sm"
                         className="col-span-2"
+                        isReadOnly={isReadOnly}
                         value={training.title}
                         onChange={(e) =>
                           handleTrainingChange(index, "title", e.target.value)
                         }
+                        readOnly={isReadOnly}
                       />
                       <Input
                         label="Duration"
                         color="success"
                         variant="bordered"
                         size="sm"
+                        isReadOnly={isReadOnly}
                         value={training.duration}
                         onChange={(e) =>
                           handleTrainingChange(
@@ -1047,12 +1131,14 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        readOnly={isReadOnly}
                       />
                       <Input
                         label="Institution"
                         color="success"
                         variant="bordered"
                         size="sm"
+                        isReadOnly={isReadOnly}
                         value={training.institution}
                         onChange={(e) =>
                           handleTrainingChange(
@@ -1061,6 +1147,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             e.target.value
                           )
                         }
+                        readOnly={isReadOnly}
                       />
                     </div>
                   ))}
@@ -1073,6 +1160,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
 
                   <RadioGroup
                     color="success"
+                    isReadOnly={isReadOnly}
                     value={formData.advance_studies_reason}
                     onValueChange={handleAdvanceStudiesReasonChange}
                   >
@@ -1089,6 +1177,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       variant="bordered"
                       value={formData.other_advance_studies_reason}
                       onChange={handleOtherAdvanceStudiesReasonChange}
+                      readOnly={isReadOnly}
                     />
                   )}
                 </>
@@ -1101,25 +1190,36 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                   <h1 className="lg:col-span-2 font-semibold justify-start place-content-start">
                     D. EMPLOYMENT DATA
                   </h1>
-                  <Select
-                    label="16. Are you presently employed?"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[formData.employment_status]}
-                    value={formData.employment_status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        employment_status: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key={"Yes"}>Yes</SelectItem>
-                    <SelectItem key={"No"}>No</SelectItem>
-                    <SelectItem key={"Never Employed"}>
-                      Never Employed
-                    </SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="16. Are you presently employed?"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[formData.employment_status]}
+                      value={formData.employment_status}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          employment_status: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key={"Yes"}>Yes</SelectItem>
+                      <SelectItem key={"No"}>No</SelectItem>
+                      <SelectItem key={"Never Employed"}>
+                        Never Employed
+                      </SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="16. Are you presently employed?"
+                      color="success"
+                      variant="bordered"
+                      value={formData.employment_status}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
                   {(formData.employment_status === "No" ||
                     formData.employment_status === "Never Employed") && (
@@ -1143,6 +1243,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           <Checkbox
                             key={reason}
                             color="success"
+                            isReadOnly={isReadOnly}
                             isSelected={formData.unemployment_reasons.includes(
                               reason
                             )}
@@ -1158,6 +1259,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             "Other"
                           )}
                           color="success"
+                          isReadOnly={isReadOnly}
                           onValueChange={(isSelected) =>
                             handleUnemploymentReasonChange("Other", isSelected)
                           }
@@ -1172,30 +1274,46 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             value={formData.other_unemployment_reason}
                             onChange={handleOtherUnemploymentReasonChange}
                             className="mt-2"
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
                     </>
                   )}
-                  <Select
-                    label="18. Present Employment Status"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[formData.present_employment_status]}
-                    value={formData.present_employment_status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        present_employment_status: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key={"Regular"}>Regular or Permanen</SelectItem>
-                    <SelectItem key={"Temporary"}>Temporary</SelectItem>
-                    <SelectItem key={"Casual"}>Casual</SelectItem>
-                    <SelectItem key={"Contractual"}>Contractual</SelectItem>
-                    <SelectItem key={"Self-employed"}>Self-employed</SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="18. Present Employment Status"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[formData.present_employment_status]}
+                      value={formData.present_employment_status}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          present_employment_status: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key={"Regular"}>
+                        Regular or Permanen
+                      </SelectItem>
+                      <SelectItem key={"Temporary"}>Temporary</SelectItem>
+                      <SelectItem key={"Casual"}>Casual</SelectItem>
+                      <SelectItem key={"Contractual"}>Contractual</SelectItem>
+                      <SelectItem key={"Self-employed"}>
+                        Self-employed
+                      </SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="18. Present Employment Status"
+                      color="success"
+                      variant="bordered"
+                      value={formData.present_employment_status}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
                   <Input
                     label="19. Present occupation"
@@ -1205,103 +1323,137 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     variant="bordered"
                     value={formData.present_occupation}
                     onChange={handleChange}
+                    readOnly={isReadOnly}
                   />
 
-                  <Select
-                    label="20. Major line of business of the company you are presently employed in."
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[formData.major_line_of_business]}
-                    value={formData.major_line_of_business}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        major_line_of_business: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key="Agriculture, Hunting and Forestry">
-                      Agriculture, Hunting and Forestry
-                    </SelectItem>
-                    <SelectItem key="Fishing">Fishing</SelectItem>
-                    <SelectItem key="Mining and Quarrying">
-                      Mining and Quarrying{" "}
-                    </SelectItem>
-                    <SelectItem key="Manufacturing">Manufacturing</SelectItem>
-                    <SelectItem key="Electricity, Gas and Water Supply">
-                      Electricity, Gas and Water Supply
-                    </SelectItem>
-                    <SelectItem key="Construction">Construction</SelectItem>
-                    <SelectItem key="Wholesale and Retail Trade">
-                      Wholesale and Retail Trade, repair of motor vehicles,
-                      motorcycles and personal and household goods
-                    </SelectItem>
-                    <SelectItem key="Hotels and Restaurants">
-                      Hotels and Restaurants
-                    </SelectItem>
-                    <SelectItem key="Transport Storage and Communication">
-                      Transport Storage and Communication
-                    </SelectItem>
-                    <SelectItem key="Financial Intermediation">
-                      Financial Intermediation
-                    </SelectItem>
-                    <SelectItem key="Real Estate, Renting and Business Activities">
-                      Real Estate, Renting and Business Activities
-                    </SelectItem>
-                    <SelectItem key="Public Administration and Defense">
-                      Public Administration and Defense; Compulsory Social
-                      Security
-                    </SelectItem>
-                    <SelectItem key="Education">Education</SelectItem>
-                    <SelectItem key="Health and Social Work">
-                      Health and Social Work
-                    </SelectItem>
-                    <SelectItem key="Other Community, Social and Personal Service Activities">
-                      Other Community, Social and Personal Service Activities
-                    </SelectItem>
-                    <SelectItem key="Private Households with Employed Persons">
-                      Private Households with Employed Persons
-                    </SelectItem>
-                    <SelectItem key="Extra-territorial Organizations and Bodies">
-                      Extra-territorial Organizations and Bodies
-                    </SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="20. Major line of business of the company you are presently employed in."
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[formData.major_line_of_business]}
+                      value={formData.major_line_of_business}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          major_line_of_business: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key="Agriculture, Hunting and Forestry">
+                        Agriculture, Hunting and Forestry
+                      </SelectItem>
+                      <SelectItem key="Fishing">Fishing</SelectItem>
+                      <SelectItem key="Mining and Quarrying">
+                        Mining and Quarrying{" "}
+                      </SelectItem>
+                      <SelectItem key="Manufacturing">Manufacturing</SelectItem>
+                      <SelectItem key="Electricity, Gas and Water Supply">
+                        Electricity, Gas and Water Supply
+                      </SelectItem>
+                      <SelectItem key="Construction">Construction</SelectItem>
+                      <SelectItem key="Wholesale and Retail Trade">
+                        Wholesale and Retail Trade, repair of motor vehicles,
+                        motorcycles and personal and household goods
+                      </SelectItem>
+                      <SelectItem key="Hotels and Restaurants">
+                        Hotels and Restaurants
+                      </SelectItem>
+                      <SelectItem key="Transport Storage and Communication">
+                        Transport Storage and Communication
+                      </SelectItem>
+                      <SelectItem key="Financial Intermediation">
+                        Financial Intermediation
+                      </SelectItem>
+                      <SelectItem key="Real Estate, Renting and Business Activities">
+                        Real Estate, Renting and Business Activities
+                      </SelectItem>
+                      <SelectItem key="Public Administration and Defense">
+                        Public Administration and Defense; Compulsory Social
+                        Security
+                      </SelectItem>
+                      <SelectItem key="Education">Education</SelectItem>
+                      <SelectItem key="Health and Social Work">
+                        Health and Social Work
+                      </SelectItem>
+                      <SelectItem key="Other Community, Social and Personal Service Activities">
+                        Other Community, Social and Personal Service Activities
+                      </SelectItem>
+                      <SelectItem key="Private Households with Employed Persons">
+                        Private Households with Employed Persons
+                      </SelectItem>
+                      <SelectItem key="Extra-territorial Organizations and Bodies">
+                        Extra-territorial Organizations and Bodies
+                      </SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="20. Major line of business of the company you are presently employed in."
+                      color="success"
+                      variant="bordered"
+                      value={formData.major_line_of_business}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
-                  <Select
-                    label="21. Place of work"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[formData.place_of_work]}
-                    value={formData.place_of_work}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        place_of_work: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key="Local">Local</SelectItem>
-                    <SelectItem key="Abroad">Abroad</SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="21. Place of work"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[formData.place_of_work]}
+                      value={formData.place_of_work}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          place_of_work: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key="Local">Local</SelectItem>
+                      <SelectItem key="Abroad">Abroad</SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="21. Place of work"
+                      color="success"
+                      variant="bordered"
+                      value={formData.place_of_work}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
-                  <Select
-                    label="22. Is this your first job after college?"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[
-                      formData.is_first_time_job_after_college,
-                    ]}
-                    value={formData.is_first_time_job_after_college}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        is_first_time_job_after_college: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key="Yes">Yes</SelectItem>
-                    <SelectItem key="No">No</SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="22. Is this your first job after college?"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[
+                        formData.is_first_time_job_after_college,
+                      ]}
+                      value={formData.is_first_time_job_after_college}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          is_first_time_job_after_college: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key="Yes">Yes</SelectItem>
+                      <SelectItem key="No">No</SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="22. Is this your first job after college?"
+                      color="success"
+                      variant="bordered"
+                      value={formData.is_first_time_job_after_college}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
                   {formData.is_first_time_job_after_college === "Yes" && (
                     <>
@@ -1325,6 +1477,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           <Checkbox
                             key={reason}
                             color="success"
+                            isReadOnly={isReadOnly}
                             isSelected={formData.staying_on_job_reasons.includes(
                               reason
                             )}
@@ -1340,6 +1493,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             "Other"
                           )}
                           color="success"
+                          isReadOnly={isReadOnly}
                           onValueChange={(isSelected) =>
                             handleStayingReasonChange("Other", isSelected)
                           }
@@ -1354,28 +1508,40 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             value={formData.other_staying_on_job_reason}
                             onChange={handleOtherStayingOnJobReasonChange}
                             className="mt-2"
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
 
-                      <Select
-                        label="24. Is your first job related to the course you took up in college? You may check (✓) more than one answer."
-                        color="success"
-                        variant="bordered"
-                        defaultSelectedKeys={[
-                          formData.is_first_job_related_to_course,
-                        ]}
-                        value={formData.is_first_job_related_to_course}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            is_first_job_related_to_course: e.target.value,
-                          })
-                        }
-                      >
-                        <SelectItem key="Yes">Yes</SelectItem>
-                        <SelectItem key="No">No</SelectItem>
-                      </Select>
+                      {!isReadOnly ? (
+                        <Select
+                          label="24. Is your first job related to the course you took up in college? You may check (✓) more than one answer."
+                          color="success"
+                          variant="bordered"
+                          defaultSelectedKeys={[
+                            formData.is_first_job_related_to_course,
+                          ]}
+                          value={formData.is_first_job_related_to_course}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              is_first_job_related_to_course: e.target.value,
+                            })
+                          }
+                        >
+                          <SelectItem key="Yes">Yes</SelectItem>
+                          <SelectItem key="No">No</SelectItem>
+                        </Select>
+                      ) : (
+                        <Input
+                          label="24. Is your first job related to the course you took up in college? You may check (✓) more than one answer."
+                          color="success"
+                          variant="bordered"
+                          value={formData.is_first_job_related_to_course}
+                          onChange={handleChange}
+                          readOnly
+                        />
+                      )}
 
                       {formData.is_first_job_related_to_course === "Yes" && (
                         <>
@@ -1397,6 +1563,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                               <Checkbox
                                 key={reason}
                                 color="success"
+                                isReadOnly={isReadOnly}
                                 isSelected={formData.first_job_related_to_course_reasons.includes(
                                   reason
                                 )}
@@ -1415,6 +1582,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                                 "Other"
                               )}
                               color="success"
+                              isReadOnly={isReadOnly}
                               onValueChange={(isSelected) =>
                                 handleIsFirstJobRelatedToCourseReasonChange(
                                   "Other",
@@ -1438,6 +1606,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                                   handleOtherFirstJobRelatedToCourseReasonChange
                                 }
                                 className="mt-2"
+                                isReadOnly={isReadOnly}
                               />
                             )}
                           </div>
@@ -1466,6 +1635,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           <Checkbox
                             key={reason}
                             color="success"
+                            isReadOnly={isReadOnly}
                             isSelected={formData.leaving_job_reasons.includes(
                               reason
                             )}
@@ -1482,6 +1652,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             "Other"
                           )}
                           color="success"
+                          isReadOnly={isReadOnly}
                           onValueChange={(isSelected) =>
                             handleLeavingJobReasonChange("Other", isSelected)
                           }
@@ -1496,6 +1667,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             value={formData.other_leaving_job_reason}
                             onChange={handleOtherLeavingJobReasonChange}
                             className="mt-2"
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
@@ -1518,6 +1690,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           <Checkbox
                             key={reason}
                             color="success"
+                            isReadOnly={isReadOnly}
                             isSelected={formData.staying_duration_in_first_job.includes(
                               reason
                             )}
@@ -1536,6 +1709,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             formData.staying_duration_in_first_job === "Other"
                           }
                           color="success"
+                          isReadOnly={isReadOnly}
                           onValueChange={(isSelected) =>
                             handleStayingDurationInFirstJobChange(
                               "Other",
@@ -1555,6 +1729,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                               handleOtherStayingDurationInFirstJobChange
                             }
                             className="mt-2"
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
@@ -1580,6 +1755,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       <Checkbox
                         key={reason}
                         color="success"
+                        isReadOnly={isReadOnly}
                         isSelected={formData.first_job_found_through.includes(
                           reason
                         )}
@@ -1595,6 +1771,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         "Other"
                       )}
                       color="success"
+                      isReadOnly={isReadOnly}
                       onValueChange={(isSelected) =>
                         handleFirstJobFoundThroughChange("Other", isSelected)
                       }
@@ -1609,6 +1786,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         value={formData.other_first_job_found_through}
                         onChange={handleOtherFirstJobFoundThroughChange}
                         className="mt-2"
+                        isReadOnly={isReadOnly}
                       />
                     )}
                   </div>
@@ -1631,6 +1809,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       <Checkbox
                         key={reason}
                         color="success"
+                        isReadOnly={isReadOnly}
                         isSelected={formData.duration_before_first_job.includes(
                           reason
                         )}
@@ -1646,6 +1825,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         formData.duration_before_first_job === "Other"
                       }
                       color="success"
+                      isReadOnly={isReadOnly}
                       onValueChange={(isSelected) =>
                         handleDurationBeforeFirstJobChange("Other", isSelected)
                       }
@@ -1660,6 +1840,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         value={formData.other_duration_before_first_job}
                         onChange={handleOtherDurationBeforeFirstJobChange}
                         className="mt-2"
+                        isReadOnly={isReadOnly}
                       />
                     )}
                   </div>
@@ -1679,6 +1860,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <Checkbox
                           key={`first-job-${index}`}
                           color="success"
+                          isReadOnly={isReadOnly}
                           isSelected={formData.job_levels.first_job.includes(
                             level
                           )}
@@ -1697,6 +1879,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <Checkbox
                           key={`current-job-${index}`}
                           color="success"
+                          isReadOnly={isReadOnly}
                           isSelected={formData.job_levels.current_job.includes(
                             level
                           )}
@@ -1710,57 +1893,79 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     </div>
                   </div>
 
-                  <Select
-                    label="31. What is your initial gross monthly earning in your first job after college?"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[formData.initial_gross_first_job]}
-                    value={formData.initial_gross_first_job}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        initial_gross_first_job: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key={"Below P5,000.00"}>
-                      Below P5,000.00
-                    </SelectItem>
-                    <SelectItem key={"P5,000.00 to less than P10,000.00"}>
-                      P5,000.00 to less than P10,000.00
-                    </SelectItem>
-                    <SelectItem key={"P10,000.00 to less than P15,000.00"}>
-                      P10,000.00 to less than P15,000.00
-                    </SelectItem>
-                    <SelectItem key={"P15,000.00 to less than P20,000.00"}>
-                      P15,000.00 to less than P20,000.00
-                    </SelectItem>
-                    <SelectItem key={"P20,000.00 to less than P25,000.00"}>
-                      P20,000.00 to less than P25,000.00
-                    </SelectItem>
-                    <SelectItem key={"P25,000.00 and above"}>
-                      P25,000.00 and above
-                    </SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="31. What is your initial gross monthly earning in your first job after college?"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[formData.initial_gross_first_job]}
+                      value={formData.initial_gross_first_job}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          initial_gross_first_job: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key={"Below P5,000.00"}>
+                        Below P5,000.00
+                      </SelectItem>
+                      <SelectItem key={"P5,000.00 to less than P10,000.00"}>
+                        P5,000.00 to less than P10,000.00
+                      </SelectItem>
+                      <SelectItem key={"P10,000.00 to less than P15,000.00"}>
+                        P10,000.00 to less than P15,000.00
+                      </SelectItem>
+                      <SelectItem key={"P15,000.00 to less than P20,000.00"}>
+                        P15,000.00 to less than P20,000.00
+                      </SelectItem>
+                      <SelectItem key={"P20,000.00 to less than P25,000.00"}>
+                        P20,000.00 to less than P25,000.00
+                      </SelectItem>
+                      <SelectItem key={"P25,000.00 and above"}>
+                        P25,000.00 and above
+                      </SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="31. What is your initial gross monthly earning in your first job after college?"
+                      color="success"
+                      variant="bordered"
+                      value={formData.initial_gross_first_job}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
-                  <Select
-                    label="32. Was the curriculum you had in college relevant to your first job?"
-                    color="success"
-                    variant="bordered"
-                    defaultSelectedKeys={[
-                      formData.is_curriculum_relevant_in_first_job,
-                    ]}
-                    value={formData.is_curriculum_relevant_in_first_job}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        is_curriculum_relevant_in_first_job: e.target.value,
-                      })
-                    }
-                  >
-                    <SelectItem key="Yes">Yes</SelectItem>
-                    <SelectItem key="No">No</SelectItem>
-                  </Select>
+                  {!isReadOnly ? (
+                    <Select
+                      label="32. Was the curriculum you had in college relevant to your first job?"
+                      color="success"
+                      variant="bordered"
+                      defaultSelectedKeys={[
+                        formData.is_curriculum_relevant_in_first_job,
+                      ]}
+                      value={formData.is_curriculum_relevant_in_first_job}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          is_curriculum_relevant_in_first_job: e.target.value,
+                        })
+                      }
+                    >
+                      <SelectItem key="Yes">Yes</SelectItem>
+                      <SelectItem key="No">No</SelectItem>
+                    </Select>
+                  ) : (
+                    <Input
+                      label="32. Was the curriculum you had in college relevant to your first job?"
+                      color="success"
+                      variant="bordered"
+                      value={formData.is_curriculum_relevant_in_first_job}
+                      onChange={handleChange}
+                      readOnly
+                    />
+                  )}
 
                   {formData.is_curriculum_relevant_in_first_job === "Yes" && (
                     <>
@@ -1784,6 +1989,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           <Checkbox
                             key={reason}
                             color="success"
+                            isReadOnly={isReadOnly}
                             isSelected={formData.learned_competencies.includes(
                               reason
                             )}
@@ -1799,6 +2005,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             "Other"
                           )}
                           color="success"
+                          isReadOnly={isReadOnly}
                           onValueChange={(isSelected) =>
                             handleLearnedCompetencies("Other", isSelected)
                           }
@@ -1812,6 +2019,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             variant="bordered"
                             value={formData.other_learned_competencies}
                             onChange={handleOtherLearnedCompetencies}
+                            isReadOnly={isReadOnly}
                           />
                         )}
                       </div>
@@ -1826,6 +2034,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, suggestions: e.target.value })
                     }
+                    isReadOnly={isReadOnly}
                   />
                 </>
               </ModalBody>
@@ -1850,6 +2059,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
               <Button
                 color="success"
                 // className={currentView === "D" ? "invisible" : "text-white"}
+                // className={currentView === "D" ? "hidden" : "text-white"}
                 className="text-white"
                 onClick={() => {
                   if (currentView === "A") {
@@ -1859,11 +2069,19 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                   } else if (currentView === "C") {
                     setCurrentView("D");
                   } else {
-                    handleSubmit();
+                    if (!isReadOnly) {
+                      handleSubmit();
+                    } else {
+                      setOpenGPTSModal(false);
+                    }
                   }
                 }}
               >
-                {currentView === "D" ? "Submit" : "Next"}
+                {isReadOnly && currentView === "D"
+                  ? "Close"
+                  : !isReadOnly && currentView === "D"
+                  ? "Submit"
+                  : "Next"}
               </Button>
             </ModalFooter>
           </>

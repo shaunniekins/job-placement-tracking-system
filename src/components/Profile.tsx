@@ -12,12 +12,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   Select,
-  SelectItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  SelectItem
 } from "@nextui-org/react";
 import { supabase, supabaseAdmin } from "@/utils/supabase";
 import { useHandleLogout } from "@/utils/authUtils";
@@ -37,9 +32,9 @@ import {
   programs,
   scholarships,
 } from "@/app/api/collegeAndProgramData";
-import GTSComponent from "./alumniComponents/GTS";
+import GTSComponent from "./GTS";
 import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
-import { deletePOEFile, insertPOEFile } from "@/app/api/poeIUD";
+import POEComponent from "./POEComponent";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -434,122 +429,19 @@ const ProfileComponent = () => {
     <div className="h-full w-full flex flex-col gap-2">
       <GTSComponent
         userInfo={tempUserInfo}
+        currentUserId={user.id}
         openGPTSModal={openGPTSModal}
         setOpenGPTSModal={setOpenGPTSModal}
       />
-      <Modal size="xl" isOpen={isPOEModalOpen} onOpenChange={setIsPOEModalOpen}>
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader>Profile of Employment</ModalHeader>
-              <ModalBody className="flex flex-col gap-2">
-                {tempUserInfo.profile_of_employment && (
-                  <>
-                    <iframe
-                      src={tempUserInfo.profile_of_employment}
-                      className="w-full h-96"
-                      title="POE File"
-                    />
-                  </>
-                )}
-
-                {!tempUserInfo.profile_of_employment && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      fullWidth
-                      size="sm"
-                      color="success"
-                      type="file"
-                      label="Profile of Employment"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          setPOEFile(e.target.files[0]);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-              </ModalBody>
-              <ModalFooter className="flex justify-between gap-2">
-                <Button
-                  color="secondary"
-                  variant="flat"
-                  className={`${
-                    tempUserInfo.profile_of_employment ? "block" : "hidden"
-                  }`}
-                  onClick={() =>
-                    window.open(tempUserInfo.profile_of_employment, "_blank")
-                  }
-                >
-                  View
-                </Button>
-                <div className="flex gap-2">
-                  <Button
-                    color="danger"
-                    variant="flat"
-                    className={`${
-                      tempUserInfo.profile_of_employment ? "block" : "hidden"
-                    }`}
-                    onClick={async () => {
-                      await deletePOEFile(user.id);
-
-                      const { error } = await supabase.auth.updateUser({
-                        data: {
-                          profile_of_employment: "",
-                        },
-                      });
-                      if (error) throw error;
-
-                      reloadUser();
-                    }}
-                  >
-                    Delete
-                  </Button>
-
-                  <Button
-                    color="primary"
-                    variant="flat"
-                    isDisabled={!POEFile}
-                    className={`${
-                      tempUserInfo.profile_of_employment && "hidden"
-                    }`}
-                    onClick={async () => {
-                      let url: any = "";
-
-                      if (tempUserInfo.profile_of_employment) {
-                        await deletePOEFile(user.id);
-                        url = await insertPOEFile(user.id, POEFile);
-                      } else {
-                        url = await insertPOEFile(user.id, POEFile);
-                      }
-                      const { error } = await supabase.auth.updateUser({
-                        data: {
-                          profile_of_employment: url,
-                        },
-                      });
-                      if (error) throw error;
-
-                      reloadUser();
-                    }}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    color="warning"
-                    variant="flat"
-                    onClick={() => {
-                      setIsPOEModalOpen(false);
-                      setPOEFile(null);
-                    }}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      <POEComponent
+        userID={user.id}
+        tempUserInfo={tempUserInfo}
+        isPOEModalOpen={isPOEModalOpen}
+        setIsPOEModalOpen={setIsPOEModalOpen}
+        reloadUser={reloadUser}
+        POEFile={POEFile}
+        setPOEFile={setPOEFile}
+      />
       <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-start lg:items-center lg:gap-4">
         <Button
           startContent={<MdDeleteOutline />}
@@ -591,6 +483,7 @@ const ProfileComponent = () => {
         <Button
           startContent={<RiProfileLine />}
           color="primary"
+          className={`${currentUserType !== "alumni" && "hidden"} `}
           onClick={() => setIsPOEModalOpen(true)}
         >
           POE
@@ -604,7 +497,7 @@ const ProfileComponent = () => {
         } flex h-full w-full overflow-y-auto relative`}
       >
         {user && (
-          <div className="h-full w-full border-2 border-[#007057] rounded-xl p-4 overflow-y-auto ">
+          <div className="h-full w-full border-2 border-[#008B47] rounded-xl p-4 overflow-y-auto ">
             <div className="w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
               <h1 className="text-xl font-semibold col-span-3 capitalize">
                 {`  ${currentUserType} Information`}
