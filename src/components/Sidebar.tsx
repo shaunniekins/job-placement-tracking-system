@@ -90,7 +90,7 @@ const SidebarComponent = ({
     },
     { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
-    { path: "/superadmin/settings", label: "Settings", icon: <FaTools /> },
+    // { path: "/superadmin/settings", label: "Settings", icon: <FaTools /> },
   ];
 
   const agencyItems: MenuItem[] = [

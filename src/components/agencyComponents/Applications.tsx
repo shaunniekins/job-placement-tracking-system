@@ -66,6 +66,7 @@ const ApplicationsComponent = () => {
     <>
       <AlumniProfileModal
         alumniId={currentAlumniId}
+        setAlumniId={setCurrentAlumniId}
         openAlumniProfile={isAlumniProfileOpen}
         setOpenAlumniProfile={setIsAlumniProfileOpen}
       />

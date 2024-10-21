@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   Select,
-  SelectItem
+  SelectItem,
 } from "@nextui-org/react";
 import { supabase, supabaseAdmin } from "@/utils/supabase";
 import { useHandleLogout } from "@/utils/authUtils";
@@ -701,7 +701,7 @@ const ProfileComponent = () => {
                 />
               )}
 
-              {currentUserType === "admin" && (
+              {currentUserType === "agency" && (
                 <Input
                   label="Valid ID"
                   name="valid_id"
@@ -724,7 +724,12 @@ const ProfileComponent = () => {
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
                   />
+                </>
+              )}
 
+              {(currentUserType === "alumni" ||
+                currentUserType === "admin") && (
+                <>
                   <Input
                     label="College"
                     color="success"
@@ -749,7 +754,11 @@ const ProfileComponent = () => {
                       <SelectItem key={item.key}>{item.label}</SelectItem>
                     ))}
                   </Select>
+                </>
+              )}
 
+              {currentUserType === "alumni" && (
+                <>
                   <Input
                     label="Program"
                     color="success"

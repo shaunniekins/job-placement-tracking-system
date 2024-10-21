@@ -2,17 +2,24 @@ import { useEffect, useCallback, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
 
-const useAlumni = (alumniId: string) => {
+const useAlumni = (alumniId: string, userType: string) => {
   const [alumniData, setAlumniData] = useState<any[]>([]);
   const [isLoadingAlumni, setIsLoadingAlumni] = useState<boolean>(true);
   const [totalAlumniEntries, setTotalAlumniEntries] = useState<number>(0);
 
   const fetchAndSubscribeUsers = useCallback(async () => {
-    if (!alumniId) return;
+    if (!alumniId || !userType) return;
 
     try {
       let query = supabase.from("ViewUsers").select("*", { count: "exact" });
-      query.eq("meta_data->>user_type", "alumni");
+
+      if (userType === "alumni") {
+        query = query.eq("meta_data->>user_type", "alumni");
+      } else if (userType === "admin") {
+        query = query.eq("meta_data->>user_type", "admin");
+      } else if (userType === "agency") {
+        query = query.eq("meta_data->>user_type", "agency");
+      }
 
       const response: PostgrestResponse<any> = await query;
 
@@ -32,7 +39,7 @@ const useAlumni = (alumniId: string) => {
     } finally {
       setIsLoadingAlumni(false);
     }
-  }, [alumniId]);
+  }, [alumniId, userType]);
 
   useEffect(() => {
     fetchAndSubscribeUsers();

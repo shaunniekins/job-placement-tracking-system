@@ -18,8 +18,11 @@ import POEComponent from "../POEComponent";
 
 interface AlumniProfileModalProps {
   alumniId: string;
+  setAlumniId: (id: string) => void;
   openAlumniProfile: boolean;
   setOpenAlumniProfile: (isOpen: boolean) => void;
+  userType?: string | "alumni";
+  setUserType?: (userType: string) => void;
 }
 
 interface AlumniData {
@@ -31,6 +34,7 @@ interface AlumniData {
   middle_name: string;
   contact_number: string;
   address: string;
+
   birth_date: string;
   college: string;
   program: string;
@@ -41,12 +45,17 @@ interface AlumniData {
 
 const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   alumniId,
+  setAlumniId,
   openAlumniProfile,
   setOpenAlumniProfile,
+  userType = "alumni",
+  setUserType = () => {},
 }) => {
   const { gts, loadingGTS, errorGTS } = useGTS(alumniId);
-  const { alumniData, isLoadingAlumni, totalAlumniEntries } =
-    useAlumni(alumniId);
+  const { alumniData, isLoadingAlumni, totalAlumniEntries } = useAlumni(
+    alumniId,
+    userType
+  );
 
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
   const [cleanAlumniData, setCleanAlumniData] = useState<AlumniData | null>(
@@ -56,6 +65,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
 
   useEffect(() => {
     if (alumniData) {
+      // console.log("Alumni Data: ", alumniData);
       const cleanedData = alumniData.map((alumni: any) => {
         const { meta_data, ...rest } = alumni;
 
@@ -72,10 +82,16 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   return (
     <>
       <Modal
-        size="2xl"
+        // size="2xl"
         isOpen={openAlumniProfile}
         onOpenChange={setOpenAlumniProfile}
-        className="overflow-hidden"
+        onClose={() => {
+          setAlumniId("");
+          setUserType("");
+          setOpenGPTSModal(false);
+          setOpenAlumniProfile(false);
+        }}
+        className="overflow-hidden size-full lg:size-fit"
       >
         <ModalContent>
           {(onClose) => (
@@ -92,23 +108,47 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
                         className="w-32 h-32 rounded-full object-cover"
                       />
                     </div>
-                    <Input
-                      label="Currenly Employed"
-                      name="is_currently_employed"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.is_currently_employed.toUpperCase()}
-                      readOnly
-                    />
+                    {userType === "agency" && (
+                      <>
+                        <Input
+                          label="Company Name"
+                          name="company_name"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.company_name}
+                          readOnly
+                        />
+                        <Input
+                          label="Company Type"
+                          name="company_type"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.company_type}
+                          readOnly
+                        />
+                      </>
+                    )}
+                    {userType === "alumni" && (
+                      <>
+                        <Input
+                          label="Currenly Employed"
+                          name="is_currently_employed"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.is_currently_employed?.toUpperCase()}
+                          readOnly
+                        />
 
-                    <Input
-                      label="Job Aligned with Course"
-                      name="is_course_aligned_with_job"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.is_course_aligned_with_job.toUpperCase()}
-                      readOnly
-                    />
+                        <Input
+                          label="Job Aligned with Course"
+                          name="is_course_aligned_with_job"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.is_course_aligned_with_job?.toUpperCase()}
+                          readOnly
+                        />
+                      </>
+                    )}
 
                     <hr className="col-span-3" />
                     <Input
@@ -153,51 +193,86 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
                       readOnly
                     />
 
-                    <Input
-                      label="Birth Date"
-                      name="birth_date"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.birth_date}
-                      readOnly
-                    />
+                    {userType === "admin" && (
+                      <Input
+                        label="Gender"
+                        name="gender"
+                        color="success"
+                        variant="bordered"
+                        value={cleanAlumniData?.gender}
+                        readOnly
+                      />
+                    )}
 
-                    <Input
-                      label="College"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.college.toLocaleUpperCase()}
-                      readOnly
-                    />
+                    {userType === "agency" && (
+                      <Input
+                        label="Valid ID"
+                        name="valid_id"
+                        color="success"
+                        variant="bordered"
+                        value={cleanAlumniData?.valid_id}
+                        readOnly
+                      />
+                    )}
 
-                    <Input
-                      label="Program"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.program.toLocaleUpperCase()}
-                      readOnly
-                    />
+                    {userType === "alumni" && (
+                      <>
+                        <Input
+                          label="Birth Date"
+                          name="birth_date"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.birth_date}
+                          readOnly
+                        />
+                      </>
+                    )}
+                    {(userType === "alumni" || userType === "admin") && (
+                      <Input
+                        label="College"
+                        color="success"
+                        variant="bordered"
+                        value={cleanAlumniData?.college?.toLocaleUpperCase()}
+                        readOnly
+                      />
+                    )}
 
-                    <Input
-                      label="Scholarship"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.scholarship.toLocaleUpperCase()}
-                      readOnly
-                    />
-                    <Input
-                      label="Batch Year"
-                      name="batch_year"
-                      color="success"
-                      variant="bordered"
-                      value={cleanAlumniData?.batch_year}
-                      readOnly
-                    />
+                    {userType === "alumni" && (
+                      <>
+                        <Input
+                          label="Program"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.program?.toLocaleUpperCase()}
+                          readOnly
+                        />
+
+                        <Input
+                          label="Scholarship"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.scholarship?.toLocaleUpperCase()}
+                          readOnly
+                        />
+                        <Input
+                          label="Batch Year"
+                          name="batch_year"
+                          color="success"
+                          variant="bordered"
+                          value={cleanAlumniData?.batch_year}
+                          readOnly
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               </ModalBody>
               <ModalFooter className="flex justify-between gap-2">
-                <div className="flex gap-2">
+                <div
+                  className={`${
+                    userType !== "alumni" && "invisible"
+                  } flex gap-2`}
+                >
                   <Button
                     color="success"
                     className="text-white"
@@ -228,23 +303,27 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
         </ModalContent>
       </Modal>
 
-      <GTSComponent
-        userInfo={cleanAlumniData}
-        currentUserId={alumniId}
-        openGPTSModal={openGPTSModal}
-        setOpenGPTSModal={setOpenGPTSModal}
-        isReadOnly={true}
-      />
-      <POEComponent
-        userID={alumniId}
-        tempUserInfo={cleanAlumniData}
-        isPOEModalOpen={openPOEModal}
-        setIsPOEModalOpen={setOpenPOEModal}
-        reloadUser={() => {}}
-        POEFile={null}
-        setPOEFile={() => {}}
-        isReadOnly={true}
-      />
+      {userType === "alumni" && (
+        <>
+          <GTSComponent
+            userInfo={cleanAlumniData}
+            currentUserId={alumniId}
+            openGPTSModal={openGPTSModal}
+            setOpenGPTSModal={setOpenGPTSModal}
+            isReadOnly={true}
+          />
+          <POEComponent
+            userID={alumniId}
+            tempUserInfo={cleanAlumniData}
+            isPOEModalOpen={openPOEModal}
+            setIsPOEModalOpen={setOpenPOEModal}
+            reloadUser={() => {}}
+            POEFile={null}
+            setPOEFile={() => {}}
+            isReadOnly={true}
+          />
+        </>
+      )}
     </>
   );
 };

@@ -32,6 +32,7 @@ import { IoAdd, IoAddOutline } from "react-icons/io5";
 import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges } from "@/app/api/collegeAndProgramData";
+import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -45,6 +46,10 @@ const UserComponent = () => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [totalPages, setTotalPages] = useState(0);
+
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [currentUserType, setCurrentUserType] = useState("");
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -110,6 +115,9 @@ const UserComponent = () => {
     setCurrentColumns([]);
     setCurrentViewContent([]);
     setTotalPages(0);
+    setCurrentUserId("");
+    setCurrentUserType("");
+    setIsUserProfileOpen(false);
 
     if (currentView === "agency") {
       setCurrentColumns(agencyColumns);
@@ -142,6 +150,15 @@ const UserComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
+      <AlumniProfileModal
+        alumniId={currentUserId}
+        setAlumniId={setCurrentUserId}
+        openAlumniProfile={isUserProfileOpen}
+        setOpenAlumniProfile={setIsUserProfileOpen}
+        userType={currentUserType}
+        setUserType={setCurrentUserType}
+      />
+
       <Modal
         size="xl"
         isOpen={isAddNewAdminModalOpen}
@@ -470,7 +487,15 @@ const UserComponent = () => {
                   if (columnKey === "action") {
                     return (
                       <TableCell className="flex items-center justify-center gap-4">
-                        <Button size="sm" color="success" onClick={() => {}}>
+                        <Button
+                          size="sm"
+                          color="success"
+                          onClick={() => {
+                            setCurrentUserId(item.id);
+                            setCurrentUserType(item.meta_data.user_type);
+                            setIsUserProfileOpen(true);
+                          }}
+                        >
                           View
                         </Button>
                         <Button

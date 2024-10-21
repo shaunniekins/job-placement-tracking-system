@@ -24,8 +24,9 @@ import { supabaseAdmin } from "@/utils/supabase";
 import { FaCheck } from "react-icons/fa";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { IoCheckmark } from "react-icons/io5";
-import { updateJobPosting } from "@/app/api/jobPostingsIUD";
+import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import useJobPostings from "@/hooks/useJobPostings";
+import { MdDelete } from "react-icons/md";
 
 const ValidationComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -258,7 +259,7 @@ const ValidationComponent = () => {
             label="Status Filter"
             disallowEmptySelection={true}
             size="sm"
-            className="max-w-32" 
+            className="max-w-32"
             defaultSelectedKeys={["pending"]}
             selectedKeys={new Set([statusFilter])}
             onSelectionChange={(keys) => {
@@ -473,14 +474,34 @@ const ValidationComponent = () => {
                               </Button>
                             </>
                           ) : item.job_status === "approved" ? (
-                            <Button
-                              size="sm"
-                              isIconOnly
-                              color="success"
-                              isDisabled={true}
-                            >
-                              <IoMdCheckmark />
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                isIconOnly
+                                color="success"
+                                isDisabled={true}
+                              >
+                                <IoMdCheckmark />
+                              </Button>
+                              <Button
+                                size="sm"
+                                isIconOnly
+                                color="warning"
+                                onClick={async () => {
+                                  const confirmed = window.confirm(
+                                    "Are you sure you want to delete this job posting?"
+                                  );
+                                  if (confirmed) {
+                                    const response = await deleteJobPosting(
+                                      item.job_posting_id
+                                    );
+                                    response && fetchJobPostings();
+                                  }
+                                }}
+                              >
+                                <MdDelete />
+                              </Button>
+                            </>
                           ) : (
                             <Button
                               size="sm"

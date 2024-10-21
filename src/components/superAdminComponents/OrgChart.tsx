@@ -37,7 +37,7 @@ const OrgChartComponent = () => {
   const [isEditMode, setIsEditMode] = useState(false); // New state to track mode
 
   useEffect(() => {
-    if (user & user.user_metadata) {
+    if (user) {
       if (
         user.user_metadata.user_type === "admin" ||
         user.user_metadata.user_type === "alumni" ||
