@@ -53,10 +53,10 @@ const SidebarComponent = ({
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
-    { path: "/admin/monitor", label: "Monitor Chats", icon: <FaComments /> },
-    { path: "/admin/users", label: "Users", icon: <FaUsers /> },
-    { path: "/admin/settings", label: "Settings", icon: <FaCog /> },
-    { path: "/admin/report", label: "Report", icon: <FaChartBar /> },
+    { path: "/admin/alumni", label: "Alumni", icon: <FaUsers /> },
+    { path: "/admin/profile", label: "Profile", icon: <FaUser /> },
+    { path: "/admin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
+    { path: "/admin/calendar", label: "Calendar", icon: <FaCalendarAlt /> },
   ];
 
   const superAdminItems: MenuItem[] = [
@@ -90,7 +90,7 @@ const SidebarComponent = ({
     },
     { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
-    {path: "/superadmin/settings", label: "Settings", icon: <FaTools />},
+    { path: "/superadmin/settings", label: "Settings", icon: <FaTools /> },
   ];
 
   const agencyItems: MenuItem[] = [

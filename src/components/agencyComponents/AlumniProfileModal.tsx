@@ -16,7 +16,7 @@ import GTSComponent from "../GTS";
 import { useEffect, useState } from "react";
 import POEComponent from "../POEComponent";
 
-interface AlumniProfileProps {
+interface AlumniProfileModalProps {
   alumniId: string;
   openAlumniProfile: boolean;
   setOpenAlumniProfile: (isOpen: boolean) => void;
@@ -39,7 +39,7 @@ interface AlumniData {
   [key: string]: any; // To allow additional properties
 }
 
-const AlumniProfile: React.FC<AlumniProfileProps> = ({
+const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   alumniId,
   openAlumniProfile,
   setOpenAlumniProfile,
@@ -249,4 +249,4 @@ const AlumniProfile: React.FC<AlumniProfileProps> = ({
   );
 };
 
-export default AlumniProfile;
+export default AlumniProfileModal;

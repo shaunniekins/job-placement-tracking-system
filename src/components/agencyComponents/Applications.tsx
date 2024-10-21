@@ -16,7 +16,7 @@ import {
   TableCell,
 } from "@nextui-org/react";
 import { formatDate } from "@/utils/compUtils";
-import AlumniProfile from "./AlumniProfile";
+import AlumniProfileModal from "./AlumniProfileModal";
 import ApplicationStatusModalComponent from "../ApplicationStatusModal";
 
 const ApplicationsComponent = () => {
@@ -64,7 +64,7 @@ const ApplicationsComponent = () => {
 
   return (
     <>
-      <AlumniProfile
+      <AlumniProfileModal
         alumniId={currentAlumniId}
         openAlumniProfile={isAlumniProfileOpen}
         setOpenAlumniProfile={setIsAlumniProfileOpen}

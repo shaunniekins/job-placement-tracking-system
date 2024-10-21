@@ -121,7 +121,7 @@ const SigninComponent = ({ userType }: SigninComponentProps) => {
             }}
             className="absolute bottom-5"
           >
-            {userType !== "superadmin" && userType !== "administrator"
+            {userType !== "superadmin" && userType !== "admin"
               ? "Create New Account"
               : "Administrator"}
           </Button>

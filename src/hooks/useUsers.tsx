@@ -37,13 +37,13 @@ const useUsers = (
 
         if (userType === "admin" || userType === "alumni") {
           if (collegeFilter && collegeFilter !== "all") {
-            query = query.eq("meta_data->>college", collegeFilter);
+            query = query.eq(
+              "meta_data->>college",
+              collegeFilter.toLowerCase()
+            );
           }
 
-          if (
-            batchYearFilter &&
-            batchYearFilter !== "all"
-          ) {
+          if (batchYearFilter && batchYearFilter !== "all") {
             query = query.eq("meta_data->>batch_year", batchYearFilter);
           }
         }

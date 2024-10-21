@@ -48,9 +48,9 @@ export default function Home() {
 
               <div
                 className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "administrator" ? "border-[#008B47]" : ""
+                  selectedUserType === "admin" ? "border-[#008B47]" : ""
                 }`}
-                onClick={() => handleSelect("administrator")}
+                onClick={() => handleSelect("admin")}
               >
                 <p className="font-semibold">Administrator</p>
                 <p className="text-xs">Dean, ARO and Program Chair</p>

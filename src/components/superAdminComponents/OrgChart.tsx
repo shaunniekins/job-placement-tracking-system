@@ -27,7 +27,7 @@ interface Node {
 
 const OrgChartComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
-  const [userId, setUserId] = useState("");
+  const [userType, setUserType] = useState("");
   const { orgData, loadingOrgData } = useOrganization();
   const [data, setData] = useState<Node[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -37,8 +37,16 @@ const OrgChartComponent = () => {
   const [isEditMode, setIsEditMode] = useState(false); // New state to track mode
 
   useEffect(() => {
-    if (user) {
-      setUserId(user.id);
+    if (user & user.user_metadata) {
+      if (
+        user.user_metadata.user_type === "admin" ||
+        user.user_metadata.user_type === "alumni" ||
+        user.user_metadata.user_type === "agency"
+      ) {
+        setUserType(user.user_metadata.user_type);
+      } else {
+        setUserType("superadmin");
+      }
     }
   }, [user]);
 
@@ -128,6 +136,7 @@ const OrgChartComponent = () => {
                 setIsEditMode(true); // Set to edit mode
                 setModalOpen(true);
               }}
+              className={userType !== "superadmin" ? "invisible" : ""}
             >
               Edit
             </Button>
@@ -142,6 +151,7 @@ const OrgChartComponent = () => {
                 setIsEditMode(false);
                 setModalOpen(true);
               }}
+              className={userType !== "superadmin" ? "invisible" : ""}
             >
               Add
             </Button>
@@ -151,6 +161,7 @@ const OrgChartComponent = () => {
                 color="danger"
                 variant="flat"
                 onClick={() => deleteNode(node)}
+                className={userType !== "superadmin" ? "invisible" : ""}
               >
                 Delete
               </Button>

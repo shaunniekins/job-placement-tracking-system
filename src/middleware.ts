@@ -143,8 +143,8 @@ export async function middleware(request: NextRequest) {
       }
     }
     if (request.nextUrl.pathname.startsWith("/ident/confirmation")) {
-      if (user_type === "admin" && user_status === "approved") {
-        return NextResponse.redirect(new URL("/admin", request.url));
+      if (user_type === "admin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       } else if (user_type === "agency") {
         return NextResponse.redirect(new URL("/agency", request.url));
       } else if (user_type === "alumni") {
@@ -158,12 +158,12 @@ export async function middleware(request: NextRequest) {
 
     // Redirect users to their respective dashboards based on role
     if (
-      request.nextUrl.pathname.startsWith("/admin") &&
+      request.nextUrl.pathname === "/admin" &&
       (user_type === "admin" ||
         user_type === "agency" ||
         user_type === "alumni")
     ) {
-      return NextResponse.redirect(new URL(`/${user_type}`, request.url));
+      return NextResponse.redirect(new URL(`/admin/dashboard`, request.url));
     }
 
     // Redirect non-admins to / if trying to access /admin

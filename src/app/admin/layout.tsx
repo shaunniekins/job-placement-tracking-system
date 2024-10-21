@@ -5,7 +5,7 @@ import SidebarComponent from "@/components/Sidebar";
 import { Spinner } from "@nextui-org/react";
 import { Suspense, useState } from "react";
 
-export default function AgencySlugLayout({
+export default function AdminSlugLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
