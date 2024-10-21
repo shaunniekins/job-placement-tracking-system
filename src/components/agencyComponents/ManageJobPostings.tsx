@@ -313,6 +313,12 @@ const JobPostingDetails = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => {
+  const currentDate = new Date();
+  const applicationDeadline = new Date(job.application_deadline);
+
+  const isInactive =
+    job.job_status === "inactive" || applicationDeadline < currentDate;
+
   return (
     <Card>
       <CardHeader className="flex justify-between items-center pb-0">
@@ -372,8 +378,10 @@ const JobPostingDetails = ({
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <h2 className="font-bold text-lg">About the Job</h2>
-          <div className="h-56 overflow-y-auto">
-            <p className="p text-sm">{job.job_description}</p>
+          {/* <div className="h-56 overflow-y-auto"> */}
+          <div className="w-full text-justify">
+            {/* <p className="p text-sm">{job.job_description}</p> */}
+            <p className="text-sm text-ellipsis">{job.job_description}</p>
           </div>
         </div>
       </CardBody>
@@ -383,16 +391,16 @@ const JobPostingDetails = ({
           <span className="text-xs text-gray-500">Date Posted</span>
         </p>
         <Button
-          color={`${
-            job.job_status === "approved"
-              ? "success"
-              : job.job_status === "inactive"
+          color={
+            isInactive
               ? "danger"
+              : job.job_status === "approved"
+              ? "success"
               : "default"
-          }`}
+          }
           isDisabled
         >
-          {capitalizeFirstLetter(job.job_status)}
+          {isInactive ? "Inactive" : capitalizeFirstLetter(job.job_status)}
         </Button>
       </CardFooter>
     </Card>

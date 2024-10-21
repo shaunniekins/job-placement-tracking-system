@@ -79,7 +79,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
       >
         <ModalContent>
           {(onClose) => (
-            <ModalContent className="h-full w-full ">
+            <ModalContent className="h-full w-full overflow-hidden">
               <ModalHeader>Personal Details</ModalHeader>
               <ModalBody className="h-full w-full overflow-y-auto">
                 <div className="h-full w-full overflow-y-auto ">

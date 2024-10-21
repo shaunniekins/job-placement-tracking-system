@@ -23,11 +23,14 @@ const useActivities = (rowsPerPage: number, currentPage: number) => {
     setLoadingActivities(true);
     setErrorActivities(null);
 
+    const currentDate = new Date().toISOString();
+
     try {
       let query = supabase
         .from("Activities")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
+        .gt("activity_date", currentDate) // Only fetch future activities
         .range(offset, offset + rowsPerPage - 1);
 
       const response: PostgrestResponse<Activity> = await query;

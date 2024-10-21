@@ -6,6 +6,7 @@ import ProfileComponent from "@/components/Profile";
 import NotificationsComponent from "@/components/Notifications";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import AgencyDashboardComponent from "@/components/agencyComponents/Dashboard";
 
 export default function AgencySlugPage() {
   const pathname = usePathname();
@@ -13,7 +14,7 @@ export default function AgencySlugPage() {
 
   useEffect(() => {
     if (pathname.startsWith("/agency/dashboard")) {
-      setDisplay("Dashboard");
+      setDisplay(<AgencyDashboardComponent />);
     } else if (pathname.startsWith("/agency/managejobpostings")) {
       setDisplay(<ManageJobPostingsComponent />);
     } else if (pathname.startsWith("/agency/applicants")) {

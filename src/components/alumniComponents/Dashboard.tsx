@@ -220,6 +220,12 @@ const JobPostingDetails = ({
   const [visible, setVisible] = useState(false);
   const [isApplied, setIsApplied] = useState<boolean | null>(null);
 
+  const currentDate = new Date();
+  const applicationDeadline = new Date(job.application_deadline);
+
+  const isInactive =
+    job.job_status === "inactive" || applicationDeadline < currentDate;
+
   useEffect(() => {
     const fetchStatus = async () => {
       const status = await fetchApplicationStatus(job.job_posting_id);
@@ -346,12 +352,16 @@ const JobPostingDetails = ({
           </p>
           <Button
             size="sm"
-            color={isApplied ? "default" : "success"}
-            isDisabled={isApplied === null ? true : isApplied}
+            color={isApplied ? "default" : isInactive ? "danger" : "success"}
+            isDisabled={isApplied || isInactive}
             onPress={() => setVisible(true)}
-            className={`${!isApplied && "text-white"}`}
+            className={`${!isApplied && !isInactive && "text-white"}`}
           >
-            {isApplied ? "You already applied" : "Apply"}
+            {isApplied
+              ? "You already applied"
+              : isInactive
+              ? "Inactive"
+              : "Apply"}
           </Button>
         </CardFooter>
       </Card>
