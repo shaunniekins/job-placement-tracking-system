@@ -10,6 +10,7 @@ import UserComponent from "@/components/superAdminComponents/Users";
 import ValidationComponent from "@/components/superAdminComponents/Validation";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import JobInteractionComponent from "@/components/superAdminComponents/JobInteraction";
 
 export default function SuperAdminSlugPage() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export default function SuperAdminSlugPage() {
     if (pathname.startsWith("/superadmin/dashboard")) {
       setDisplay(<DashboardComponent />);
     } else if (pathname.startsWith("/superadmin/jobinteraction")) {
-      setDisplay("Job Interaction");
+      setDisplay(<JobInteractionComponent />);
     } else if (pathname.startsWith("/superadmin/validation")) {
       setDisplay(<ValidationComponent />);
     } else if (pathname.startsWith("/superadmin/notifications")) {

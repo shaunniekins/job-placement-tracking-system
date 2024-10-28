@@ -10,6 +10,8 @@ SELECT
     a.raw_user_meta_data->>'first_name' AS applicant_first_name,
     a.raw_user_meta_data->>'last_name' AS applicant_last_name,
     a.raw_user_meta_data->>'contact_number' AS applicant_mobile_number,
+    a.raw_user_meta_data->>'college' AS applicant_college,
+    a.raw_user_meta_data->>'program' AS applicant_program,
     
     -- Job Posting details
     jp.job_posting_id,

@@ -306,7 +306,7 @@ const SelectedCollegeView = ({
   );
 
   const columns = [
-    { key: "college", label: "College" },
+    // { key: "college", label: "College" },
     { key: "graduates", label: "Graduates" },
     { key: "scholarship_count", label: "Scholars" },
     { key: "employed_count", label: "Number of Employed" },
