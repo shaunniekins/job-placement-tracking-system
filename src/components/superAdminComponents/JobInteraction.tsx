@@ -1,9 +1,7 @@
 "use client";
 
-import useCollegeStats from "@/hooks/useCollegeStats";
 import {
   Button,
-  Image,
   Select,
   SelectItem,
   Spinner,
@@ -14,12 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import useJobInteractionDefault from "@/hooks/useJobInteractionSelectedProgram";
 import useCollegeStats2 from "@/hooks/useCollegeStats2";
-import { format } from "date-fns";
+
 import { formatDate } from "@/utils/compUtils";
 
 interface CollegeStatsItem {

@@ -2,6 +2,9 @@
 
 import useCollegeStats from "@/hooks/useCollegeStats";
 import {
+  Card,
+  CardHeader,
+  CardBody,
   getKeyValue,
   Image,
   Select,
@@ -13,6 +16,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  Button,
 } from "@nextui-org/react";
 import {
   BarChart,
@@ -23,10 +27,12 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { programs } from "@/app/api/collegeAndProgramData";
+import { FaChevronDown, FaChevronUp, FaFilePdf, FaPrint } from "react-icons/fa";
 
 const DashboardComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("");
@@ -55,6 +61,27 @@ const DashboardComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col">
+      <div
+        className={`${
+          selectedCollege && !selectedProgram && "invisible"
+        } -mt-20 mb-2 hidden lg:block`}
+      >
+        <div className="flex justify-end items-center space-x-4 p-4">
+          <div className="flex items-center">
+            <span className="inline-block w-3 h-3 bg-[#00DAB2] mr-2"></span>
+            <span>Employed / Scholar</span>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-block w-3 h-3 bg-[#14FA00] mr-2"></span>
+            <span>Aligned</span>
+          </div>
+
+          <div className="flex items-center">
+            <span className="inline-block w-3 h-3 bg-black mr-2"></span>
+            <span>Unaligned / Unemployed / Non-scholar</span>
+          </div>
+        </div>
+      </div>
       <div className="lg:h-44 flex justify-around gap-4 overflow-x-auto overflow-y-hidden lg:overflow-hidden">
         {colleges.map((college, index) => (
           <div
@@ -69,7 +96,7 @@ const DashboardComponent = () => {
             <Image
               src={college.src}
               alt={college.name}
-              className="w-fulllg:w-24 lg:h-24 cursor-pointer"
+              className="w-full lg:w-24 lg:h-24 cursor-pointer"
             />
             <span className="mt-2 text-center">{college.name}</span>
           </div>
@@ -87,6 +114,7 @@ const DashboardComponent = () => {
           <SelectedProgramView
             selectedCollege={selectedCollege}
             selectedProgram={selectedProgram}
+            setSelectedProgram={setSelectedProgram}
           />
         )}
       </div>
@@ -98,15 +126,33 @@ export default DashboardComponent;
 
 // BarChart component for displaying statistics
 const StatsBarChart = ({ data }: { data: any[] }) => {
+  const colors: any = {
+    Employed: "#00DAB2",
+    Unemployed: "#000000",
+    Scholar: "#00DAB2",
+    "Non-scholar": "#000000",
+    Aligned: "#14FA00",
+    "Non-aligned": "#000000",
+  };
+
+  // console.log("data", data);
+
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <Tooltip />
-        <Bar dataKey="value" fill="#8884d8" />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="h-48 lg:h-96">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <Tooltip />
+          {/* <Bar dataKey="value" fill="#8884d8" /> */}
+          <Bar dataKey="value">
+            {data.map((entry: any, index: any) => (
+              <Cell key={`cell-${index}`} fill={colors[entry.name]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -124,28 +170,163 @@ const DefaultView = () => {
     { key: "jobAlignment", label: "Job Alignment" },
   ];
 
-  // Function to transform college stats into bar chart data with updated labels
-  const formatChartData = (stat: any, metric1: string, metric2: string) => {
-    const labels: any = {
-      employed_count: "Employed",
-      scholarship_count: "Scholar",
-      course_aligned_count: "Aligned",
-    };
+  // useEffect(() => {
+  //   console.log("collegeStats", collegeStats);
+  // }, [collegeStats]);
 
-    const totalLabels: any = {
-      employed_count: "Unemployed",
-      scholarship_count: "Non-scholar",
-      course_aligned_count: "Non-aligned",
-    };
+  //////////////////////////// NEW CODE ////////////////////////////
 
-    return [
-      { name: labels[metric1], value: stat[metric1] || 0 },
-      {
-        name: totalLabels[metric1],
-        value: (stat.total_population || 0) - (stat[metric1] || 0),
-      },
-    ];
+  const generateCollegeData = () => ({
+    graduates: [
+      { category: "Employed", value: Math.floor(Math.random() * 30) + 60 },
+      { category: "Unemployed", value: Math.floor(Math.random() * 30) + 10 },
+    ],
+    scholars: [
+      { category: "Scholar", value: Math.floor(Math.random() * 30) + 40 },
+      { category: "Non-scholar", value: Math.floor(Math.random() * 30) + 30 },
+    ],
+    alignment: [
+      { category: "Aligned", value: Math.floor(Math.random() * 30) + 50 },
+      { category: "Non-aligned", value: Math.floor(Math.random() * 30) + 20 },
+    ],
+  });
+
+  const getCollegeData = (collegeKey: any, batchYear: any) => {
+    // Filter and aggregate data if batchYear is "all"
+    const collegeDataArray = collegeStats?.filter(
+      (stat) =>
+        stat.college === collegeKey &&
+        (batchYear === "all" || stat.batch_year === batchYear)
+    );
+
+    // Calculate totals by summing values across all matching entries
+    const totalPopulation =
+      collegeDataArray?.reduce((acc, curr) => acc + curr.total_population, 0) ??
+      0;
+    const employedCount =
+      collegeDataArray?.reduce((acc, curr) => acc + curr.employed_count, 0) ??
+      0;
+    const scholarshipCount =
+      collegeDataArray?.reduce(
+        (acc, curr) => acc + curr.scholarship_count,
+        0
+      ) ?? 0;
+    const courseAlignedCount =
+      collegeDataArray?.reduce(
+        (acc, curr) => acc + curr.course_aligned_count,
+        0
+      ) ?? 0;
+
+    return {
+      graduates: [
+        { category: "Employed", value: employedCount },
+        { category: "Unemployed", value: totalPopulation - employedCount },
+      ],
+      scholars: [
+        { category: "Scholar", value: scholarshipCount },
+        { category: "Non-scholar", value: totalPopulation - scholarshipCount },
+      ],
+      alignment: [
+        { category: "Aligned", value: courseAlignedCount },
+        {
+          category: "Non-aligned",
+          value: totalPopulation - courseAlignedCount,
+        },
+      ],
+    };
   };
+
+  const colors = {
+    Employed: "#00DAB2",
+    Unemployed: "#000000",
+    Scholar: "#00DAB2",
+    "Non-scholar": "#000000",
+    Aligned: "#14FA00",
+    "Non-aligned": "#000000",
+  };
+
+  const MetricChart = ({
+    title,
+    data,
+    colors,
+  }: {
+    title: any;
+    data: any;
+    colors: any;
+  }) => (
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <h1 className="text-sm font-medium">{title}</h1>
+      </CardHeader>
+      <CardBody>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <XAxis dataKey="category" fontSize={12} />
+              <YAxis fontSize={12} />
+              <Tooltip />
+              <Bar dataKey="value">
+                {data.map((entry: any, index: any) => (
+                  <Cell key={`cell-${index}`} fill={colors[entry.category]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </CardBody>
+    </Card>
+  );
+
+  const CollegeSection = ({
+    college,
+    batchYear,
+  }: {
+    college: any;
+    batchYear: any;
+  }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const data = getCollegeData(college.key, batchYear);
+
+    return (
+      <Card className="w-full mb-6">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
+            {/* <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+            </button> */}
+          </div>
+        </CardHeader>
+        {isExpanded && (
+          <CardBody>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <MetricChart
+                // title="Graduate Employment Status"
+                title="Graduates"
+                data={data.graduates}
+                colors={colors}
+              />
+              <MetricChart
+                title="Scholar Distribution"
+                data={data.scholars}
+                colors={colors}
+              />
+              <MetricChart
+                title="Job Alignment"
+                data={data.alignment}
+                colors={colors}
+              />
+            </div>
+          </CardBody>
+        )}
+      </Card>
+    );
+  };
+
+  //////////////////////////// NEW CODE ////////////////////////////
 
   const colleges = [
     { key: "ca", name: "CA" },
@@ -186,104 +367,22 @@ const DefaultView = () => {
             <SelectItem key={item.key}>{item.label}</SelectItem>
           ))}
         </Select>
+        <div className="flex gap-2">
+          <Button endContent={<FaFilePdf />}>Download as PDF</Button>
+          <Button endContent={<FaPrint />}>Print</Button>
+        </div>
       </div>
-      <div className="flex h-full w-full overflow-y-auto">
-        <Table
-          fullWidth
-          layout="auto"
-          isHeaderSticky={true}
-          aria-label="College Stats Table"
-          classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
-          }}
-          className="h-full w-full flex items-center justify-center"
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn
-                key={column.key}
-                className="text-center whitespace-nowrap flex-nowrap"
-              >
-                {column.label}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody
-            items={colleges}
-            emptyContent={"No data to display."}
-            loadingContent={<Spinner color="success" />}
-          >
-            {(item) => (
-              <TableRow key={item.key} className="text-center w-full">
-                {(columnKey) => {
-                  const stat = (collegeStats ?? []).find(
-                    (stat) => stat.college === item.key
-                  ) || {
-                    college: item.key,
-                    employed_count: 0,
-                    scholarship_count: 0,
-                    course_aligned_count: 0,
-                    total_population: 0,
-                  };
 
-                  if (columnKey === "graduates") {
-                    return (
-                      <TableCell className="w-[33.3%] text-center">
-                        <h1 className="uppercase">{stat.college}</h1>
-
-                        <StatsBarChart
-                          data={formatChartData(
-                            stat,
-                            "employed_count",
-                            "total_population"
-                          )}
-                        />
-                      </TableCell>
-                    );
-                  }
-
-                  if (columnKey === "scholars") {
-                    return (
-                      <TableCell className="w-[33.3%] text-center">
-                        <h1 className="uppercase">{stat.college}</h1>
-
-                        <StatsBarChart
-                          data={formatChartData(
-                            stat,
-                            "scholarship_count",
-                            "total_population"
-                          )}
-                        />
-                      </TableCell>
-                    );
-                  }
-
-                  if (columnKey === "jobAlignment") {
-                    return (
-                      <TableCell className="w-[33.3%] text-center">
-                        <h1 className="uppercase">{stat.college}</h1>
-
-                        <StatsBarChart
-                          data={formatChartData(
-                            stat,
-                            "course_aligned_count",
-                            "total_population"
-                          )}
-                        />
-                      </TableCell>
-                    );
-                  }
-
-                  return (
-                    <TableCell className="text-center">
-                      {item[columnKey as keyof typeof item]}
-                    </TableCell>
-                  );
-                }}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className="h-full w-full flex overflow-y-auto">
+        <div className="h-fit w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+          {colleges.map((college) => (
+            <CollegeSection
+              key={college.key}
+              college={college}
+              batchYear={batchYearFilter}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -306,7 +405,6 @@ const SelectedCollegeView = ({
   );
 
   const columns = [
-    // { key: "college", label: "College" },
     { key: "graduates", label: "Graduates" },
     { key: "scholarship_count", label: "Scholars" },
     { key: "employed_count", label: "Number of Employed" },
@@ -321,18 +419,63 @@ const SelectedCollegeView = ({
 
   const filteredPrograms = getProgramsByCollege(selectedCollege.toLowerCase());
 
+  // Format the data for the table
+  const formatTableData = useCallback(() => {
+    if (!collegeStats || !filteredPrograms) return [];
+
+    return filteredPrograms.map((program) => {
+      // Filter stats for this program
+      const programStats = collegeStats.filter(
+        (stat) => stat.program.toLowerCase() === program.key.toLowerCase()
+      );
+
+      // Calculate totals for the program
+      const totalPopulation = programStats.reduce(
+        (sum, stat) => sum + stat.total_population,
+        0
+      );
+      const totalScholarship = programStats.reduce(
+        (sum, stat) => sum + stat.scholarship_count,
+        0
+      );
+      const totalEmployed = programStats.reduce(
+        (sum, stat) => sum + stat.employed_count,
+        0
+      );
+
+      return {
+        id: program.key,
+        graduates: (
+          <div
+            className="cursor-pointer hover:text-green-600"
+            onClick={() => {
+              if (totalPopulation === 0) {
+                alert("No data to show");
+              } else {
+                setSelectedProgram(program.key);
+              }
+            }}
+          >
+            {program.label}
+            {/* ({totalPopulation}) */}
+          </div>
+        ),
+        scholarship_count: totalScholarship,
+        employed_count: totalEmployed,
+      };
+    });
+  }, [collegeStats, filteredPrograms, setSelectedProgram]);
+
   useEffect(() => {
-    // Transform the batchYears data
     const formattedData = batchYears.map((item: any) => ({
       key: item.batch_year.toString(),
       label: item.batch_year.toString(),
     }));
-
-    // Append the "all" option
     formattedData.unshift({ key: "all", label: "All" });
-
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
+
+  const tableData = formatTableData();
 
   return (
     <div className="h-full w-full flex flex-col gap-3">
@@ -368,53 +511,25 @@ const SelectedCollegeView = ({
             {(column) => (
               <TableColumn
                 key={column.key}
-                className="text-center whitespace-nowrap flex-nowrap"
+                className="bg-[#008B47] text-white whitespace-nowrap text-center flex-nowrap"
               >
                 {column.label}
               </TableColumn>
             )}
           </TableHeader>
           <TableBody
-            items={filteredPrograms}
+            items={tableData}
             emptyContent="No data to display."
+            isLoading={loadingStats}
             loadingContent={<Spinner color="success" />}
           >
             {(item) => (
-              <TableRow key={item.key} className="text-center w-full">
-                {(columnKey) => {
-                  const stat = (collegeStats ?? []).find(
-                    (stat) =>
-                      stat.program.toLowerCase() === item.key.toLowerCase() &&
-                      stat.college.toLowerCase() ===
-                        selectedCollege.toLowerCase()
-                  );
-
-                  const displayStat = stat || {
-                    college: selectedCollege,
-                    program: item.key,
-                    employed_count: 0,
-                    scholarship_count: 0,
-                    course_aligned_count: 0,
-                    total_population: 0,
-                  };
-
-                  if (columnKey === "graduates") {
-                    return (
-                      <TableCell
-                        className="text-center cursor-pointer"
-                        onClick={() => setSelectedProgram(item.key)}
-                      >
-                        <h1 className="uppercase">{displayStat.program}</h1>
-                      </TableCell>
-                    );
-                  }
-
-                  return (
-                    <TableCell className="text-center uppercase">
-                      {displayStat[columnKey as keyof typeof displayStat]}
-                    </TableCell>
-                  );
-                }}
+              <TableRow key={item.id}>
+                {(columnKey) => (
+                  <TableCell className="text-center">
+                    {item[columnKey as keyof typeof item]}
+                  </TableCell>
+                )}
               </TableRow>
             )}
           </TableBody>
@@ -428,9 +543,11 @@ const SelectedCollegeView = ({
 const SelectedProgramView = ({
   selectedCollege,
   selectedProgram,
+  setSelectedProgram,
 }: {
   selectedCollege: string;
   selectedProgram: string;
+  setSelectedProgram: (program: string) => void;
 }) => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
@@ -448,15 +565,11 @@ const SelectedProgramView = ({
   ];
 
   useEffect(() => {
-    // Transform the batchYears data
     const formattedData = batchYears.map((item: any) => ({
       key: item.batch_year.toString(),
       label: item.batch_year.toString(),
     }));
-
-    // Append the "all" option
     formattedData.unshift({ key: "all", label: "All" });
-
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
 
@@ -482,23 +595,77 @@ const SelectedProgramView = ({
     ];
   };
 
+  // New function to merge stats when "all" is selected
+  const getMergedStats = () => {
+    if (!collegeStats || collegeStats.length === 0) return [];
+
+    if (batchYearFilter !== "all") return collegeStats;
+
+    // Initialize merged stats with zeros
+    const mergedStats = {
+      college: collegeStats[0].college,
+      program: collegeStats[0].program,
+      batch_year: 0, // This won't matter for merged view
+      total_population: 0,
+      employed_count: 0,
+      course_aligned_count: 0,
+      scholarship_count: 0,
+    };
+
+    // Sum up all the stats
+    collegeStats.forEach((stat) => {
+      mergedStats.total_population += stat.total_population;
+      mergedStats.employed_count += stat.employed_count;
+      mergedStats.course_aligned_count += stat.course_aligned_count;
+      mergedStats.scholarship_count += stat.scholarship_count;
+    });
+
+    return [mergedStats];
+  };
+
+  const processedStats = getMergedStats();
+
+  const colors = {
+    Employed: "#00DAB2",
+    Unemployed: "#000000",
+    Scholar: "#00DAB2",
+    "Non-scholar": "#000000",
+    Aligned: "#14FA00",
+    "Non-aligned": "#000000",
+  };
+
   return (
     <div className="h-full w-full flex flex-col gap-3">
-      <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-between gap-3">
-        <Select
-          items={batchYearFormatted}
-          label="Year"
-          disallowEmptySelection={true}
-          size="sm"
-          className="max-w-32"
-          defaultSelectedKeys={["all"]}
-          value={batchYearFilter}
-          onChange={(e) => setBatchYearFilter(e.target.value)}
-        >
-          {batchYearFormatted.map((item) => (
-            <SelectItem key={item.key}>{item.label}</SelectItem>
-          ))}
-        </Select>
+      <div className="w-full grid grid-cols-1 place-items-center lg:flex lg:justify-between gap-3">
+        <div className="flex gap-3 w-full justify-center lg:justify-start">
+          <Select
+            items={batchYearFormatted}
+            label="Year"
+            disallowEmptySelection={true}
+            size="sm"
+            className="max-w-32"
+            defaultSelectedKeys={["all"]}
+            value={batchYearFilter}
+            onChange={(e) => setBatchYearFilter(e.target.value)}
+          >
+            {batchYearFormatted.map((item) => (
+              <SelectItem key={item.key}>{item.label}</SelectItem>
+            ))}
+          </Select>
+          <Button
+            color="success"
+            size="lg"
+            className={`${!selectedProgram && "invisible"} text-white`}
+            onPress={() => setSelectedProgram("")}
+          >
+            {selectedProgram.toUpperCase()}
+          </Button>
+        </div>
+
+        <div className="flex gap-2">
+          <Button endContent={<FaFilePdf />}>Download as PDF</Button>
+          <Button endContent={<FaPrint />}>Print</Button>
+        </div>
       </div>
 
       <div className="flex h-full w-full overflow-y-auto">
@@ -516,14 +683,14 @@ const SelectedProgramView = ({
             {(column) => (
               <TableColumn
                 key={column.key}
-                className="text-center whitespace-nowrap flex-nowrap"
+                className="bg-[#008B47] text-white whitespace-nowrap text-center flex-nowrap"
               >
                 {column.label}
               </TableColumn>
             )}
           </TableHeader>
           <TableBody>
-            {(collegeStats ?? []).map((stat, index) => (
+            {processedStats.map((stat, index) => (
               <TableRow key={index}>
                 <TableCell>
                   <StatsBarChart
