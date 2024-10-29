@@ -71,12 +71,13 @@ export const markNotificationAsSeen = async (
   }
 };
 
-export const markAllNotificationsAsSeen = async () => {
+export const markAllNotificationsAsSeen = async (receiver_id: string) => {
   try {
     const { error } = await supabase
       .from("Notifications")
       .update({ seen: true })
-      .eq("seen", false);
+      .eq("seen", false)
+      .eq("receiver_id", receiver_id);
 
     if (error) {
       throw error;

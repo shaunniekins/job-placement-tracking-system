@@ -61,7 +61,7 @@ const NotificationsComponent = () => {
         <Button
           variant="flat"
           startContent={<HiOutlineMailOpen />}
-          onClick={async () => await markAllNotificationsAsSeen()}
+          onClick={async () => await markAllNotificationsAsSeen(userId)}
         >
           Mark all as read
         </Button>
