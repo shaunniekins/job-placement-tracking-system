@@ -14,10 +14,15 @@ import {
   TableColumn,
   TableCell,
 } from "@nextui-org/react";
+import { HiOutlineMail, HiOutlineMailOpen } from "react-icons/hi";
 import { formatDateSuffix } from "@/utils/compUtils";
 import useNotifications from "@/hooks/useNotifications";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { markNotificationAsSeen } from "@/app/api/notificationsIUD";
+import {
+  markAllNotificationsAsSeen,
+  markNotificationAsSeen,
+} from "@/app/api/notificationsIUD";
+import { MdEmail } from "react-icons/md";
 
 const NotificationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -38,7 +43,7 @@ const NotificationsComponent = () => {
 
   const columns = [
     { key: "message", label: "Message" },
-    { key: "created_at", label: "Date" },
+    // { key: "created_at", label: "Date" },
     { key: "seen", label: "Seen Status" },
   ];
 
@@ -52,7 +57,14 @@ const NotificationsComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
-      <div className="flex justify-end items-center">
+      <div className="flex justify-between items-center">
+        <Button
+          variant="flat"
+          startContent={<HiOutlineMailOpen />}
+          onClick={async () => await markAllNotificationsAsSeen()}
+        >
+          Mark all as read
+        </Button>
         <Pagination
           isCompact
           showControls
@@ -94,32 +106,37 @@ const NotificationsComponent = () => {
             {(item) => (
               <TableRow
                 key={item.notification_id}
-                className="text-center hover:bg-green-100"
+                className={`${
+                  !item.seen ? "bg-gray-200" : ""
+                } hover:border-3 border-none hover:border-gray-600 hover:shadow-sm text-center`}
               >
                 {(columnKey) => {
                   if (columnKey === "message") {
                     return (
                       <TableCell
-                        className={`text-center ${
-                          !item.seen && "text-purple-800"
+                        className={`w-full text-center lg:text-start ${
+                          !item.seen && "text-red-800 font-semibold"
                         }`}
                       >
-                        {item.message}
+                        <div className="text-gray-500 text-xs">
+                          {formatDateSuffix(item.created_at)}
+                        </div>
+                        <div>{item.message}</div>
                       </TableCell>
                     );
                   }
 
-                  if (columnKey === "created_at") {
-                    return (
-                      <TableCell className="text-center text-sm">
-                        {formatDateSuffix(item.created_at)}
-                      </TableCell>
-                    );
-                  }
+                  // if (columnKey === "created_at") {
+                  //   return (
+                  //     <TableCell className="text-center text-sm">
+                  //       {formatDateSuffix(item.created_at)}
+                  //     </TableCell>
+                  //   );
+                  // }
 
                   if (columnKey === "seen") {
                     return (
-                      <TableCell className="flex m-0 justify-center items-center lg:w-36">
+                      <TableCell className="flex m-0 justify-center items-center">
                         <Button
                           isIconOnly
                           onPress={() =>
@@ -129,7 +146,11 @@ const NotificationsComponent = () => {
                             )
                           }
                         >
-                          {item.seen ? <FaEye /> : <FaEyeSlash />}
+                          {item.seen ? (
+                            <HiOutlineMail />
+                          ) : (
+                            <HiOutlineMailOpen />
+                          )}
                         </Button>
                       </TableCell>
                     );

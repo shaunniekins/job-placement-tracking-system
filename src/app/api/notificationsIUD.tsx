@@ -71,6 +71,21 @@ export const markNotificationAsSeen = async (
   }
 };
 
+export const markAllNotificationsAsSeen = async () => {
+  try {
+    const { error } = await supabase
+      .from("Notifications")
+      .update({ seen: true })
+      .eq("seen", false);
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error("Error marking all notifications as seen:", err);
+  }
+};
+
 // export const markNotificationsAsSeen = async (userId: string) => {
 //   try {
 //     if (!userId) return;
