@@ -29,10 +29,14 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { programs } from "@/app/api/collegeAndProgramData";
 import { FaChevronDown, FaChevronUp, FaFilePdf, FaPrint } from "react-icons/fa";
+import { useReactToPrint } from "react-to-print";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 const DashboardComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("");
@@ -176,21 +180,6 @@ const DefaultView = () => {
 
   //////////////////////////// NEW CODE ////////////////////////////
 
-  const generateCollegeData = () => ({
-    graduates: [
-      { category: "Employed", value: Math.floor(Math.random() * 30) + 60 },
-      { category: "Unemployed", value: Math.floor(Math.random() * 30) + 10 },
-    ],
-    scholars: [
-      { category: "Scholar", value: Math.floor(Math.random() * 30) + 40 },
-      { category: "Non-scholar", value: Math.floor(Math.random() * 30) + 30 },
-    ],
-    alignment: [
-      { category: "Aligned", value: Math.floor(Math.random() * 30) + 50 },
-      { category: "Non-aligned", value: Math.floor(Math.random() * 30) + 20 },
-    ],
-  });
-
   const getCollegeData = (collegeKey: any, batchYear: any) => {
     // Filter and aggregate data if batchYear is "all"
     const collegeDataArray = collegeStats?.filter(
@@ -289,15 +278,18 @@ const DefaultView = () => {
 
     return (
       <Card className="w-full mb-6">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
+        <CardHeader className="w-full pb-2">
+          <div
+            className="w-full flex justify-between items-center"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
             <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
-            {/* <button
-              onClick={() => setIsExpanded(!isExpanded)}
+            <button
+              // onClick={() => setIsExpanded(!isExpanded)}
               className="p-1 hover:bg-gray-100 rounded"
             >
               {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-            </button> */}
+            </button>
           </div>
         </CardHeader>
         {isExpanded && (
@@ -350,6 +342,34 @@ const DefaultView = () => {
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
 
+  const generatePDF = () => {
+    const doc = new jsPDF("p", "mm", "a4");
+    doc.setFontSize(16);
+    doc.text("Data by each College", 105, 20, { align: "center" });
+
+    colleges.forEach((college, index) => {
+      const data = getCollegeData(college.key, batchYearFilter);
+      doc.setFontSize(14);
+      doc.text(`${college.name} Statistics`, 15, 30 + index * 60);
+
+      autoTable(doc, {
+        startY: 35 + index * 60,
+        head: [["Category", "Value"]],
+        body: [
+          ...data.graduates.map((item) => [item.category, item.value]),
+          ...data.scholars.map((item) => [item.category, item.value]),
+          ...data.alignment.map((item) => [item.category, item.value]),
+        ],
+      });
+    });
+
+    doc.save("college_data.pdf");
+  };
+
+  const printPage = () => {
+    window.print();
+  };
+
   return (
     <div className="h-full w-full flex flex-col gap-3 pb-[6.3rem]">
       <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-between gap-3">
@@ -368,13 +388,24 @@ const DefaultView = () => {
           ))}
         </Select>
         <div className="flex gap-2">
-          <Button endContent={<FaFilePdf />}>Download as PDF</Button>
-          <Button endContent={<FaPrint />}>Print</Button>
+          <Button
+            endContent={<FaFilePdf />}
+            // onClick={generatePDF}
+          >
+            Download as PDF
+          </Button>
+          <Button
+            endContent={<FaPrint />}
+            // onClick={printPage}
+          >
+            Print
+          </Button>
         </div>
       </div>
 
       <div className="h-full w-full flex overflow-y-auto">
-        <div className="h-fit w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* lg:grid-cols-2 gap-6 */}
+        <div className="h-fit w-full grid grid-cols-1">
           {colleges.map((college) => (
             <CollegeSection
               key={college.key}
