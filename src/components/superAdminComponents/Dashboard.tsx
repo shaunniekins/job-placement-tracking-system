@@ -30,12 +30,8 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { programs } from "@/app/api/collegeAndProgramData";
-import { FaChevronDown, FaChevronUp, FaFilePdf, FaPrint } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPrint } from "react-icons/fa";
 import { useReactToPrint } from "react-to-print";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import html2pdf from "html2pdf.js";
-import ReactPDF from "@react-pdf/renderer";
 
 const DashboardComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("");
@@ -173,25 +169,6 @@ const DefaultView = () => {
 
   const handlePrintWrapper = (e: any) => {
     handlePrint();
-  };
-
-  const handleExportPDF = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: "Data Graphs",
-    copyShadowRoots: true,
-    pageStyle:
-      "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
-    print: async (printIframe: HTMLIFrameElement) => {
-      const document = printIframe.contentDocument;
-      if (document) {
-        const html = document.getElementsByTagName("html")[0];
-        await html2pdf().from(html).save();
-      }
-    },
-  });
-
-  const handleExportPDFWrapper = (e: any) => {
-    handleExportPDF();
   };
 
   const getCollegeData = (collegeKey: any, batchYear: any) => {
@@ -372,32 +349,22 @@ const DefaultView = () => {
             <SelectItem key={item.key}>{item.label}</SelectItem>
           ))}
         </Select>
-        <div className="flex gap-2">
-          <Button
-            color="success"
-            className="text-white"
-            endContent={<FaFilePdf />}
-            onClick={handleExportPDFWrapper}
-          >
-            Download as PDF
-          </Button>
-          <Button
-            color="success"
-            className="text-white"
-            endContent={<FaPrint />}
-            onPress={handlePrintWrapper}
-          >
-            Print
-          </Button>
-        </div>
+        <Button
+          color="success"
+          className="text-white"
+          endContent={<FaPrint />}
+          onPress={handlePrintWrapper}
+        >
+          Export
+        </Button>
       </div>
 
       <div
         className="h-full w-full flex flex-col overflow-y-auto print-center"
         ref={printRef}
       >
-        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7">
-          STATS BY COLLEGES
+        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7 uppercase">
+          College Data Visualizations
         </div>
         {/* grid grid-cols-1 */}
         <div className="h-fit w-full flex flex-col">
@@ -692,31 +659,22 @@ const SelectedProgramView = ({
           </Button>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            color="success"
-            className="text-white"
-            endContent={<FaFilePdf />}
-          >
-            Download as PDF
-          </Button>
-          <Button
-            color="success"
-            className="text-white"
-            endContent={<FaPrint />}
-            onPress={handlePrintWrapper}
-          >
-            Print
-          </Button>
-        </div>
+        <Button
+          color="success"
+          className="text-white"
+          endContent={<FaPrint />}
+          onPress={handlePrintWrapper}
+        >
+          Export
+        </Button>
       </div>
 
       <div
         className="h-full w-full flex flex-col overflow-y-auto print-center"
         ref={printRef}
       >
-        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7">
-          STATS BY {selectedProgram.toUpperCase()}
+        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7 uppercase">
+          {selectedProgram} DATA VISUALIZATION
         </div>
         <Table
           fullWidth
