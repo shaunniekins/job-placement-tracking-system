@@ -5,7 +5,6 @@ import {
   Card,
   CardHeader,
   CardBody,
-  getKeyValue,
   Image,
   Select,
   SelectItem,
@@ -25,7 +24,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Cell,
 } from "recharts";
@@ -35,8 +33,9 @@ import { programs } from "@/app/api/collegeAndProgramData";
 import { FaChevronDown, FaChevronUp, FaFilePdf, FaPrint } from "react-icons/fa";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
+import html2pdf from "html2pdf.js";
+import ReactPDF from "@react-pdf/renderer";
 
 const DashboardComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("");
@@ -139,8 +138,6 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
     "Non-aligned": "#000000",
   };
 
-  // console.log("data", data);
-
   return (
     <div className="h-48 lg:h-96">
       <ResponsiveContainer width="100%" height="100%">
@@ -164,21 +161,38 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
 const DefaultView = () => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
-  const { batchYears, isBatchYearsLoading } = useBatchYears();
-  const { collegeStats, loadingStats, errorStats } =
-    useCollegeStats(batchYearFilter);
+  const { batchYears } = useBatchYears();
+  const { collegeStats } = useCollegeStats(batchYearFilter);
 
-  const columns = [
-    { key: "graduates", label: "Graduates" },
-    { key: "scholars", label: "Scholars" },
-    { key: "jobAlignment", label: "Job Alignment" },
-  ];
+  const printRef = useRef<HTMLDivElement>(null);
 
-  // useEffect(() => {
-  //   console.log("collegeStats", collegeStats);
-  // }, [collegeStats]);
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Data Graphs",
+  });
 
-  //////////////////////////// NEW CODE ////////////////////////////
+  const handlePrintWrapper = (e: any) => {
+    handlePrint();
+  };
+
+  const handleExportPDF = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Data Graphs",
+    copyShadowRoots: true,
+    pageStyle:
+      "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
+    print: async (printIframe: HTMLIFrameElement) => {
+      const document = printIframe.contentDocument;
+      if (document) {
+        const html = document.getElementsByTagName("html")[0];
+        await html2pdf().from(html).save();
+      }
+    },
+  });
+
+  const handleExportPDFWrapper = (e: any) => {
+    handleExportPDF();
+  };
 
   const getCollegeData = (collegeKey: any, batchYear: any) => {
     // Filter and aggregate data if batchYear is "all"
@@ -277,7 +291,7 @@ const DefaultView = () => {
     const data = getCollegeData(college.key, batchYear);
 
     return (
-      <Card className="w-full mb-6">
+      <Card className="w-full mb-6 print:break-inside-avoid">
         <CardHeader className="w-full pb-2">
           <div
             className="w-full flex justify-between items-center"
@@ -286,7 +300,7 @@ const DefaultView = () => {
             <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
             <button
               // onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 rounded print:hidden"
             >
               {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
             </button>
@@ -294,7 +308,7 @@ const DefaultView = () => {
         </CardHeader>
         {isExpanded && (
           <CardBody>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 print:grid-cols-3 gap-4">
               <MetricChart
                 // title="Graduate Employment Status"
                 title="Graduates"
@@ -318,8 +332,6 @@ const DefaultView = () => {
     );
   };
 
-  //////////////////////////// NEW CODE ////////////////////////////
-
   const colleges = [
     { key: "ca", name: "CA" },
     { key: "cas", name: "CAS" },
@@ -342,34 +354,6 @@ const DefaultView = () => {
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
 
-  const generatePDF = () => {
-    const doc = new jsPDF("p", "mm", "a4");
-    doc.setFontSize(16);
-    doc.text("Data by each College", 105, 20, { align: "center" });
-
-    colleges.forEach((college, index) => {
-      const data = getCollegeData(college.key, batchYearFilter);
-      doc.setFontSize(14);
-      doc.text(`${college.name} Statistics`, 15, 30 + index * 60);
-
-      autoTable(doc, {
-        startY: 35 + index * 60,
-        head: [["Category", "Value"]],
-        body: [
-          ...data.graduates.map((item) => [item.category, item.value]),
-          ...data.scholars.map((item) => [item.category, item.value]),
-          ...data.alignment.map((item) => [item.category, item.value]),
-        ],
-      });
-    });
-
-    doc.save("college_data.pdf");
-  };
-
-  const printPage = () => {
-    window.print();
-  };
-
   return (
     <div className="h-full w-full flex flex-col gap-3 pb-[6.3rem]">
       <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-between gap-3">
@@ -378,6 +362,7 @@ const DefaultView = () => {
           label="Year"
           disallowEmptySelection={true}
           size="sm"
+          color="success"
           className="max-w-32"
           defaultSelectedKeys={["all"]}
           value={batchYearFilter}
@@ -389,23 +374,33 @@ const DefaultView = () => {
         </Select>
         <div className="flex gap-2">
           <Button
+            color="success"
+            className="text-white"
             endContent={<FaFilePdf />}
-            // onClick={generatePDF}
+            onClick={handleExportPDFWrapper}
           >
             Download as PDF
           </Button>
           <Button
+            color="success"
+            className="text-white"
             endContent={<FaPrint />}
-            // onClick={printPage}
+            onPress={handlePrintWrapper}
           >
             Print
           </Button>
         </div>
       </div>
 
-      <div className="h-full w-full flex overflow-y-auto">
-        {/* lg:grid-cols-2 gap-6 */}
-        <div className="h-fit w-full grid grid-cols-1">
+      <div
+        className="h-full w-full flex flex-col overflow-y-auto print-center"
+        ref={printRef}
+      >
+        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7">
+          STATS BY COLLEGES
+        </div>
+        {/* grid grid-cols-1 */}
+        <div className="h-fit w-full flex flex-col">
           {colleges.map((college) => (
             <CollegeSection
               key={college.key}
@@ -516,6 +511,7 @@ const SelectedCollegeView = ({
           label="Year"
           disallowEmptySelection={true}
           size="sm"
+          color="success"
           className="max-w-32"
           defaultSelectedKeys={["all"]}
           value={batchYearFilter}
@@ -582,12 +578,23 @@ const SelectedProgramView = ({
 }) => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
-  const { batchYears, isBatchYearsLoading } = useBatchYears();
-  const { collegeStats, loadingStats, errorStats } = useCollegeStats(
+  const { batchYears } = useBatchYears();
+  const { collegeStats } = useCollegeStats(
     batchYearFilter,
     selectedCollege.toString().toLowerCase(),
     selectedProgram.toString().toLowerCase()
   );
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Data Graphs",
+  });
+
+  const handlePrintWrapper = (e: any) => {
+    handlePrint();
+  };
 
   const columns = [
     { key: "graduates", label: "Graduates" },
@@ -656,15 +663,6 @@ const SelectedProgramView = ({
 
   const processedStats = getMergedStats();
 
-  const colors = {
-    Employed: "#00DAB2",
-    Unemployed: "#000000",
-    Scholar: "#00DAB2",
-    "Non-scholar": "#000000",
-    Aligned: "#14FA00",
-    "Non-aligned": "#000000",
-  };
-
   return (
     <div className="h-full w-full flex flex-col gap-3">
       <div className="w-full grid grid-cols-1 place-items-center lg:flex lg:justify-between gap-3">
@@ -674,6 +672,7 @@ const SelectedProgramView = ({
             label="Year"
             disallowEmptySelection={true}
             size="sm"
+            color="success"
             className="max-w-32"
             defaultSelectedKeys={["all"]}
             value={batchYearFilter}
@@ -694,12 +693,31 @@ const SelectedProgramView = ({
         </div>
 
         <div className="flex gap-2">
-          <Button endContent={<FaFilePdf />}>Download as PDF</Button>
-          <Button endContent={<FaPrint />}>Print</Button>
+          <Button
+            color="success"
+            className="text-white"
+            endContent={<FaFilePdf />}
+          >
+            Download as PDF
+          </Button>
+          <Button
+            color="success"
+            className="text-white"
+            endContent={<FaPrint />}
+            onPress={handlePrintWrapper}
+          >
+            Print
+          </Button>
         </div>
       </div>
 
-      <div className="flex h-full w-full overflow-y-auto">
+      <div
+        className="h-full w-full flex flex-col overflow-y-auto print-center"
+        ref={printRef}
+      >
+        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7">
+          STATS BY {selectedProgram.toUpperCase()}
+        </div>
         <Table
           fullWidth
           layout="auto"
