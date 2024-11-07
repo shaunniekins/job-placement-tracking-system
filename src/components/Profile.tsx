@@ -13,6 +13,11 @@ import {
   PopoverContent,
   Select,
   SelectItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import { supabase, supabaseAdmin } from "@/utils/supabase";
 import { useHandleLogout } from "@/utils/authUtils";
@@ -35,6 +40,7 @@ import {
 import GTSComponent from "./GTS";
 import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
 import POEComponent from "./POEComponent";
+import { IoOptionsOutline } from "react-icons/io5";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -48,6 +54,8 @@ const ProfileComponent = () => {
 
   const [POEFile, setPOEFile] = useState<File | null>(null);
   const [isPOEModalOpen, setIsPOEModalOpen] = useState(false);
+
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
   // User info state
   const [userInfo, setUserInfo] = useState({
@@ -442,20 +450,98 @@ const ProfileComponent = () => {
         POEFile={POEFile}
         setPOEFile={setPOEFile}
       />
+      <Modal
+        size="xs"
+        isOpen={isOptionModalOpen}
+        onOpenChange={setIsOptionModalOpen}
+        onClose={() => {
+          setIsOptionModalOpen(false);
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Options</ModalHeader>
+              <ModalBody>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    startContent={<MdDeleteOutline />}
+                    color="danger"
+                    onClick={handleDeleteToggle}
+                  >
+                    Delete Account
+                  </Button>
+                  <Button
+                    startContent={
+                      isUserEditing ? <MdCancel /> : <MdModeEditOutline />
+                    }
+                    color="secondary"
+                    onClick={handleUserEditToggle}
+                  >
+                    {isUserEditing ? "Cancel Edit" : "Edit Info"}
+                  </Button>
+                  <Button
+                    startContent={<MdSave />}
+                    className={`${
+                      !isUserChanged && "hidden"
+                    } bg-[#008B47] capitalize text-white`}
+                    onClick={() => {
+                      if (isUserChanged) {
+                        handleUserSave();
+                      }
+                    }}
+                  >
+                    Save Info
+                  </Button>
+                  <Button
+                    startContent={<RiQuestionnaireLine />}
+                    className={`${
+                      currentUserType !== "alumni" && "hidden"
+                    } bg-[#008B47] text-white`}
+                    onClick={() => setOpenGPTSModal(true)}
+                  >
+                    GTS
+                  </Button>
+
+                  <Button
+                    startContent={<RiProfileLine />}
+                    color="primary"
+                    className={`${currentUserType !== "alumni" && "hidden"} `}
+                    onClick={() => setIsPOEModalOpen(true)}
+                  >
+                    Certificate of Employment
+                  </Button>
+                </div>
+              </ModalBody>
+              <ModalFooter className="flex justify-end gap-2">
+                <Button
+                  variant="flat"
+                  onClick={() => {
+                    setIsOptionModalOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-start lg:items-center lg:gap-4">
         <Button
-          startContent={<MdDeleteOutline />}
-          color="danger"
-          onClick={handleDeleteToggle}
-        >
-          Delete Account
-        </Button>
-        <Button
+          isIconOnly
+          startContent={<IoOptionsOutline size={23} />}
+          color="default"
+          onClick={() => setIsOptionModalOpen(true)}
+        />
+        {/* <Button
           startContent={isUserEditing ? <MdCancel /> : <MdModeEditOutline />}
           color="secondary"
+          className={`${!isUserEditing && "hidden"}`}
           onClick={handleUserEditToggle}
         >
-          {isUserEditing ? "Cancel" : `Edit ${currentUserType} Info`}
+          {isUserEditing ? "Cancel Edit" : "Edit Info"}
         </Button>
         <Button
           startContent={<MdSave />}
@@ -468,26 +554,8 @@ const ProfileComponent = () => {
             }
           }}
         >
-          {` Save ${currentUserType} Info`}
-        </Button>
-        <Button
-          startContent={<RiQuestionnaireLine />}
-          className={`${
-            currentUserType !== "alumni" && "hidden"
-          } bg-[#008B47] text-white`}
-          onClick={() => setOpenGPTSModal(true)}
-        >
-          GTS
-        </Button>
-
-        <Button
-          startContent={<RiProfileLine />}
-          color="primary"
-          className={`${currentUserType !== "alumni" && "hidden"} `}
-          onClick={() => setIsPOEModalOpen(true)}
-        >
-          POE
-        </Button>
+         Save Info
+        </Button> */}
       </div>
 
       <div

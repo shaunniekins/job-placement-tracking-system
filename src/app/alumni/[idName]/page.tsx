@@ -7,6 +7,7 @@ import NotificationsComponent from "@/components/Notifications";
 import CalendarComponent from "@/components/superAdminComponents/Calendar";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 
 export default function AlumniSlugPage() {
   const pathname = usePathname();
@@ -21,6 +22,8 @@ export default function AlumniSlugPage() {
       setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/alumni/profile")) {
       setDisplay(<ProfileComponent />);
+    } else if (pathname.startsWith("/alumni/orgchart")) {
+      setDisplay(<OrgChartComponent />);
       // } else if (pathname.startsWith("/alumni/settings")) {
       //   setDisplay("Settings");
     } else if (pathname.startsWith("/alumni/calendar")) {

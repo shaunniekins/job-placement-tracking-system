@@ -1,7 +1,6 @@
 "use client";
 
 import { RootState } from "@/app/reduxUtils/store";
-import useJobApplications from "@/hooks/useJobApplications";
 import { Key, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -28,11 +27,12 @@ import {
 import useUsers from "@/hooks/useUsers";
 import { supabaseAdmin } from "@/utils/supabase";
 import useBatchYears from "@/hooks/useBatchYears";
-import { IoAdd, IoAddOutline } from "react-icons/io5";
+import { IoAddOutline } from "react-icons/io5";
 import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
+import { MdDelete } from "react-icons/md";
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -50,6 +50,9 @@ const UserComponent = () => {
   const [currentUserId, setCurrentUserId] = useState("");
   const [currentUserType, setCurrentUserType] = useState("");
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -79,7 +82,7 @@ const UserComponent = () => {
     batchYearFilter
   );
 
-  const { batchYears, isBatchYearsLoading } = useBatchYears();
+  const { batchYears } = useBatchYears();
 
   useEffect(() => {
     // Transform the batchYears data
@@ -292,6 +295,51 @@ const UserComponent = () => {
           )}
         </ModalContent>
       </Modal>
+
+      <Modal
+        size="md"
+        isOpen={isUserModalOpen}
+        onOpenChange={setIsUserModalOpen}
+        onClose={() => {
+          setSelectedUserId("");
+          setIsUserModalOpen(false);
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Delete Confirmation</ModalHeader>
+              <ModalBody>
+                <h1>Are you sure you want to delete this user?</h1>
+              </ModalBody>
+              <ModalFooter className="flex justify-end gap-2">
+                <Button
+                  variant="flat"
+                  onClick={() => {
+                    setIsUserModalOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color="danger"
+                  variant="flat"
+                  onClick={async () => {
+                    if (!selectedUserId) return;
+
+                    const response = await supabaseAdmin.auth.admin.deleteUser(
+                      selectedUserId
+                    );
+                    response && fetchAndSubscribeUsers();
+                  }}
+                >
+                  Delete
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
       <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex gap-3">
           <Tabs
@@ -490,6 +538,7 @@ const UserComponent = () => {
                         <Button
                           size="sm"
                           color="success"
+                          startContent={<EyeFilledIcon />}
                           onClick={() => {
                             setCurrentUserId(item.id);
                             setCurrentUserType(item.meta_data.user_type);
@@ -501,16 +550,10 @@ const UserComponent = () => {
                         <Button
                           size="sm"
                           color="warning"
-                          onClick={async () => {
-                            const confirmed = window.confirm(
-                              "Are you sure you want to delete this user?"
-                            );
-                            if (confirmed) {
-                              await supabaseAdmin.auth.admin.deleteUser(
-                                item.id
-                              );
-                            }
-                            fetchAndSubscribeUsers();
+                          startContent={<MdDelete />}
+                          onClick={() => {
+                            setSelectedUserId(item.id);
+                            setIsUserModalOpen(true);
                           }}
                         >
                           Delete

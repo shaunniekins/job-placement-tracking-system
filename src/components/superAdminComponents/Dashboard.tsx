@@ -271,16 +271,20 @@ const DefaultView = () => {
       <Card className="w-full mb-6 print:break-inside-avoid">
         <CardHeader className="w-full pb-2">
           <div
-            className="w-full flex justify-between items-center"
+            className="w-full flex items-center gap-3"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
-            <button
-              // onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 hover:bg-gray-100 rounded print:hidden"
+            <Button
+              size="sm"
+              color="success"
+              isIconOnly
+              className="text-white rounded-full"
+              onClick={() => setIsExpanded(!isExpanded)}
+              // className="p-1 hover:bg-gray-100 rounded print:hidden"
             >
               {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-            </button>
+            </Button>
+            <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
           </div>
         </CardHeader>
         {isExpanded && (

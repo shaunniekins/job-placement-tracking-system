@@ -1,7 +1,6 @@
 "use client";
 
 import { RootState } from "@/app/reduxUtils/store";
-import useJobApplications from "@/hooks/useJobApplications";
 import { Key, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -18,12 +17,15 @@ import {
   Select,
   Tabs,
   Tab,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import useUsers from "@/hooks/useUsers";
 import { supabaseAdmin } from "@/utils/supabase";
-import { FaCheck } from "react-icons/fa";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import { IoCheckmark } from "react-icons/io5";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import useJobPostings from "@/hooks/useJobPostings";
 import { MdDelete } from "react-icons/md";
@@ -37,6 +39,9 @@ const ValidationComponent = () => {
   const [currenViewContent, setCurrentViewContent] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("pending");
   const [totalPages, setTotalPages] = useState(0);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [currentJobPostingId, setCurrentJobPostingId] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -217,6 +222,51 @@ const ValidationComponent = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
+      <Modal
+        size="md"
+        isOpen={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        onClose={() => {
+          setCurrentJobPostingId("");
+          setDeleteModalOpen(false);
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Delete Confirmation</ModalHeader>
+              <ModalBody>
+                <h1>Are you sure you want to delete this job posting?</h1>
+              </ModalBody>
+              <ModalFooter className="flex justify-end gap-2">
+                <Button
+                  variant="flat"
+                  onClick={() => {
+                    setDeleteModalOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color="danger"
+                  variant="flat"
+                  onClick={async () => {
+                    if (!currentJobPostingId) return;
+
+                    const response = await deleteJobPosting(
+                      currentJobPostingId
+                    );
+                    response && fetchJobPostings();
+                  }}
+                >
+                  Delete
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex gap-3">
           <Tabs
@@ -487,16 +537,9 @@ const ValidationComponent = () => {
                                 size="sm"
                                 isIconOnly
                                 color="warning"
-                                onClick={async () => {
-                                  const confirmed = window.confirm(
-                                    "Are you sure you want to delete this job posting?"
-                                  );
-                                  if (confirmed) {
-                                    const response = await deleteJobPosting(
-                                      item.job_posting_id
-                                    );
-                                    response && fetchJobPostings();
-                                  }
+                                onClick={() => {
+                                  setCurrentJobPostingId(item.job_posting_id);
+                                  setDeleteModalOpen(true);
                                 }}
                               >
                                 <MdDelete />

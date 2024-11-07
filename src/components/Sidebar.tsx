@@ -123,6 +123,7 @@ const SidebarComponent = ({
     { path: "/alumni/placement", label: "Placement", icon: <FaBriefcase /> },
     { path: "/alumni/notifications", label: "Notifications", icon: <FaBell /> },
     { path: "/alumni/profile", label: "Profile", icon: <FaUser /> },
+    { path: "/alumni/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     // { path: "/alumni/settings", label: "Settings", icon: <FaCog /> },
   ];
 
@@ -201,7 +202,7 @@ const SidebarComponent = ({
         className={`${
           userType === "superadmin"
             ? "hidden lg:flex"
-            : "flex lg:absolute lg:top-16 lg:left-1/2 lg:transform lg:-translate-x-1/2"
+            : "flex lg:absolute lg:top-10 lg:left-1/2 lg:transform lg:-translate-x-1/2"
         } items-center justify-center text-9xl`}
       >
         <div className="flex flex-col justify-center items-center gap-2">

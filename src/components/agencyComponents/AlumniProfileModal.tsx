@@ -82,7 +82,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   return (
     <>
       <Modal
-        // size="2xl"
+        size="xl"
         isOpen={openAlumniProfile}
         onOpenChange={setOpenAlumniProfile}
         onClose={() => {

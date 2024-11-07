@@ -77,6 +77,8 @@ const AlumniUserComponent = () => {
   const columns = [
     { key: "full_name", label: "Full Name" },
     { key: "employment_status", label: "Employment Status" },
+    { key: "job_alignment", label: "Job Alignment" },
+    { key: "scholarship", label: "Scholarship" },
   ];
 
   if (isLoadingUsers) {
@@ -199,6 +201,26 @@ const AlumniUserComponent = () => {
                         {item.meta_data.is_currently_employed === "yes"
                           ? "Employed"
                           : "Currently Unemployed"}
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "job_alignment") {
+                    return (
+                      <TableCell className="text-center uppercase">
+                        {!item.meta_data.is_course_aligned_with_job
+                          ? "N/A"
+                          : item.meta_data.is_course_aligned_with_job}
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "scholarship") {
+                    return (
+                      <TableCell className="text-center">
+                        {item.meta_data.scholarship === "n/a"
+                          ? "N/A"
+                          : item.meta_data.scholarship}
                       </TableCell>
                     );
                   }
