@@ -5,9 +5,11 @@ import {
   insertActivity,
   updateActivity,
 } from "@/app/api/activitiesIUD";
+import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
 import useActivities from "@/hooks/useActivities";
-import { capitalizeFirstLetter, formatDate } from "@/utils/compUtils";
+import useUsers from "@/hooks/useUsers";
+import { formatDate } from "@/utils/compUtils";
 import { parseDate } from "@internationalized/date";
 import {
   Button,
@@ -144,6 +146,14 @@ const ManageActivities = () => {
     try {
       if (modalType === "insert") {
         await insertActivity(formattedActivityForm);
+
+        // Loop through usersData and create a notification for each approved alumni user
+        const notifications = usersData.map((user: any) => ({
+          receiver_id: user.id,
+          message: `New activity posted: ${activityForm.activity_title}`,
+        }));
+
+        await Promise.all(notifications.map(insertNotification));
       } else if (modalType === "update" && selectedActivity) {
         await updateActivity(
           selectedActivity.activity_id,
@@ -155,6 +165,9 @@ const ManageActivities = () => {
       console.error("Error submitting activity:", error);
     }
   };
+
+  // limited to 1000 alumni users only
+  const { usersData } = useUsers(1000, 1, "alumni", "approved");
 
   if (loadingActivities) {
     return (

@@ -33,6 +33,7 @@ import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 import { MdDelete } from "react-icons/md";
+import { sendNotification } from "@/utils/compUtils";
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -53,6 +54,7 @@ const UserComponent = () => {
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -330,7 +332,25 @@ const UserComponent = () => {
                     const response = await supabaseAdmin.auth.admin.deleteUser(
                       selectedUserId
                     );
-                    response && fetchAndSubscribeUsers();
+                    if (response) {
+                      const sendEmailData = {
+                        email: selectedUserEmail,
+                        recipient_name: "",
+                        subject: "Account Status Update",
+                        message: `
+Greetings!
+
+We regret to inform you that your account has been deleted. You can no longer access your account.
+
+Thank you!
+
+Best regards,
+JPTS Team`,
+                      };
+
+                      await sendNotification(sendEmailData);
+                      fetchAndSubscribeUsers();
+                    }
                   }}
                 >
                   Delete
@@ -553,6 +573,7 @@ const UserComponent = () => {
                           startContent={<MdDelete />}
                           onClick={() => {
                             setSelectedUserId(item.id);
+                            setSelectedUserEmail(item.email);
                             setIsUserModalOpen(true);
                           }}
                         >

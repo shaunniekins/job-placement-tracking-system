@@ -12,12 +12,11 @@ import {
   Select,
   SelectItem,
 } from "@nextui-org/react";
-import { supabase } from "@/utils/supabase";
 import useApplicationStatus from "@/hooks/useApplicationStatus";
 import { updateApplicationStatus } from "@/app/api/applicationStatusIUD";
-import { current } from "@reduxjs/toolkit";
 import { updateJobApplication } from "@/app/api/jobApplicationsIUD";
 import { insertNotification } from "@/app/api/notificationsIUD";
+import { sendNotification } from "@/utils/compUtils";
 
 interface ApplicationStatusModalProps {
   isOpen: boolean;
@@ -40,11 +39,7 @@ const ApplicationStatusModalComponent: React.FC<
   applicantId,
   applicantEmail,
 }) => {
-  const {
-    applicationStatus,
-    loadingApplicationStatus,
-    errorApplicationStatus,
-  } = useApplicationStatus(currentJobApplicationId);
+  const { applicationStatus } = useApplicationStatus(currentJobApplicationId);
 
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
@@ -146,13 +141,19 @@ const ApplicationStatusModalComponent: React.FC<
           }
 
           if (message && applicantId && applicantEmail) {
-            await insertNotification(
-              {
-                receiver_id: applicantId,
-                message: message,
-              },
-              applicantEmail
-            );
+            await insertNotification({
+              receiver_id: applicantId,
+              message: message,
+            });
+
+            const alumniSendEmailData = {
+              email: applicantEmail,
+              recipient_name: "Applicant",
+              subject: "Application Status Update",
+              message: message,
+            };
+
+            await sendNotification(alumniSendEmailData);
           }
         }
 

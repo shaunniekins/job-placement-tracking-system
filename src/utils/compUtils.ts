@@ -17,7 +17,6 @@ export const formatDate = (dateString: string) => {
   return format(date, "dd MMM yyyy");
 };
 
-
 export const formatDateSuffix = (timestamp: string) => {
   const date = parseISO(timestamp);
   const now = new Date();
@@ -28,4 +27,25 @@ export const formatDateSuffix = (timestamp: string) => {
   }
 
   return formatDistanceToNow(date, { addSuffix: true });
+};
+
+// send notification function
+export const sendNotification = async (sendEmailData: any) => {
+  try {
+    const response = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sendEmailData),
+    });
+    const data = await response.json();
+    if (response.ok) {
+      console.log("Notification sent successfully!");
+    } else {
+      console.log(
+        `Failed to send notification: ${data?.error || "Unknown error"}`
+      );
+    }
+  } catch (error) {
+    console.error("Error sending notification:", error);
+  }
 };

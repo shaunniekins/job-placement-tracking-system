@@ -29,6 +29,8 @@ import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import useJobPostings from "@/hooks/useJobPostings";
 import { MdDelete } from "react-icons/md";
+import { sendNotification } from "@/utils/compUtils";
+import { insertNotification } from "@/app/api/notificationsIUD";
 
 const ValidationComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -126,6 +128,7 @@ const ValidationComponent = () => {
 
   const handleAction = async (
     userId: string,
+    userEmail: string,
     action: string,
     userData: any
   ) => {
@@ -138,42 +141,27 @@ const ValidationComponent = () => {
         if (error) throw error;
 
         // Send notification to the agency or alumni
-        const notificationData = {
-          recipient_id: userId,
-          message: `Your account status has been updated to ${action}.`,
-          type: "account_status_update",
-        };
-        // await sendNotification(notificationData);
-        fetchAndSubscribeUsers();
-
         if (action === "approved" && user) {
-          const emailData = {
-            email: userData.email,
+          const sendEmailData = {
+            email: userEmail,
             recipient_name: `${userData.first_name} ${userData.last_name}`,
             subject: "Account Approved",
             message: `
               Greetings!
+              
               We are pleased to inform you that your account associated with the email ${userData.email} has been approved. You can now sign in and access your account.
               Thank you!
+
               Best regards,
-              Agri Advice Team`,
+              JPTS Team`,
           };
-          try {
-            const response = await fetch("/api/send-email", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(emailData),
-            });
-            const data = await response.json();
-            if (!response.ok) {
-              console.log(
-                `Failed to send email: ${data?.error || "Unknown error"}`
-              );
-            }
-          } catch (error) {
-            console.error("Error sending email:", error);
-          }
+          await sendNotification(sendEmailData);
+          await insertNotification({
+            receiver_id: userId,
+            message: `Your account has been approved.`,
+          });
         }
+        fetchAndSubscribeUsers();
       } catch (error) {
         console.error("Error updating:", error);
       }
@@ -186,37 +174,28 @@ const ValidationComponent = () => {
         if (!job) throw new Error("Failed to update job posting");
 
         // Send notification to the agency
-        const notificationData = {
-          recipient_id: userData.agency_id,
-          message: `The job posting status has been updated to ${action}.`,
-          type: "job_status_update",
+        const sendEmailData = {
+          email: userEmail,
+          recipient_name: userData.agency_name,
+          subject: "Job Posting Status Update",
+          message: `
+          Greetings!
+
+          We would like to inform you that the job posting status has been updated to ${action}.
+          Thank you!
+
+          Best regards,
+          JPTS Team`,
         };
-        // await sendNotification(notificationData);
+        await sendNotification(sendEmailData);
+        await insertNotification({
+          receiver_id: userId,
+          message: `Your job posting status has been updated to ${action}.`,
+        });
         fetchJobPostings();
       } catch (error) {
         console.error("Error updating job posting:", error);
       }
-    }
-  };
-
-  // send notification function
-  const sendNotification = async (notificationData: any) => {
-    try {
-      const response = await fetch("/api/send-notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(notificationData),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        console.log("Notification sent successfully!");
-      } else {
-        console.log(
-          `Failed to send notification: ${data?.error || "Unknown error"}`
-        );
-      }
-    } catch (error) {
-      console.error("Error sending notification:", error);
     }
   };
 
@@ -445,6 +424,7 @@ const ValidationComponent = () => {
                                 onClick={() =>
                                   handleAction(
                                     item.id,
+                                    item.email,
                                     "approved",
                                     item.meta_data
                                   )
@@ -459,6 +439,7 @@ const ValidationComponent = () => {
                                 onClick={() =>
                                   handleAction(
                                     item.id,
+                                    item.email,
                                     "declined",
                                     item.meta_data
                                   )
@@ -483,6 +464,7 @@ const ValidationComponent = () => {
                               onClick={() =>
                                 handleAction(
                                   item.id,
+                                  item.email,
                                   "approved",
                                   item.meta_data
                                 )
@@ -501,6 +483,7 @@ const ValidationComponent = () => {
                                 onClick={() =>
                                   handleAction(
                                     item.job_posting_id,
+                                    item.agency_email,
                                     "approved",
                                     item
                                   )
@@ -515,6 +498,7 @@ const ValidationComponent = () => {
                                 onClick={() =>
                                   handleAction(
                                     item.job_posting_id,
+                                    item.agency_email,
                                     "declined",
                                     item
                                   )
@@ -552,6 +536,7 @@ const ValidationComponent = () => {
                               onClick={() =>
                                 handleAction(
                                   item.job_posting_id,
+                                  item.agency_email,
                                   "approved",
                                   item
                                 )

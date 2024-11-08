@@ -15,7 +15,11 @@ import {
   Pagination,
   Spinner,
 } from "@nextui-org/react";
-import { capitalizeFirstLetter, formatDate } from "@/utils/compUtils";
+import {
+  capitalizeFirstLetter,
+  formatDate,
+  sendNotification,
+} from "@/utils/compUtils";
 import { useEffect, useState } from "react";
 import { MdOutlineEdit } from "react-icons/md";
 import { useSelector } from "react-redux";
@@ -256,22 +260,48 @@ const JobPostingDetails = ({
       });
 
       // notify agency
-      await insertNotification(
-        {
-          receiver_id: job.agency_id,
-          message: `New application for job posting: ${job.job_title} by ${userName}.`,
-        },
-        job.agency_email
-      );
+      await insertNotification({
+        receiver_id: job.agency_id,
+        message: `New application for job posting: ${job.job_title} by ${userName}.`,
+      });
 
-      // notify user
-      await insertNotification(
-        {
-          receiver_id: userId,
-          message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
-        },
-        userEmail
-      );
+      const agencySendEmailData = {
+        email: job.agency_email,
+        recipient_name: job.agency_name,
+        subject: "New Job Application",
+        message: `
+        Greetings!
+
+        There is a new application for the job posting: ${job.job_title} by ${userName}. Please check your dashboard for more details.
+
+        Best regards,
+        JPTS Team`,
+      };
+
+      await sendNotification(agencySendEmailData);
+      //
+
+      // notify alumni user
+      await insertNotification({
+        receiver_id: userId,
+        message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
+      });
+
+      const alumniSendEmailData = {
+        email: userEmail,
+        recipient_name: userName,
+        subject: "Job Application Confirmation",
+        message: `
+        Greetings!
+
+        You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency. Thank you!
+        
+        Best regards,
+        JPTS Team`,
+      };
+
+      await sendNotification(alumniSendEmailData);
+      //
 
       setIsApplied(true);
     }
