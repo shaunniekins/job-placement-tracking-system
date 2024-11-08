@@ -147,13 +147,12 @@ const ValidationComponent = () => {
             recipient_name: `${userData.first_name} ${userData.last_name}`,
             subject: "Account Approved",
             message: `
-              Greetings!
-              
-              We are pleased to inform you that your account associated with the email ${userData.email} has been approved. You can now sign in and access your account.
-              Thank you!
+Greetings!
 
-              Best regards,
-              JPTS Team`,
+We are pleased to inform you that your account associated with the email ${userData.email} has been approved. You can now sign in and access your account. Thank you!
+
+Best regards,
+JPTS Team`,
           };
           await sendNotification(sendEmailData);
           await insertNotification({

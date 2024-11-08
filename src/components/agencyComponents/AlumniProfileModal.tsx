@@ -1,7 +1,6 @@
 "use client";
 
 import useAlumni from "@/hooks/useAlumni";
-import useGTS from "@/hooks/useGTS";
 import {
   Avatar,
   Button,
@@ -51,11 +50,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   userType = "alumni",
   setUserType = () => {},
 }) => {
-  const { gts, loadingGTS, errorGTS } = useGTS(alumniId);
-  const { alumniData, isLoadingAlumni, totalAlumniEntries } = useAlumni(
-    alumniId,
-    userType
-  );
+  const { alumniData } = useAlumni(alumniId, userType);
 
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
   const [cleanAlumniData, setCleanAlumniData] = useState<AlumniData | null>(
@@ -65,19 +60,24 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
 
   useEffect(() => {
     if (alumniData) {
-      // console.log("Alumni Data: ", alumniData);
-      const cleanedData = alumniData.map((alumni: any) => {
-        const { meta_data, ...rest } = alumni;
+      // Filter the data to get the record matching the alumniId
+      const filteredData = alumniData.filter(
+        (alumni: any) => alumni.id === alumniId
+      );
 
-        return {
-          ...rest,
-          ...meta_data,
-        };
-      });
+      if (filteredData.length > 0) {
+        const cleanedData = filteredData.map((alumni: any) => {
+          const { meta_data, ...rest } = alumni;
 
-      setCleanAlumniData(cleanedData[0] as AlumniData);
+          return {
+            ...rest,
+            ...meta_data,
+          };
+        });
+        setCleanAlumniData(cleanedData[0] as AlumniData);
+      }
     }
-  }, [alumniData]);
+  }, [alumniData, alumniId]);
 
   return (
     <>

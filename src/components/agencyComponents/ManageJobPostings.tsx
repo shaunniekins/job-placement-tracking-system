@@ -5,9 +5,15 @@ import {
   insertJobPosting,
   updateJobPosting,
 } from "@/app/api/jobPostingsIUD";
+import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
 import useJobPostings from "@/hooks/useJobPostings";
-import { capitalizeFirstLetter, formatDate } from "@/utils/compUtils";
+import useUsers from "@/hooks/useUsers";
+import {
+  capitalizeFirstLetter,
+  formatDate,
+  sendNotification,
+} from "@/utils/compUtils";
 import {
   Button,
   Card,
@@ -56,6 +62,9 @@ const ManageJobPostingsComponent = () => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
   const [openPopoverJobId, setOpenPopoverJobId] = useState<string | null>(null);
+
+  // limited to 1000 alumni users only
+  const { usersData } = useUsers(1000, 1, "alumni", "approved");
 
   const togglePopover = (jobId: string) => {
     if (openPopoverJobId === jobId) {
@@ -132,6 +141,40 @@ const ManageJobPostingsComponent = () => {
   const handleSubmit = async () => {
     if (modalType === "insert") {
       await insertJobPosting(jobForm);
+
+      const notifications = usersData.map((user: any) => ({
+        receiver_id: user.id,
+        message: `New job posting: ${jobForm.job_title} has been posted.`,
+      }));
+
+      await Promise.all(notifications.map(insertNotification));
+
+      const emailNotifications = usersData.map((user: any) => {
+        const alumniSendEmailData = {
+          email: user.email,
+          recipient_name: `${user.first_name} ${user.last_name}`,
+          subject: "New Job Posting",
+          message: `
+Greetings!
+
+A new job posting has been posted by the agency. Here are the details:
+- Job Title: ${jobForm.job_title}
+- Job Type: ${jobForm.job_type}
+- Location: ${jobForm.job_location}
+- Industry: ${jobForm.industry}
+- Application Deadline: ${jobForm.application_deadline}
+- Salary Range: PHP ${jobForm.salary_range}
+- Job Description: ${jobForm.job_description}
+
+For more information, please visit the job postings page.
+
+Best regards,
+JPTS Team`,
+        };
+        return sendNotification(alumniSendEmailData);
+      });
+
+      await Promise.all(emailNotifications);
     } else if (modalType === "update" && selectedJob) {
       await updateJobPosting(selectedJob.job_posting_id, jobForm);
     }

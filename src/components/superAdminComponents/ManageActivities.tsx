@@ -9,7 +9,7 @@ import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
 import useActivities from "@/hooks/useActivities";
 import useUsers from "@/hooks/useUsers";
-import { formatDate } from "@/utils/compUtils";
+import { formatDate, sendNotification } from "@/utils/compUtils";
 import { parseDate } from "@internationalized/date";
 import {
   Button,
@@ -154,6 +154,26 @@ const ManageActivities = () => {
         }));
 
         await Promise.all(notifications.map(insertNotification));
+
+        // Loop through usersData and send an email notification to each user
+        const emailNotifications = usersData.map((user: any) => {
+          const alumniSendEmailData = {
+            email: user.email,
+            recipient_name: `${user.first_name} ${user.last_name}`,
+            subject: "Activity Posting",
+            message: `
+Greetings!
+
+We are pleased to inform you that a new activity has been posted: ${activityForm.activity_title}. Please check the site for more details.
+
+Best regards,
+JPTS Team`,
+          };
+
+          return sendNotification(alumniSendEmailData);
+        });
+
+        await Promise.all(emailNotifications);
       } else if (modalType === "update" && selectedActivity) {
         await updateActivity(
           selectedActivity.activity_id,
