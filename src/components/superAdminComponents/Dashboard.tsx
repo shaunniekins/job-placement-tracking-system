@@ -1,6 +1,5 @@
 "use client";
 
-import useCollegeStats from "@/hooks/useCollegeStats";
 import {
   Card,
   CardHeader,
@@ -28,10 +27,11 @@ import {
   Cell,
 } from "recharts";
 import { useCallback, useEffect, useRef, useState } from "react";
-import useBatchYears from "@/hooks/useBatchYears";
-import { programs } from "@/app/api/collegeAndProgramData";
 import { FaChevronDown, FaChevronUp, FaPrint } from "react-icons/fa";
 import { useReactToPrint } from "react-to-print";
+import { programs } from "@/app/api/collegeAndProgramData";
+import useCollegeStats from "@/hooks/useCollegeStats";
+import useBatchYears from "@/hooks/useBatchYears";
 
 const DashboardComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("");
@@ -395,8 +395,8 @@ const SelectedCollegeView = ({
 }) => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
-  const { batchYears, isBatchYearsLoading } = useBatchYears();
-  const { collegeStats, loadingStats, errorStats } = useCollegeStats(
+  const { batchYears } = useBatchYears();
+  const { collegeStats, loadingStats } = useCollegeStats(
     batchYearFilter,
     selectedCollege.toString().toLowerCase()
   );

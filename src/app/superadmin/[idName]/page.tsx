@@ -23,8 +23,6 @@ export default function SuperAdminSlugPage() {
       setDisplay(<JobInteractionComponent />);
     } else if (pathname.startsWith("/superadmin/validation")) {
       setDisplay(<ValidationComponent />);
-    } else if (pathname.startsWith("/superadmin/notifications")) {
-      setDisplay(<NotificationsComponent />);
     } else if (pathname.startsWith("/superadmin/users")) {
       setDisplay(<UserComponent />);
     } else if (pathname.startsWith("/superadmin/manage")) {

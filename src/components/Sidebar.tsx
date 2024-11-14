@@ -1,29 +1,24 @@
 "use client";
 
-import { Avatar, Button } from "@nextui-org/react";
+import { Avatar, Badge } from "@nextui-org/react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   FaBars,
-  FaSignOutAlt,
   FaTachometerAlt,
   FaComments,
   FaChartBar,
   FaUsers,
   FaCog,
   FaBell,
-  FaHistory,
   FaUser,
   FaSitemap,
   FaCalendarAlt,
   FaBriefcase,
   FaUserGraduate,
-  FaUserAlt,
   FaUserCircle,
-  FaTools,
 } from "react-icons/fa";
 
 import classNames from "classnames";
-import { useHandleLogout } from "@/utils/authUtils";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
@@ -50,6 +45,7 @@ const SidebarComponent = ({
   const [displayImage, setDisplayImage] = useState({
     profile_picture: "",
   });
+  const [isBadgeInvisible, setIsBadgeInvisible] = useState(false);
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
@@ -75,12 +71,6 @@ const SidebarComponent = ({
       path: "/superadmin/jobinteraction",
       label: "Job Interaction",
       icon: <FaComments />,
-    },
-
-    {
-      path: "/superadmin/notifications",
-      label: "Notifications",
-      icon: <FaBell />,
     },
     { path: "/superadmin/users", label: "Users", icon: <FaUsers /> },
     {
@@ -232,15 +222,35 @@ const SidebarComponent = ({
         <FaBars />
       </button>
       <ul className="flex flex-col py-5 px-5">
-        {items.map((item) => (
-          <NavItem
-            key={item.path}
-            path={item.path}
-            label={item.label}
-            icon={item.icon}
-            userType={userType}
-          />
-        ))}
+        {items.map((item) =>
+          item.label === "Validation" ? (
+            <Badge
+              key={item.path}
+              isOneChar
+              isInvisible={isBadgeInvisible}
+              size="sm"
+              color="danger"
+              shape="circle"
+              placement="top-right"
+              className="absolute top-1/2 right-8"
+            >
+              <NavItem
+                path={item.path}
+                label={item.label}
+                icon={item.icon}
+                userType={userType}
+              />
+            </Badge>
+          ) : (
+            <NavItem
+              key={item.path}
+              path={item.path}
+              label={item.label}
+              icon={item.icon}
+              userType={userType}
+            />
+          )
+        )}
       </ul>
     </div>
   );
@@ -272,7 +282,7 @@ const NavItem = ({
     <li
       onClick={handleNavigation}
       className={classNames(
-        "flex items-center gap-5 px-5 lg:text-xl rounded-lg cursor-pointer hover:bg-[#00503D]",
+        "w-full flex items-center gap-5 px-5 lg:text-xl rounded-lg cursor-pointer hover:bg-[#00503D]",
         {
           "bg-[#F4FFFC] text-black hover:bg-[#F4FFFC] hover:text-black":
             isActive,

@@ -13,4 +13,6 @@ FROM auth.users
 WHERE raw_user_meta_data->>'college' IS NOT NULL
 AND raw_user_meta_data->>'program' IS NOT NULL
 AND raw_user_meta_data->>'batch_year' IS NOT NULL
+AND raw_user_meta_data->>'account_status' = 'approved'
+AND raw_user_meta_data->>'user_type' = 'alumni'
 GROUP BY raw_user_meta_data->>'college', raw_user_meta_data->>'program', raw_user_meta_data->>'batch_year';

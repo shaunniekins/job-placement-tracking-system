@@ -52,8 +52,6 @@ const HeaderComponent = ({
     display = "Job Interaction";
   } else if (pathname === "/superadmin/validation") {
     display = "Validation";
-  } else if (pathname === "/superadmin/notifications") {
-    display = "Notifications";
   } else if (pathname === "/superadmin/users") {
     display = "Users";
   } else if (pathname === "/superadmin/manage") {

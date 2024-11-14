@@ -17,12 +17,10 @@ import {
 import { HiOutlineMail, HiOutlineMailOpen } from "react-icons/hi";
 import { formatDateSuffix } from "@/utils/compUtils";
 import useNotifications from "@/hooks/useNotifications";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import {
   markAllNotificationsAsSeen,
   markNotificationAsSeen,
 } from "@/app/api/notificationsIUD";
-import { MdEmail } from "react-icons/md";
 
 const NotificationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -43,7 +41,6 @@ const NotificationsComponent = () => {
 
   const columns = [
     { key: "message", label: "Message" },
-    // { key: "created_at", label: "Date" },
     { key: "seen", label: "Seen Status" },
   ];
 
