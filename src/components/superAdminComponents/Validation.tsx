@@ -1,8 +1,6 @@
 "use client";
 
-import { RootState } from "@/app/reduxUtils/store";
 import { Key, useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import {
   Button,
   Pagination,
@@ -22,19 +20,22 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Badge,
 } from "@nextui-org/react";
 import useUsers from "@/hooks/useUsers";
+import useJobPostings from "@/hooks/useJobPostings";
 import { supabaseAdmin } from "@/utils/supabase";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
-import useJobPostings from "@/hooks/useJobPostings";
 import { MdDelete } from "react-icons/md";
 import { sendNotification } from "@/utils/compUtils";
 import { insertNotification } from "@/app/api/notificationsIUD";
+import {
+  useJobPostingsBadgeData,
+  useUsersBadgeData,
+} from "@/hooks/useBadgeData";
 
 const ValidationComponent = () => {
-  const user = useSelector((state: RootState) => state.user.user);
-  const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
   const rowsPerPage = 13;
   const [currentView, setCurrentView] = useState("agency");
@@ -45,11 +46,18 @@ const ValidationComponent = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentJobPostingId, setCurrentJobPostingId] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      setUserId(user.id);
-    }
-  }, [user]);
+  // const [totalAgency, setTotalAgency] = useState(0);
+  // const [totalAlumni, setTotalAlumni] = useState(0);
+  // const [totalJPBadge, setTotalJPBadge] = useState(0);
+
+  const { totalJobPostingsBadge } = useJobPostingsBadgeData();
+  const { totalAlumniUsers, totalAgencyUsers } = useUsersBadgeData();
+
+  // useEffect(() => {
+  //   setTotalAgency(totalAgencyUsers);
+  //   setTotalAlumni(totalAlumniUsers);
+  //   setTotalJPBadge(totalJobPostingsBadge);
+  // }, [totalAgencyUsers, totalAlumniUsers, totalJobPostingsBadge]);
 
   const handleTabSelectionChange = (key: Key) => {
     const keyString = key.toString();
@@ -260,7 +268,16 @@ JPTS Team`,
               key="agency"
               title={
                 <div className="flex items-center space-x-2">
-                  <span>Agency</span>
+                  <Badge
+                    isOneChar
+                    isInvisible={totalAgencyUsers === 0}
+                    size="sm"
+                    color="danger"
+                    shape="circle"
+                    placement="top-right"
+                  >
+                    <span>Agency</span>
+                  </Badge>
                 </div>
               }
             />
@@ -268,7 +285,16 @@ JPTS Team`,
               key="alumni"
               title={
                 <div className="flex items-center space-x-2">
-                  <span>Graduates</span>
+                  <Badge
+                    isOneChar
+                    isInvisible={totalAlumniUsers === 0}
+                    size="sm"
+                    color="danger"
+                    shape="circle"
+                    placement="top-right"
+                  >
+                    <span>Graduates</span>
+                  </Badge>
                 </div>
               }
             />
@@ -276,7 +302,16 @@ JPTS Team`,
               key="job_postings"
               title={
                 <div className="flex items-center space-x-2">
-                  <span>Job Applications</span>
+                  <Badge
+                    isOneChar
+                    isInvisible={totalJobPostingsBadge === 0}
+                    size="sm"
+                    color="danger"
+                    shape="circle"
+                    placement="top-right"
+                  >
+                    <span>Job Applications</span>
+                  </Badge>
                 </div>
               }
             />
@@ -386,7 +421,7 @@ JPTS Team`,
 
                     if (columnKey === "college") {
                       return (
-                        <TableCell className="text-center">
+                        <TableCell className="text-center uppercase">
                           {item.meta_data.college}
                         </TableCell>
                       );
@@ -394,7 +429,7 @@ JPTS Team`,
 
                     if (columnKey === "program") {
                       return (
-                        <TableCell className="text-center">
+                        <TableCell className="text-center uppercase">
                           {item.meta_data.program}
                         </TableCell>
                       );

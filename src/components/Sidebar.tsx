@@ -22,6 +22,10 @@ import classNames from "classnames";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
+import {
+  useJobPostingsBadgeData,
+  useUsersBadgeData,
+} from "@/hooks/useBadgeData";
 
 interface SidebarComponentProps {
   isSidebarOpen: boolean;
@@ -46,6 +50,25 @@ const SidebarComponent = ({
     profile_picture: "",
   });
   const [isBadgeInvisible, setIsBadgeInvisible] = useState(false);
+
+  const { totalJobPostingsBadge } = useJobPostingsBadgeData();
+  const { totalAlumniUsers, totalAgencyUsers } = useUsersBadgeData();
+
+  useEffect(() => {
+    // console.log("totalJobPostingsBadge", totalJobPostingsBadge);
+    // console.log("totalAlumniUsers", totalAlumniUsers);
+    // console.log("totalAgencyUsers", totalAgencyUsers);
+
+    if (
+      totalJobPostingsBadge > 0 ||
+      totalAlumniUsers > 0 ||
+      totalAgencyUsers > 0
+    ) {
+      setIsBadgeInvisible(false);
+    } else {
+      setIsBadgeInvisible(true);
+    }
+  }, [totalJobPostingsBadge, totalAlumniUsers, totalAgencyUsers]);
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
