@@ -28,7 +28,7 @@ import { supabaseAdmin } from "@/utils/supabase";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import { MdDelete } from "react-icons/md";
-import { sendNotification } from "@/utils/compUtils";
+import { sendEmailNotification } from "@/utils/compUtils";
 import { insertNotification } from "@/app/api/notificationsIUD";
 import {
   useJobPostingsBadgeData,
@@ -162,7 +162,7 @@ We are pleased to inform you that your account associated with the email ${userD
 Best regards,
 JPTS Team`,
           };
-          await sendNotification(sendEmailData);
+          await sendEmailNotification(sendEmailData);
           await insertNotification({
             receiver_id: userId,
             message: `Your account has been approved.`,
@@ -194,7 +194,7 @@ JPTS Team`,
           Best regards,
           JPTS Team`,
         };
-        await sendNotification(sendEmailData);
+        await sendEmailNotification(sendEmailData);
         await insertNotification({
           receiver_id: userId,
           message: `Your job posting status has been updated to ${action}.`,

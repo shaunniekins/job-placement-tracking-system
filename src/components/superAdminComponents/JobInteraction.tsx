@@ -12,13 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import useJobInteractionDefault from "@/hooks/useJobInteractionSelectedProgram";
 import useCollegeStats2 from "@/hooks/useCollegeStats2";
 
 import { formatDate } from "@/utils/compUtils";
+import { FaPrint } from "react-icons/fa";
+import { useReactToPrint } from "react-to-print";
 
 interface CollegeStatsItem {
   college: string;
@@ -48,6 +50,17 @@ const JobInteractionComponent = () => {
   ];
 
   const allColleges = [{ key: "all", label: "All" }, ...colleges];
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Data Graphs",
+  });
+
+  const handlePrintWrapper = (e: any) => {
+    handlePrint();
+  };
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -91,6 +104,14 @@ const JobInteractionComponent = () => {
               <SelectItem key={item.key}>{item.label}</SelectItem>
             ))}
           </Select>
+          <Button
+            color="success"
+            endContent={<FaPrint />}
+            className={`${!selectedProgram && "hidden"} text-white`}
+            onPress={handlePrintWrapper}
+          >
+            Export
+          </Button>
         </div>
       </div>
       <div className="h-full flex overflow-y-auto mt-5">
@@ -103,6 +124,7 @@ const JobInteractionComponent = () => {
           <SelectedProgramView
             selectedCollege={selectedCollege}
             selectedProgram={selectedProgram}
+            printRef={printRef}
           />
         )}
       </div>
@@ -179,9 +201,11 @@ const DefaultView = ({
 const SelectedProgramView = ({
   selectedCollege,
   selectedProgram,
+  printRef,
 }: {
   selectedCollege: string;
   selectedProgram: string;
+  printRef: React.RefObject<HTMLDivElement>;
 }) => {
   const { jobInteractionDataSelectedProgram, loading, error } =
     useJobInteractionDefault(
@@ -191,14 +215,14 @@ const SelectedProgramView = ({
 
   const columns = [
     { key: "applicant_name", label: "Name of Applicants" },
-    { key: "job_description", label: "Job Description" },
+    { key: "position", label: "Position" },
     { key: "agency_company_name", label: "Agency" },
     { key: "application_date", label: "Date" },
     { key: "application_status", label: "Status" },
   ];
 
   return (
-    <div className="h-full w-full flex flex-col gap-3">
+    <div className="h-full w-full flex flex-col gap-3" ref={printRef}>
       <div className="flex h-full w-full overflow-y-auto">
         <Table
           fullWidth
@@ -245,6 +269,14 @@ const SelectedProgramView = ({
                     return (
                       <TableCell className="text-center">
                         <h1>{formatDate(item.application_date)}</h1>
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "position") {
+                    return (
+                      <TableCell className="text-center capitalize">
+                        {item.job_description}
                       </TableCell>
                     );
                   }

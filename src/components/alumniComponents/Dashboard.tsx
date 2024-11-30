@@ -18,7 +18,7 @@ import {
 import {
   capitalizeFirstLetter,
   formatDate,
-  sendNotification,
+  sendEmailNotification,
 } from "@/utils/compUtils";
 import { useEffect, useState } from "react";
 import { MdOutlineEdit } from "react-icons/md";
@@ -278,7 +278,7 @@ const JobPostingDetails = ({
         JPTS Team`,
       };
 
-      await sendNotification(agencySendEmailData);
+      await sendEmailNotification(agencySendEmailData);
       //
 
       // notify alumni user
@@ -300,7 +300,7 @@ const JobPostingDetails = ({
         JPTS Team`,
       };
 
-      await sendNotification(alumniSendEmailData);
+      await sendEmailNotification(alumniSendEmailData);
       //
 
       setIsApplied(true);

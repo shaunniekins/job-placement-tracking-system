@@ -1,35 +1,49 @@
 # Job Placement Tracking System (JPTS)
 
-1. Admin / Superadmin
-- id
-- profile_picture
-- first_name
-- middle_name
-- last_name
-- gender
-- contact_number
+## Setup Instructions
 
-2. Agency
-- id
-- profile_picture
-- first_name
-- middle_name
-- last_name
-- company_name
-- company_type
-- valid_id
-- address
-- contact_number
+1. Install dependencies:
+    ```sh
+    npm install
+    ```
 
-3. alumni
-- id
-- profile_picture
-- first_name
-- middle_name
-- last_name
-- birth_date
-- address
-- contact_number
-- college
-- program
-- batch_year
+2. Set up Supabase:
+    - Create a Supabase project at [supabase.com](https://supabase.com).
+    - Obtain the following keys from your Supabase project settings:
+        - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`
+        - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+        - `NEXT_PUBLIC_SUPABASE_URL`
+    - Add these keys to your `.env.local` file:
+        ```env
+        NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+        NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+        ```
+
+3. Create a Mailjet account:
+    - Sign up at [mailjet.com](https://www.mailjet.com).
+    - Obtain the following keys from your Mailjet account settings:
+        - `MJ_APIKEY_PUBLIC`
+        - `MJ_APIKEY_PRIVATE`
+        - `MJ_EMAIL_REGISTERED`
+    - Add these keys to your `.env.local` file:
+        ```env
+        MJ_APIKEY_PUBLIC=<your-mailjet-public-key>
+        MJ_APIKEY_PRIVATE=<your-mailjet-private-key>
+        MJ_EMAIL_REGISTERED=<your-registered-email>
+        ```
+
+4. Run the development server:
+    ```sh
+    npm run dev
+    ```
+
+5. Build the project for production:
+    ```sh
+    npm run build
+    ```
+
+6. Start the production server:
+    ```sh
+    npm start
+    ```

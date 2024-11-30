@@ -33,7 +33,7 @@ import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 import { MdDelete } from "react-icons/md";
-import { sendNotification } from "@/utils/compUtils";
+import { sendEmailNotification } from "@/utils/compUtils";
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -97,6 +97,7 @@ const UserComponent = () => {
     formattedData.unshift({ key: "all", label: "All" });
 
     setBatchYearFormatted(formattedData);
+    console.log("formattedData", formattedData);
   }, [batchYears]);
 
   const agencyColumns = [
@@ -115,8 +116,12 @@ const UserComponent = () => {
 
   const [currentColumns, setCurrentColumns] = useState(agencyColumns);
 
+  // useEffect(() => {
+  //   setPage(1);
+  // }, [totalUserEntries]);
+
   useEffect(() => {
-    setPage(1);
+    // setPage(1);
     setCurrentColumns([]);
     setCurrentViewContent([]);
     setTotalPages(0);
@@ -274,7 +279,10 @@ const UserComponent = () => {
                           last_name: lastName,
                           college: college,
                           faculty_type: facultyType,
-                          user_type: "admin",
+                          user_type:
+                            facultyType !== "program-chair"
+                              ? "admin"
+                              : "program-chair",
                         },
                       }
                     );
@@ -348,7 +356,7 @@ Best regards,
 JPTS Team`,
                       };
 
-                      await sendNotification(sendEmailData);
+                      await sendEmailNotification(sendEmailData);
                       fetchAndSubscribeUsers();
                     }
                   }}

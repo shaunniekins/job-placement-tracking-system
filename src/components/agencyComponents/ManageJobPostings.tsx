@@ -12,7 +12,7 @@ import useUsers from "@/hooks/useUsers";
 import {
   capitalizeFirstLetter,
   formatDate,
-  sendNotification,
+  sendEmailNotification,
 } from "@/utils/compUtils";
 import {
   Button,
@@ -171,7 +171,7 @@ For more information, please visit the job postings page.
 Best regards,
 JPTS Team`,
         };
-        return sendNotification(alumniSendEmailData);
+        return sendEmailNotification(alumniSendEmailData);
       });
 
       await Promise.all(emailNotifications);

@@ -16,7 +16,7 @@ import useApplicationStatus from "@/hooks/useApplicationStatus";
 import { updateApplicationStatus } from "@/app/api/applicationStatusIUD";
 import { updateJobApplication } from "@/app/api/jobApplicationsIUD";
 import { insertNotification } from "@/app/api/notificationsIUD";
-import { sendNotification } from "@/utils/compUtils";
+import { sendEmailNotification } from "@/utils/compUtils";
 
 interface ApplicationStatusModalProps {
   isOpen: boolean;
@@ -153,7 +153,7 @@ const ApplicationStatusModalComponent: React.FC<
               message: message,
             };
 
-            await sendNotification(alumniSendEmailData);
+            await sendEmailNotification(alumniSendEmailData);
           }
         }
 

@@ -4,6 +4,7 @@ create table
     job_application_id bigint null,
     date_applied date not null,
     date_initial_interview date null,
+    description_initial_interview text null,
     date_exam date null,
     date_final date null,
     final_result text null,

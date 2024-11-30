@@ -21,6 +21,7 @@ interface Node {
   id: string;
   label: string;
   name?: string;
+  email?: string;
   parent_id?: string;
   children?: Node[];
 }
@@ -34,6 +35,7 @@ const OrgChartComponent = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [isEditMode, setIsEditMode] = useState(false); // New state to track mode
 
   useEffect(() => {
@@ -64,6 +66,7 @@ const OrgChartComponent = () => {
         id: item.id,
         label: item.position,
         name: item.name,
+        email: item.email,
         parent_id: item.parent_id,
         children: [],
       });
@@ -89,6 +92,7 @@ const OrgChartComponent = () => {
     const newNode = {
       position: newLabel,
       name: newName,
+      email: newEmail,
       parent_id: parent ? parent.id : null,
     };
     const result = await insertOrgData(newNode);
@@ -96,6 +100,7 @@ const OrgChartComponent = () => {
       setModalOpen(false);
       setNewLabel("");
       setNewName("");
+      setNewEmail("");
     }
   };
 
@@ -103,12 +108,14 @@ const OrgChartComponent = () => {
     const updatedNode = {
       position: newLabel,
       name: newName,
+      email: newEmail,
     };
     const result = await updateOrgData(parseInt(node.id), updatedNode);
     if (result) {
       setModalOpen(false);
       setNewLabel("");
       setNewName("");
+      setNewEmail("");
     }
   };
 
@@ -124,6 +131,21 @@ const OrgChartComponent = () => {
           {node.name && (
             <div className="text-sm text-gray-500">({node.name})</div>
           )}
+
+          <div className="text-xs text-gray-500">
+            {node.email ? (
+              <a
+                href={`mailto:${node.email}`}
+                target="_blank"
+                className="text-blue-500 underline"
+              >
+                {node.email}
+              </a>
+            ) : (
+              "N/A"
+            )}
+          </div>
+
           <div className="flex space-x-2 mt-2">
             <Button
               size="sm"
@@ -133,10 +155,11 @@ const OrgChartComponent = () => {
                 setSelectedNode(node);
                 setNewLabel(node.label);
                 setNewName(node.name || "");
+                setNewEmail(node.email || "");
                 setIsEditMode(true); // Set to edit mode
                 setModalOpen(true);
               }}
-              className={userType !== "superadmin" ? "invisible" : ""}
+              className={userType !== "superadmin" ? "hidden" : ""}
             >
               Edit
             </Button>
@@ -151,7 +174,7 @@ const OrgChartComponent = () => {
                 setIsEditMode(false);
                 setModalOpen(true);
               }}
-              className={userType !== "superadmin" ? "invisible" : ""}
+              className={userType !== "superadmin" ? "hidden" : ""}
             >
               Add
             </Button>
@@ -161,7 +184,7 @@ const OrgChartComponent = () => {
                 color="danger"
                 variant="flat"
                 onClick={() => deleteNode(node)}
-                className={userType !== "superadmin" ? "invisible" : ""}
+                className={userType !== "superadmin" ? "hidden" : ""}
               >
                 Delete
               </Button>
@@ -225,6 +248,13 @@ const OrgChartComponent = () => {
                   label="Name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
+                  className="mt-2"
+                />
+                <Input
+                  fullWidth
+                  label="Email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
                   className="mt-2"
                 />
               </ModalBody>

@@ -26,7 +26,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-[#F4FFFC] h-[100svh] w-screen flex justify-center items-center">
-        <Card className="w-96 h-96 mx-3">
+        <Card className="w-96 h-[29rem] mx-3">
           <CardHeader className="bg-[#008B47] flex justify-center items-center">
             <p className="text-center text-white text-lg font-semibold">
               Select User Type
@@ -53,7 +53,19 @@ export default function Home() {
                 onClick={() => handleSelect("admin")}
               >
                 <p className="font-semibold">Administrator</p>
-                <p className="text-xs">Dean, ARO and Program Chair</p>
+                <p className="text-xs">Dean and ARO</p>
+              </div>
+
+              <div
+                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                  selectedUserType === "program-chair" ? "border-[#008B47]" : ""
+                }`}
+                onClick={() => handleSelect("program-chair")}
+              >
+                <p className="font-semibold">Program Chair</p>
+                <p className="text-xs">
+                  Handles program-specific operations and data.
+                </p>
               </div>
 
               <div

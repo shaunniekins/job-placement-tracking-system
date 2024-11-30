@@ -31,7 +31,12 @@ import {
 import { EyeSlashFilledIcon } from "../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../public/icons/EyeFilledIcon";
 import { FaUserCircle } from "react-icons/fa";
-import { RiProfileLine, RiQuestionnaireLine } from "react-icons/ri";
+import {
+  RiAwardLine,
+  RiProfileLine,
+  RiQuestionnaireLine,
+  RiUpload2Line,
+} from "react-icons/ri";
 import {
   colleges,
   programs,
@@ -41,9 +46,10 @@ import GTSComponent from "./GTS";
 import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
 import POEComponent from "./POEComponent";
 import { IoOptionsOutline } from "react-icons/io5";
+import PDSComponent from "./PDSComponent";
 
 const ProfileComponent = () => {
-  const user = useSelector((state: RootState) => state.user.user);
+  const user = useSelector((state: RootState) => state.user?.user);
   const dispatch = useDispatch();
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +59,11 @@ const ProfileComponent = () => {
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
 
   const [POEFile, setPOEFile] = useState<File | null>(null);
+  const [PDSFile, setPDSFile] = useState<File | null>(null);
+
   const [isPOEModalOpen, setIsPOEModalOpen] = useState(false);
+  const [isUploadAwardsModalOpen, setIsUploadAwardsModalOpen] = useState(false);
+  const [isPDSModalOpen, setIsPDSModalOpen] = useState(false);
 
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
@@ -450,6 +460,15 @@ const ProfileComponent = () => {
         POEFile={POEFile}
         setPOEFile={setPOEFile}
       />
+      <PDSComponent
+        userID={user.id}
+        tempUserInfo={tempUserInfo}
+        isPDSModalOpen={isPDSModalOpen}
+        setIsPDSModalOpen={setIsPDSModalOpen}
+        reloadUser={reloadUser}
+        PDSFile={PDSFile}
+        setPDSFile={setPDSFile}
+      />
       <Modal
         size="xs"
         isOpen={isOptionModalOpen}
@@ -510,6 +529,24 @@ const ProfileComponent = () => {
                     onClick={() => setIsPOEModalOpen(true)}
                   >
                     Certificate of Employment
+                  </Button>
+                  <Button
+                    startContent={<RiAwardLine />}
+                    className={`${
+                      currentUserType !== "alumni" && "hidden"
+                    } bg-cyan-400 text-white hidden `}
+                    onClick={() => setIsUploadAwardsModalOpen(true)}
+                  >
+                    Upload Awards
+                  </Button>
+                  <Button
+                    startContent={<RiUpload2Line />}
+                    className={`${
+                      currentUserType !== "alumni" && "hidden"
+                    } bg-orange-400 text-white `}
+                    onClick={() => setIsPDSModalOpen(true)}
+                  >
+                    Upload PDS
                   </Button>
                 </div>
               </ModalBody>

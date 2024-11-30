@@ -4,9 +4,9 @@ import ProfileComponent from "@/components/Profile";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import DashboardComponent from "@/components/superAdminComponents/Dashboard";
-import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import CalendarComponent from "@/components/superAdminComponents/Calendar";
-import AlumniUserComponent from "@/components/adminComponents/AlumniUser";
+import AlumniUserPCComponent from "@/components/pcComponents/AlumniUser";
+import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 
 export default function AdminSlugPage() {
   const pathname = usePathname();
@@ -16,7 +16,7 @@ export default function AdminSlugPage() {
     if (pathname.startsWith("/admin/dashboard")) {
       setDisplay(<DashboardComponent />);
     } else if (pathname.startsWith("/admin/alumni")) {
-      setDisplay(<AlumniUserComponent />);
+      setDisplay(<AlumniUserPCComponent />);
     } else if (pathname.startsWith("/admin/profile")) {
       setDisplay(<ProfileComponent />);
     } else if (pathname.startsWith("/admin/orgchart")) {

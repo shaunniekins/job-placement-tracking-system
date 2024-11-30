@@ -9,7 +9,7 @@ import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
 import useActivities from "@/hooks/useActivities";
 import useUsers from "@/hooks/useUsers";
-import { formatDate, sendNotification } from "@/utils/compUtils";
+import { formatDate, sendEmailNotification } from "@/utils/compUtils";
 import { parseDate } from "@internationalized/date";
 import {
   Button,
@@ -170,7 +170,7 @@ Best regards,
 JPTS Team`,
           };
 
-          return sendNotification(alumniSendEmailData);
+          return sendEmailNotification(alumniSendEmailData);
         });
 
         await Promise.all(emailNotifications);
