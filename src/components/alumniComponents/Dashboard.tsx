@@ -43,11 +43,16 @@ const AlumniDashboardComponent = () => {
 
   const [currentView, setCurrentView] = useState("jobPostings");
 
+  // useEffect(() => {
+  //   console.log("user", user);
+  // }, [user]);
+
   const { jobPostings, totalJobPostings, loadingJobPostings } = useJobPostings(
     jobPostingRowsPerPage,
     jobPostingPage,
     undefined,
-    "approved"
+    "approved",
+    user?.user_metadata?.program
   );
 
   const jobPostingTotalPages = Math.ceil(

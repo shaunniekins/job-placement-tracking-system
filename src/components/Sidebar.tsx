@@ -228,7 +228,7 @@ const SidebarComponent = ({
           ) : (
             <FaUserCircle />
           )}
-          <span className="text-lg">{name}</span>
+          <span className="text-lg text-center">{name}</span>
         </div>
       </div>
       <h1

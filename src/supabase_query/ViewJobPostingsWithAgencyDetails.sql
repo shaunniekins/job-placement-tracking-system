@@ -10,6 +10,7 @@ SELECT
     jp.application_deadline,
     jp.date_posted,
     jp.job_status,
+    jp.programs,
     au.id AS agency_id,
     au.email AS agency_email,
     au.raw_user_meta_data->>'first_name' AS agency_first_name,

@@ -1,5 +1,6 @@
 "use client";
 
+import { programs } from "@/app/api/collegeAndProgramData";
 import {
   deleteJobPosting,
   insertJobPosting,
@@ -32,8 +33,10 @@ import {
   Spinner,
   Input,
   Textarea,
+  SelectItem,
+  Select,
 } from "@nextui-org/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdTrash } from "react-icons/io";
 import { IoAddCircleSharp } from "react-icons/io5";
@@ -48,6 +51,7 @@ interface JobForm {
   salary_range: string;
   industry: string;
   application_deadline: string;
+  programs: string[];
   agency_id?: string; // Optional field
 }
 
@@ -66,6 +70,12 @@ const ManageJobPostingsComponent = () => {
   // limited to 1000 alumni users only
   const { usersData } = useUsers(1000, 1, "alumni", "approved");
 
+  // useEffect(() => {
+  //   if (usersData) {
+  //     console.log("usersData", usersData);
+  //   }
+  // }, [usersData]);
+
   const togglePopover = (jobId: string) => {
     if (openPopoverJobId === jobId) {
       setOpenPopoverJobId(null);
@@ -83,6 +93,7 @@ const ManageJobPostingsComponent = () => {
     salary_range: "",
     industry: "",
     application_deadline: "",
+    programs: [],
     agency_id: undefined,
   });
 
@@ -106,6 +117,18 @@ const ManageJobPostingsComponent = () => {
     setOpenModal(true);
     setOpenPopoverJobId(null);
     if (type === "update" && job) {
+      let programsData = [];
+      if (Array.isArray(job.programs)) {
+        programsData = job.programs;
+      } else if (job.programs instanceof Set) {
+        programsData = Array.from(job.programs);
+      } else if (typeof job.programs === "string") {
+        programsData = job.programs
+          .split(",")
+          .map((p: any) => p.trim())
+          .filter(Boolean);
+      }
+
       setSelectedJob(job);
       setJobForm({
         job_title: job.job_title,
@@ -114,6 +137,7 @@ const ManageJobPostingsComponent = () => {
         job_type: job.job_type,
         salary_range: job.salary_range,
         industry: job.industry,
+        programs: programsData,
         application_deadline: job.application_deadline,
       });
     } else {
@@ -126,6 +150,7 @@ const ManageJobPostingsComponent = () => {
         salary_range: "",
         industry: "",
         application_deadline: "",
+        programs: [],
         agency_id: userId,
       });
     }
@@ -138,45 +163,65 @@ const ManageJobPostingsComponent = () => {
     });
   };
 
+  const selectedPrograms = useMemo(() => {
+    return new Set(jobForm.programs);
+  }, [jobForm.programs]);
+
+  const handleSelectMultipleChange = (name: string, value: Set<string>) => {
+    // Convert Set to simple array of strings
+    const programsArray = Array.from(value);
+
+    setJobForm({
+      ...jobForm,
+      [name]: programsArray,
+    });
+  };
+
   const handleSubmit = async () => {
+    const filteredUsersData = jobForm.programs?.length
+      ? usersData.filter((user: any) =>
+          jobForm.programs.includes(user.meta_data.program)
+        )
+      : usersData;
+
     if (modalType === "insert") {
       await insertJobPosting(jobForm);
 
-      const notifications = usersData.map((user: any) => ({
+      const notifications = filteredUsersData.map((user: any) => ({
         receiver_id: user.id,
         message: `New job posting: ${jobForm.job_title} has been posted.`,
       }));
 
       await Promise.all(notifications.map(insertNotification));
 
-      const emailNotifications = usersData.map((user: any) => {
+      const emailNotifications = filteredUsersData.map((user: any) => {
         const alumniSendEmailData = {
           email: user.email,
           recipient_name: `${user.first_name} ${user.last_name}`,
           subject: "New Job Posting",
           message: `
-Greetings!
-
-A new job posting has been posted by the agency. Here are the details:
-- Job Title: ${jobForm.job_title}
-- Job Type: ${jobForm.job_type}
-- Location: ${jobForm.job_location}
-- Industry: ${jobForm.industry}
-- Application Deadline: ${jobForm.application_deadline}
-- Salary Range: PHP ${jobForm.salary_range}
-- Job Description: ${jobForm.job_description}
-
-For more information, please visit the job postings page.
-
-Best regards,
-JPTS Team`,
+  Greetings!
+  
+  A new job posting has been posted by the agency. Here are the details:
+  - Job Title: ${jobForm.job_title}
+  - Job Type: ${jobForm.job_type}
+  - Location: ${jobForm.job_location}
+  - Industry: ${jobForm.industry}
+  - Application Deadline: ${jobForm.application_deadline}
+  - Salary Range: PHP ${jobForm.salary_range}
+  - Job Description: ${jobForm.job_description}
+  
+  For more information, please visit the job postings page.
+  
+  Best regards,
+  JPTS Team`,
         };
         return sendEmailNotification(alumniSendEmailData);
       });
 
       await Promise.all(emailNotifications);
     } else if (modalType === "update" && selectedJob) {
-      await updateJobPosting(selectedJob.job_posting_id, jobForm);
+      const res = await updateJobPosting(selectedJob.job_posting_id, jobForm);
     }
     setOpenModal(false);
   };
@@ -257,6 +302,24 @@ JPTS Team`,
                     onChange={handleInputChange}
                     className="col-span-2 md:col-span-1"
                   />
+
+                  <Select
+                    label="Filter courses"
+                    placeholder="Select courses to filter"
+                    selectionMode="multiple"
+                    selectedKeys={selectedPrograms}
+                    onSelectionChange={(value) =>
+                      handleSelectMultipleChange(
+                        "programs",
+                        value as Set<string>
+                      )
+                    }
+                    className="col-span-2 md:col-span-2"
+                  >
+                    {programs.map((item) => (
+                      <SelectItem key={item.key}>{item.label}</SelectItem>
+                    ))}
+                  </Select>
                   <Textarea
                     label="Job Description"
                     placeholder="Enter job description"
@@ -418,6 +481,12 @@ const JobPostingDetails = ({
         </p>
         <p>
           <strong>Salary Range:</strong> {job.salary_range || "N/A"}
+        </p>
+        <p className="uppercase">
+          <strong className="capitalize">Courses:</strong>{" "}
+          {job?.programs?.length > 0
+            ? job?.programs.map((program: string) => program).join(", ")
+            : "All"}
         </p>
         <div className="flex flex-col gap-2 mt-4">
           <h2 className="font-bold text-lg">About the Job</h2>

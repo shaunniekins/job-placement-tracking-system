@@ -6,7 +6,8 @@ const useJobPostings = (
   rowsPerPage: number,
   currentPage: number,
   agencyId?: string,
-  jobStatusFilter?: string
+  jobStatusFilter?: string,
+  userProgram?: string
 ) => {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [totalJobPostings, setTotalJobPostings] = useState(0);
@@ -32,6 +33,10 @@ const useJobPostings = (
         query = query.eq("job_status", jobStatusFilter);
       }
 
+      if (userProgram) {
+        query = query.or(`programs.cs.{${userProgram}},programs.is.null`);
+      }
+
       const response: PostgrestResponse<any> = await query.range(
         offset,
         offset + rowsPerPage - 1
@@ -52,7 +57,7 @@ const useJobPostings = (
     } finally {
       setLoadingJobPostings(false);
     }
-  }, [rowsPerPage, currentPage, agencyId, jobStatusFilter]);
+  }, [rowsPerPage, currentPage, agencyId, jobStatusFilter, userProgram]);
 
   const fetchFullJobPosting = async (jobPostingId: number) => {
     if (!jobPostingId) {
@@ -91,12 +96,23 @@ const useJobPostings = (
         async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
+          const shouldIncludeJob = (record: any) => {
+            const programsMatch =
+              !userProgram ||
+              !record.programs ||
+              record.programs.includes(userProgram);
+
+            const filterMatch =
+              !jobStatusFilter || record.job_status === jobStatusFilter;
+
+            const agencyMatch = !agencyId || record.agency_id === agencyId;
+
+            return programsMatch && filterMatch && agencyMatch;
+          };
+
           switch (eventType) {
             case "INSERT":
-              if (
-                (!agencyId || newRecord.agency_id === agencyId) &&
-                (!jobStatusFilter || newRecord.job_status === jobStatusFilter)
-              ) {
+              if (shouldIncludeJob(newRecord)) {
                 const fullJobPosting = await fetchFullJobPosting(
                   newRecord.job_posting_id
                 );
@@ -106,10 +122,7 @@ const useJobPostings = (
               }
               break;
             case "UPDATE":
-              if (
-                (!agencyId || newRecord.agency_id === agencyId) &&
-                (!jobStatusFilter || newRecord.job_status === jobStatusFilter)
-              ) {
+              if (shouldIncludeJob(newRecord)) {
                 const fullJobPosting = await fetchFullJobPosting(
                   newRecord.job_posting_id
                 );
@@ -123,7 +136,6 @@ const useJobPostings = (
                   );
                 }
               } else {
-                // Remove the job posting if it no longer matches the filter
                 setJobPostings((prev) =>
                   prev.filter(
                     (item) => item.job_posting_id !== newRecord.job_posting_id
@@ -152,7 +164,7 @@ const useJobPostings = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agencyId, jobStatusFilter]);
+  }, [agencyId, jobStatusFilter, userProgram]);
 
   useEffect(() => {
     fetchJobPostings(); // Fetch initial data
