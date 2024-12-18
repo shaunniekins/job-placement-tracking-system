@@ -105,13 +105,14 @@ const useNotifications = (
     return () => {
       if (unsubscribe) unsubscribe(); // Clean up on unmount
     };
-  }, [subscribeToChanges]);
+  }, [fetchNotifications, subscribeToChanges]); // Add fetchNotifications to dependencies
 
   return {
     notifications,
     totalNotifications,
     loadingNotifications,
     errorNotifications,
+    fetchNotifications,
   };
 };
 

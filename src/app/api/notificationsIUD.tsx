@@ -18,6 +18,21 @@ export const insertNotification = async (newNotification: any) => {
   }
 };
 
+export const deleteNotification = async (notificationId: number) => {
+  try {
+    const { error } = await supabase
+      .from("Notifications")
+      .delete()
+      .eq("notification_id", notificationId);
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error("Error deleting notification:", err);
+  }
+};
+
 export const markNotificationAsSeen = async (
   notificationId: number,
   currentStatus: string

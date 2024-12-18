@@ -14,12 +14,17 @@ import {
   TableColumn,
   TableCell,
 } from "@nextui-org/react";
-import { HiOutlineMail, HiOutlineMailOpen } from "react-icons/hi";
+import {
+  HiOutlineMail,
+  HiOutlineMailOpen,
+  HiOutlineTrash,
+} from "react-icons/hi";
 import { formatDateSuffix } from "@/utils/compUtils";
 import useNotifications from "@/hooks/useNotifications";
 import {
   markAllNotificationsAsSeen,
   markNotificationAsSeen,
+  deleteNotification,
 } from "@/app/api/notificationsIUD";
 
 const NotificationsComponent = () => {
@@ -34,14 +39,19 @@ const NotificationsComponent = () => {
     }
   }, [user]);
 
-  const { notifications, totalNotifications, loadingNotifications } =
-    useNotifications(rowsPerPage, page, userId);
+  const {
+    notifications,
+    totalNotifications,
+    loadingNotifications,
+    fetchNotifications,
+  } = useNotifications(rowsPerPage, page, userId);
 
   const totalPages = Math.ceil(totalNotifications / rowsPerPage);
 
   const columns = [
     { key: "message", label: "Message" },
-    { key: "seen", label: "Seen Status" },
+    // { key: "seen", label: "Seen Status" },
+    { key: "actions", label: "Actions" },
   ];
 
   if (loadingNotifications) {
@@ -72,7 +82,7 @@ const NotificationsComponent = () => {
           onChange={(newPage) => setPage(newPage)}
         />
       </div>
-      <div className="flex h-full w-full overflow-y-auto relative">
+      <div className="flex h-full w-full overflow-y-auto relative mb-28">
         <Table
           fullWidth
           layout="auto"
@@ -123,17 +133,9 @@ const NotificationsComponent = () => {
                     );
                   }
 
-                  // if (columnKey === "created_at") {
-                  //   return (
-                  //     <TableCell className="text-center text-sm">
-                  //       {formatDateSuffix(item.created_at)}
-                  //     </TableCell>
-                  //   );
-                  // }
-
-                  if (columnKey === "seen") {
+                  if (columnKey === "actions") {
                     return (
-                      <TableCell className="flex m-0 justify-center items-center">
+                      <TableCell className="m-0 flex justify-between gap-2">
                         <Button
                           isIconOnly
                           onPress={() =>
@@ -148,6 +150,18 @@ const NotificationsComponent = () => {
                           ) : (
                             <HiOutlineMailOpen />
                           )}
+                        </Button>
+
+                        <Button
+                          isIconOnly
+                          color="danger"
+                          variant="light"
+                          onPress={async () => {
+                            await deleteNotification(item.notification_id);
+                            fetchNotifications();
+                          }}
+                        >
+                          <HiOutlineTrash />
                         </Button>
                       </TableCell>
                     );
