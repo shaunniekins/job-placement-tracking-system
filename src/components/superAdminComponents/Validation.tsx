@@ -83,6 +83,8 @@ const ValidationComponent = () => {
   const agencyColumns = [
     { key: "company_name", label: "Company Name" },
     { key: "company_type", label: "Company Type" },
+    { key: "moa_file", label: "MOA" },
+    { key: "moa_duration", label: "Duration of MOA" },
     { key: "contact_number", label: "Contact Number" },
     { key: "action", label: "Action" },
   ];
@@ -397,6 +399,30 @@ JPTS Team`,
                       return (
                         <TableCell className="text-center">
                           {item.meta_data.company_type}
+                        </TableCell>
+                      );
+                    }
+
+                    if (columnKey === "moa_file") {
+                      return (
+                        <TableCell className="text-center">
+                          <a
+                            href={item.meta_data.moa_file}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-500 underline"
+                          >
+                            View MOA
+                          </a>
+                        </TableCell>
+                      );
+                    }
+
+                    if (columnKey === "moa_duration") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.moa_year_start} -{" "}
+                          {item.meta_data.moa_year_end}
                         </TableCell>
                       );
                     }

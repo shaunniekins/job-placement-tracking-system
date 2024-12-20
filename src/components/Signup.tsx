@@ -5,7 +5,7 @@
 import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseAdmin } from "@/utils/supabase";
+import { supabase, supabaseAdmin } from "@/utils/supabase";
 import {
   Button,
   Input,
@@ -27,6 +27,7 @@ import {
   programs,
   scholarships,
 } from "@/app/api/collegeAndProgramData";
+import { insertMOAFiles } from "@/app/api/moaIUD";
 
 interface SignupComponentProps {
   userType: string;
@@ -49,7 +50,9 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
   const [companyName, setCompanyName] = useState("");
   const [companyType, setCompanyType] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
-
+  const [moaYearStart, setMoaYearStart] = useState("");
+  const [moaYearEnd, setMoaYearEnd] = useState("");
+  const [moaFile, setMoaFile] = useState<File | null>(null);
   // exclusive for alumni
   const [birthDate, setBirthDate] = useState("");
   const [alumniAddress, setAlumniAddress] = useState("");
@@ -75,46 +78,75 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
 
     setSignUpPending(true);
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        account_status: "pending",
-        profile_picture: "",
+    if (userType === "agency" && !moaFile) {
+      alert("Please attach a MOA file.");
+      setSignUpPending(false);
+      return;
+    }
+
+    try {
+      // Create user with admin client
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email: email,
         password: password,
-        user_type: userType,
-        first_name: firstName,
-        last_name: lastName,
-        middle_name: middleName,
-        contact_number: contactNumber,
-        ...(userType === "agency" && {
-          valid_id: validId,
-          company_name: companyName,
-          company_type: companyType,
-          address: companyAddress,
-        }),
-        ...(userType === "alumni" && {
-          birth_date: "",
-          address: alumniAddress,
-          batch_year: batchYear,
-          id_number: idNumber,
-          college: college,
-          program: program,
-          scholarship: scholarship,
-          profile_of_employment: "",
-        }),
-      },
-    });
+        email_confirm: true,
+        user_metadata: {
+          account_status: "pending",
+          profile_picture: "",
+          email: email,
+          password: password,
+          user_type: userType,
+          first_name: firstName,
+          last_name: lastName,
+          middle_name: middleName,
+          contact_number: contactNumber,
+          ...(userType === "agency" && {
+            valid_id: validId,
+            company_name: companyName,
+            company_type: companyType,
+            address: companyAddress,
+            moa_year_start: moaYearStart,
+            moa_year_end: moaYearEnd,
+            moa_file: "",
+          }),
+          ...(userType === "alumni" && {
+            birth_date: "",
+            address: alumniAddress,
+            batch_year: batchYear,
+            id_number: idNumber,
+            college: college,
+            program: program,
+            scholarship: scholarship,
+            profile_of_employment: "",
+          }),
+        },
+      });
 
-    if (error) {
-      console.error("Error signing up:", error.message);
+      if (error) throw error;
+
+      const userId = data?.user?.id;
+      if (!userId) throw new Error("User ID not found in the response data.");
+
+      if (userType === "agency" && moaFile) {
+        // Upload MOA file and update user metadata using admin client
+        const moaFileUrl = await insertMOAFiles(userId, moaFile);
+        if (!moaFileUrl) throw new Error("Failed to upload MOA file");
+
+        const { error: updateError } =
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            user_metadata: {
+              moa_file: moaFileUrl,
+            },
+          });
+
+        if (updateError) throw updateError;
+      }
+
+      router.push(`/ident/confirmation`);
+    } catch (error: any) {
+      console.error("Error during signup:", error.message);
       alert(error.message);
       setSignUpPending(false);
-    } else {
-      router.push(`/ident/confirmation`);
-      return;
     }
   };
 
@@ -299,6 +331,43 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                         onChange={(e) => setContactNumber(e.target.value)}
                       />
                     </div>
+                    <div className="w-full flex flex-col lg:flex-row gap-2">
+                      <Input
+                        type="file"
+                        label="MOA"
+                        placeholder="Attach File of MOA"
+                        variant="bordered"
+                        color="success"
+                        isRequired
+                        accept=".pdf, image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setMoaFile(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          type="number"
+                          label="Year Start"
+                          variant="bordered"
+                          color="success"
+                          isRequired
+                          value={moaYearStart}
+                          onChange={(e) => setMoaYearStart(e.target.value)}
+                        />
+                        <span> - </span>
+                        <Input
+                          type="text"
+                          label="Year End"
+                          variant="bordered"
+                          color="success"
+                          isRequired
+                          value={moaYearEnd}
+                          onChange={(e) => setMoaYearEnd(e.target.value)}
+                        />
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -434,7 +503,10 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                               (validId &&
                                 companyName &&
                                 companyType &&
-                                companyAddress)) &&
+                                companyAddress &&
+                                moaYearStart &&
+                                moaYearEnd &&
+                                moaFile)) &&
                             (userType !== "alumni" || college)
                           )
                         : true
