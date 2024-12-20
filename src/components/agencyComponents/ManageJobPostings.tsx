@@ -53,6 +53,8 @@ interface JobForm {
   application_deadline: string;
   programs: string[];
   agency_id?: string; // Optional field
+  number_of_applicants: number;
+  requirements: string[];
 }
 
 const ManageJobPostingsComponent = () => {
@@ -95,6 +97,8 @@ const ManageJobPostingsComponent = () => {
     application_deadline: "",
     programs: [],
     agency_id: undefined,
+    number_of_applicants: 0,
+    requirements: [],
   });
 
   useEffect(() => {
@@ -103,12 +107,11 @@ const ManageJobPostingsComponent = () => {
     }
   }, [user]);
 
-  const {
-    jobPostings,
-    totalJobPostings,
-    loadingJobPostings,
-    errorJobPostings,
-  } = useJobPostings(rowsPerPage, page, userId);
+  const { jobPostings, totalJobPostings, loadingJobPostings } = useJobPostings(
+    rowsPerPage,
+    page,
+    userId
+  );
 
   const totalPages = Math.ceil(totalJobPostings / rowsPerPage);
 
@@ -139,6 +142,8 @@ const ManageJobPostingsComponent = () => {
         industry: job.industry,
         programs: programsData,
         application_deadline: job.application_deadline,
+        number_of_applicants: job.number_of_applicants,
+        requirements: job.requirements,
       });
     } else {
       // Reset form for insert
@@ -152,6 +157,8 @@ const ManageJobPostingsComponent = () => {
         application_deadline: "",
         programs: [],
         agency_id: userId,
+        number_of_applicants: 0,
+        requirements: [],
       });
     }
   };
@@ -176,6 +183,10 @@ const ManageJobPostingsComponent = () => {
       [name]: programsArray,
     });
   };
+
+  const selectedRequirements = useMemo(() => {
+    return new Set(jobForm.requirements);
+  }, [jobForm.requirements]);
 
   const handleSubmit = async () => {
     const filteredUsersData = jobForm.programs?.length
@@ -274,9 +285,22 @@ const ManageJobPostingsComponent = () => {
                     name="job_location"
                     value={jobForm.job_location}
                     onChange={handleInputChange}
+                    className="col-span-2"
+                  />
+                  <Input
+                    type="number"
+                    label="# of Applicants Needed"
+                    placeholder="Enter number of applicants"
+                    name="number_of_applicants"
+                    value={jobForm.number_of_applicants.toString()}
+                    onChange={(e) =>
+                      setJobForm({
+                        ...jobForm,
+                        number_of_applicants: parseInt(e.target.value) || 0,
+                      })
+                    }
                     className="col-span-2 md:col-span-1"
                   />
-
                   <Input
                     label="Industry"
                     placeholder="Enter industry"
@@ -302,6 +326,33 @@ const ManageJobPostingsComponent = () => {
                     onChange={handleInputChange}
                     className="col-span-2 md:col-span-1"
                   />
+                  {/* Requiments: PDS, Civil Service Exam Eligibility, Certificate of Training/s and Seminars and Certificate of Employment, TOR, and Work Portfolio */}
+                  <Select
+                    label="Requirements"
+                    placeholder="Select requirements"
+                    selectionMode="multiple"
+                    selectedKeys={selectedRequirements}
+                    onSelectionChange={(value) =>
+                      handleSelectMultipleChange(
+                        "requirements",
+                        value as Set<string>
+                      )
+                    }
+                    className="col-span-2 md:col-span-2"
+                  >
+                    <SelectItem key="PDS">PDS</SelectItem>
+                    <SelectItem key="Civil Service Exam Eligibility">
+                      Civil Service Exam Eligibility
+                    </SelectItem>
+                    <SelectItem key="Certificate of Training/s and Seminars">
+                      Certificate of Training/s and Seminars
+                    </SelectItem>
+                    <SelectItem key="Certificate of Employment">
+                      Certificate of Employment
+                    </SelectItem>
+                    <SelectItem key="TOR">TOR</SelectItem>
+                    <SelectItem key="Work Portfolio">Work Portfolio</SelectItem>
+                  </Select>
 
                   <Select
                     label="Filter courses"
@@ -342,7 +393,9 @@ const ManageJobPostingsComponent = () => {
                     !jobForm.industry ||
                     !jobForm.application_deadline ||
                     !jobForm.salary_range ||
-                    !jobForm.job_description
+                    !jobForm.job_description ||
+                    jobForm.number_of_applicants === 0 ||
+                    jobForm.requirements.length === 0
                   }
                   onClick={handleSubmit}
                 >
