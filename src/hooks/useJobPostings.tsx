@@ -23,7 +23,7 @@ const useJobPostings = (
       let query = supabase
         .from("ViewJobPostingsWithAgencyDetails")
         .select("*", { count: "exact" })
-        .order("date_posted", { ascending: true });
+        .order("date_posted", { ascending: false });
 
       if (agencyId) {
         query = query.eq("agency_id", agencyId);
