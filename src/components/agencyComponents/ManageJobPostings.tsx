@@ -8,36 +8,30 @@ import {
 } from "@/app/api/jobPostingsIUD";
 import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
-import useJobPostings from "@/hooks/useJobPostings";
+import useJobPostingsForAgency from "@/hooks/useJobPostingsForAgency";
 import useUsers from "@/hooks/useUsers";
-import {
-  capitalizeFirstLetter,
-  formatDate,
-  sendEmailNotification,
-} from "@/utils/compUtils";
+import { formatDate, sendEmailNotification } from "@/utils/compUtils";
 import {
   Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
   Pagination,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Spinner,
   Input,
   Textarea,
   SelectItem,
   Select,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
 } from "@nextui-org/react";
 import { useEffect, useMemo, useState } from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdTrash } from "react-icons/io";
 import { IoAddCircleSharp } from "react-icons/io5";
 import { MdOutlineEdit } from "react-icons/md";
@@ -67,24 +61,8 @@ const ManageJobPostingsComponent = () => {
   const [modalType, setModalType] = useState<"insert" | "update">("insert");
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
-  const [openPopoverJobId, setOpenPopoverJobId] = useState<string | null>(null);
-
   // limited to 1000 alumni users only
   const { usersData } = useUsers(1000, 1, "alumni", "approved");
-
-  // useEffect(() => {
-  //   if (usersData) {
-  //     console.log("usersData", usersData);
-  //   }
-  // }, [usersData]);
-
-  const togglePopover = (jobId: string) => {
-    if (openPopoverJobId === jobId) {
-      setOpenPopoverJobId(null);
-    } else {
-      setOpenPopoverJobId(jobId);
-    }
-  };
 
   // Form state for job posting
   const [jobForm, setJobForm] = useState<JobForm>({
@@ -107,18 +85,14 @@ const ManageJobPostingsComponent = () => {
     }
   }, [user]);
 
-  const { jobPostings, totalJobPostings, loadingJobPostings } = useJobPostings(
-    rowsPerPage,
-    page,
-    userId
-  );
+  const { jobPostings, totalJobPostings, loadingJobPostings } =
+    useJobPostingsForAgency(rowsPerPage, page, userId);
 
   const totalPages = Math.ceil(totalJobPostings / rowsPerPage);
 
   const handleModalOpen = (type: "insert" | "update", job?: any) => {
     setModalType(type);
     setOpenModal(true);
-    setOpenPopoverJobId(null);
     if (type === "update" && job) {
       let programsData = [];
       if (Array.isArray(job.programs)) {
@@ -237,6 +211,14 @@ const ManageJobPostingsComponent = () => {
     setOpenModal(false);
   };
 
+  const columns = [
+    { key: "job_title", label: "Job Title" },
+    { key: "industry", label: "Industry" },
+    { key: "job_type", label: "Job Type" },
+    { key: "application_deadline", label: "Application Deadline" },
+    { key: "action", label: "Action" },
+  ];
+
   if (loadingJobPostings) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -292,7 +274,7 @@ const ManageJobPostingsComponent = () => {
                     label="# of Applicants Needed"
                     placeholder="Enter number of applicants"
                     name="number_of_applicants"
-                    value={jobForm.number_of_applicants.toString()}
+                    value={jobForm.number_of_applicants?.toString()}
                     onChange={(e) =>
                       setJobForm({
                         ...jobForm,
@@ -394,8 +376,8 @@ const ManageJobPostingsComponent = () => {
                     !jobForm.application_deadline ||
                     !jobForm.salary_range ||
                     !jobForm.job_description ||
-                    jobForm.number_of_applicants === 0 ||
-                    jobForm.requirements.length === 0
+                    jobForm?.number_of_applicants === 0 ||
+                    jobForm?.requirements?.length === 0
                   }
                   onClick={handleSubmit}
                 >
@@ -437,138 +419,86 @@ const ManageJobPostingsComponent = () => {
           )}
 
           {jobPostings && jobPostings.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-24">
-              {jobPostings.map((job) => (
-                <JobPostingDetails
-                  key={job.job_posting_id}
-                  job={job}
-                  openPopoverJobId={openPopoverJobId}
-                  togglePopover={togglePopover}
-                  onEdit={() => handleModalOpen("update", job)}
-                  onDelete={() => {
-                    setOpenPopoverJobId(null);
-                    deleteJobPosting(job.job_posting_id);
-                  }}
-                />
-              ))}
+            <div className="flex h-full w-full overflow-y-auto">
+              <Table
+                fullWidth
+                layout="auto"
+                isHeaderSticky={true}
+                aria-label="Job Applications Table"
+                classNames={{
+                  wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
+                }}
+                className="h-full w-full flex items-center justify-center"
+              >
+                <TableHeader columns={columns}>
+                  {(column) => (
+                    <TableColumn
+                      key={column.key}
+                      className="bg-[#008B47] text-white text-center whitespace-nowrap flex-nowrap"
+                    >
+                      {column.label}
+                    </TableColumn>
+                  )}
+                </TableHeader>
+                <TableBody
+                  items={jobPostings}
+                  emptyContent={"No job applications to display."}
+                  loadingContent={<Spinner color="success" />}
+                >
+                  {(item) => (
+                    <TableRow
+                      key={item.job_posting_id}
+                      className="text-center hover:bg-green-100"
+                    >
+                      {(columnKey) => {
+                        if (columnKey === "application_deadline") {
+                          return (
+                            <TableCell className="text-center">
+                              {formatDate(item.application_deadline)}
+                            </TableCell>
+                          );
+                        }
+
+                        if (columnKey === "action") {
+                          return (
+                            <TableCell className="flex justify-center gap-2">
+                              <Button
+                                size="sm"
+                                color="primary"
+                                startContent={<MdOutlineEdit />}
+                                onPress={() => handleModalOpen("update", item)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="danger"
+                                startContent={<IoMdTrash />}
+                                onPress={() => {
+                                  deleteJobPosting(item.job_posting_id);
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </TableCell>
+                          );
+                        }
+
+                        return (
+                          <TableCell className="text-center">
+                            {item[columnKey as keyof typeof item]}
+                          </TableCell>
+                        );
+                      }}
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
       </div>
     </>
-  );
-};
-
-const JobPostingDetails = ({
-  job,
-  openPopoverJobId,
-  togglePopover,
-  onEdit,
-  onDelete,
-}: {
-  job: any;
-  openPopoverJobId: string | null;
-  togglePopover: (jobId: string) => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) => {
-  const currentDate = new Date();
-  const applicationDeadline = new Date(job.application_deadline);
-
-  const isInactive =
-    job.job_status === "inactive" || applicationDeadline < currentDate;
-
-  return (
-    <Card>
-      <CardHeader className="flex justify-between items-center pb-0">
-        <div className="flex flex-col">
-          <h2 className="text-2xl font-bold">{job.job_title}</h2>
-          <div className="flex gap-2 items-center">
-            <p className="text-xs text-gray-600">
-              {formatDate(job.application_deadline)}
-            </p>
-            <span>|</span>
-            {job.industry && (
-              <>
-                <p className="text-xs text-gray-600">{job.industry}</p>
-                <span>|</span>
-              </>
-            )}
-            <p className="text-xs text-gray-600">{job.job_type}</p>
-          </div>
-        </div>
-        <Popover
-          placement="bottom"
-          isOpen={openPopoverJobId === job.job_posting_id}
-          onOpenChange={() => togglePopover(job.job_posting_id)}
-        >
-          <PopoverTrigger>
-            <Button variant="light">
-              <BsThreeDotsVertical />
-            </Button>
-          </PopoverTrigger>
-
-          <PopoverContent className="gap-2 p-2">
-            <Button
-              fullWidth
-              size="sm"
-              startContent={<MdOutlineEdit />}
-              onPress={onEdit}
-            >
-              Edit
-            </Button>
-            <Button
-              fullWidth
-              size="sm"
-              startContent={<IoMdTrash />}
-              onPress={onDelete}
-            >
-              Delete
-            </Button>
-          </PopoverContent>
-        </Popover>
-      </CardHeader>
-      <CardBody className="whitespace-pre-wrap overflow-hidden">
-        <p>
-          <strong>Job Location:</strong> {job.job_location}
-        </p>
-        <p>
-          <strong>Salary Range:</strong> {job.salary_range || "N/A"}
-        </p>
-        <p className="uppercase">
-          <strong className="capitalize">Courses:</strong>{" "}
-          {job?.programs?.length > 0
-            ? job?.programs.map((program: string) => program).join(", ")
-            : "All"}
-        </p>
-        <div className="flex flex-col gap-2 mt-4">
-          <h2 className="font-bold text-lg">About the Job</h2>
-          {/* <div className="h-56 overflow-y-auto"> */}
-          <div className="w-full text-justify">
-            {/* <p className="p text-sm">{job.job_description}</p> */}
-            <p className="text-sm text-ellipsis">{job.job_description}</p>
-          </div>
-        </div>
-      </CardBody>
-      <CardFooter className="flex justify-between items-center pt-0">
-        <p className="flex flex-col items-center">
-          {formatDate(job.date_posted)}
-          <span className="text-xs text-gray-500">Date Posted</span>
-        </p>
-        <Button
-          color={
-            isInactive
-              ? "danger"
-              : job.job_status === "approved"
-              ? "success"
-              : "default"
-          }
-          isDisabled
-        >
-          {isInactive ? "Inactive" : capitalizeFirstLetter(job.job_status)}
-        </Button>
-      </CardFooter>
-    </Card>
   );
 };
 

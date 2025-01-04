@@ -70,3 +70,7 @@ export const sendSMSNotification = async (sendSMSData: any) => {
     console.error("Error sending notification:", error);
   }
 };
+
+export const formatActivityType = (text: string) => {
+  return text.replace(/_/g, " ");
+};

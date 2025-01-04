@@ -2,13 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
 
-const useJobPostings = (
+const useJobPostingsForAgency = (
   rowsPerPage: number,
   currentPage: number,
-  agencyId?: string,
-  jobStatusFilter?: string,
-  userProgram?: string,
-  searchFilter?: string
+  agencyId: string
 ) => {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [totalJobPostings, setTotalJobPostings] = useState(0);
@@ -16,6 +13,8 @@ const useJobPostings = (
   const [errorJobPostings, setErrorJobPostings] = useState<string | null>(null);
 
   const fetchJobPostings = useCallback(async () => {
+    if (!agencyId) return;
+
     const offset = (currentPage - 1) * rowsPerPage;
 
     try {
@@ -26,20 +25,6 @@ const useJobPostings = (
 
       if (agencyId) {
         query = query.eq("agency_id", agencyId);
-      }
-
-      if (jobStatusFilter) {
-        query = query.eq("job_status", jobStatusFilter);
-      }
-
-      if (userProgram) {
-        query = query.or(`programs.cs.{${userProgram}},programs.is.null`);
-      }
-
-      if (searchFilter) {
-        query = query.or(
-          `job_title.ilike.%${searchFilter}%,agency_company_name.ilike.%${searchFilter}%`
-        );
       }
 
       const response: PostgrestResponse<any> = await query.range(
@@ -62,14 +47,7 @@ const useJobPostings = (
     } finally {
       setLoadingJobPostings(false);
     }
-  }, [
-    rowsPerPage,
-    currentPage,
-    agencyId,
-    jobStatusFilter,
-    userProgram,
-    searchFilter,
-  ]);
+  }, [rowsPerPage, currentPage, agencyId]);
 
   const fetchFullJobPosting = async (jobPostingId: number) => {
     if (!jobPostingId) {
@@ -109,26 +87,7 @@ const useJobPostings = (
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
           const shouldIncludeJob = (record: any) => {
-            const programsMatch =
-              !userProgram ||
-              !record.programs ||
-              record.programs.includes(userProgram);
-
-            const filterMatch =
-              !jobStatusFilter || record.job_status === jobStatusFilter;
-
-            const agencyMatch = !agencyId || record.agency_id === agencyId;
-
-            const searchMatch =
-              !searchFilter ||
-              record.job_title
-                .toLowerCase()
-                .includes(searchFilter.toLowerCase()) ||
-              record.agency_company_name
-                .toLowerCase()
-                .includes(searchFilter.toLowerCase());
-
-            return programsMatch && filterMatch && agencyMatch && searchMatch;
+            return !agencyId || record.agency_id === agencyId;
           };
 
           switch (eventType) {
@@ -185,7 +144,7 @@ const useJobPostings = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agencyId, jobStatusFilter, userProgram, searchFilter]);
+  }, [agencyId]);
 
   useEffect(() => {
     fetchJobPostings(); // Fetch initial data
@@ -206,4 +165,4 @@ const useJobPostings = (
   };
 };
 
-export default useJobPostings;
+export default useJobPostingsForAgency;
