@@ -6,7 +6,9 @@ const useJobApplications = (
   rowsPerPage: number,
   currentPage: number,
   agencyId?: string,
-  applicantId?: string
+  applicantId?: string,
+  searchQuery?: string,
+  programFilter?: string
 ) => {
   const [jobApplications, setJobApplications] = useState<any[]>([]);
   const [totalJobApplications, setTotalJobApplications] = useState(0);
@@ -36,6 +38,18 @@ const useJobApplications = (
         );
       }
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(
+          `applicant_first_name.ilike.%${searchQuery}%,applicant_last_name.ilike.%${searchQuery}%,job_title.ilike.%${searchQuery}%`
+        );
+      }
+
+      // Apply program filter
+      if (programFilter !== "all" && programFilter) {
+        query = query.eq("applicant_program", programFilter);
+      }
+
       const response: PostgrestResponse<any> = await query.range(
         offset,
         offset + rowsPerPage - 1
@@ -56,7 +70,14 @@ const useJobApplications = (
     } finally {
       setLoadingJobApplications(false);
     }
-  }, [rowsPerPage, currentPage, agencyId, applicantId]);
+  }, [
+    rowsPerPage,
+    currentPage,
+    agencyId,
+    applicantId,
+    searchQuery,
+    programFilter,
+  ]);
 
   const fetchFullJobPosting = async (jobPostingId: number) => {
     if (!jobPostingId) {

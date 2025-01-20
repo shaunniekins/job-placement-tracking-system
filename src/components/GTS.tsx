@@ -1295,7 +1295,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       }
                     >
                       <SelectItem key={"Regular"}>
-                        Regular or Permanen
+                        Regular or Permanent
                       </SelectItem>
                       <SelectItem key={"Temporary"}>Temporary</SelectItem>
                       <SelectItem key={"Casual"}>Casual</SelectItem>

@@ -14,10 +14,15 @@ import {
   TableRow,
   TableColumn,
   TableCell,
+  Input,
+  Select,
+  SelectItem,
+  Selection,
 } from "@nextui-org/react";
 import { formatDate } from "@/utils/compUtils";
 import AlumniProfileModal from "./AlumniProfileModal";
 import ApplicationStatusModalComponent from "../ApplicationStatusModal";
+import { programs } from "@/app/api/collegeAndProgramData";
 
 const ApplicationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -31,6 +36,8 @@ const ApplicationsComponent = () => {
   const [currentJobTitle, setCurrentJobTitle] = useState("");
   const [currentApplicantId, setCurrentApplicantId] = useState("");
   const [currentApplicantEmail, setCurrentApplicantEmail] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [programFilter, setProgramFilter] = useState("all");
 
   useEffect(() => {
     if (user) {
@@ -38,22 +45,17 @@ const ApplicationsComponent = () => {
     }
   }, [user]);
 
-  const {
-    jobApplications,
-    totalJobApplications,
-    loadingJobApplications,
-    errorJobApplications,
-  } = useJobApplications(rowsPerPage, page, userId);
+  const { jobApplications, totalJobApplications, loadingJobApplications } =
+    useJobApplications(
+      rowsPerPage,
+      page,
+      userId,
+      undefined,
+      searchInput,
+      programFilter
+    );
 
   const totalPages = Math.ceil(totalJobApplications / rowsPerPage);
-
-  if (loadingJobApplications) {
-    return (
-      <div className="h-full w-full flex justify-center items-center">
-        <Spinner color="success" />
-      </div>
-    );
-  }
 
   const columns = [
     { key: "job_title", label: "Job Title" },
@@ -94,12 +96,37 @@ const ApplicationsComponent = () => {
             onChange={(newPage) => setPage(newPage)}
             className={`${jobApplications.length === 0 && "hidden"}`}
           />
-          <Button className="invisible" />
+          <div className="flex items-center gap-2">
+            <Input
+              label="Search"
+              size="sm"
+              fullWidth
+              placeholder="Search name or job title..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <Select
+              size="sm"
+              fullWidth
+              label="Program Filter"
+              placeholder="Select program"
+              className="uppercase"
+              items={programs}
+              onChange={(e) => setProgramFilter(e.target.value)}
+            >
+              {programs.map((item) => (
+                <SelectItem key={item.key} className="uppercase">
+                  {item.key}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
         </div>
+
         <div className="flex h-full w-full overflow-y-auto relative">
           {jobApplications.length === 0 && (
             <div className="h-full w-full flex justify-center items-center -mt-16">
-              <p>No job applications yet.</p>
+              <p>No job applications found.</p>
             </div>
           )}
 
@@ -158,85 +185,6 @@ const ApplicationsComponent = () => {
                         if (columnKey === "action") {
                           return (
                             <TableCell className="flex justify-center items-center gap-2">
-                              {/* <Select
-                              aria-label="Action Setter"
-                              disallowEmptySelection={true}
-                              size="sm"
-                              color="success"
-                              defaultSelectedKeys={[item.application_status]}
-                              disabledKeys={
-                                item.application_status !== "pending"
-                                  ? ["pending"]
-                                  : []
-                              }
-                              className="max-w-48"
-                              onChange={async (e) => {
-                                const newStatus = e.target.value;
-                                const response = await updateJobApplication(
-                                  item.job_application_id,
-                                  {
-                                    application_status: newStatus,
-                                  }
-                                );
-
-                                if (response) {
-                                  let message = "";
-                                  switch (newStatus) {
-                                    case "accepted":
-                                      message = `Congratulations! Your application for the job posting: ${item.job_title} has been accepted.`;
-                                      break;
-                                    case "rejected":
-                                      message = `We are sorry to inform you that your application for the job posting: ${item.job_title} has been rejected.`;
-                                      break;
-                                    case "interview":
-                                      message = `The agency has decided to move forward with your application for the job posting: ${item.job_title} and would like to schedule an interview.`;
-                                      break;
-                                    default:
-                                      message = "";
-                                  }
-
-                                  if (message) {
-                                    await insertNotification(
-                                      {
-                                        receiver_id: item.applicant_id,
-                                        message: message,
-                                      },
-                                      item.applicant_email
-                                    );
-                                  }
-                                }
-                              }}
-                            >
-                              <SelectItem
-                                key="pending"
-                                value="pending"
-                                className="text-center"
-                              >
-                                Pending
-                              </SelectItem>
-                              <SelectItem
-                                key="interview"
-                                value="interview"
-                                className="text-center"
-                              >
-                                Interview
-                              </SelectItem>
-                              <SelectItem
-                                key="accepted"
-                                value="accepted"
-                                className="text-center"
-                              >
-                                Accepted
-                              </SelectItem>
-                              <SelectItem
-                                key="rejected"
-                                value="rejected"
-                                className="text-center"
-                              >
-                                Rejected
-                              </SelectItem>
-                            </Select> */}
-
                               <Button
                                 size="sm"
                                 color="success"

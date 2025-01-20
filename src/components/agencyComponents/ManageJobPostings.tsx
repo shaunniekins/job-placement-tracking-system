@@ -1,6 +1,6 @@
 "use client";
 
-import { programs } from "@/app/api/collegeAndProgramData";
+import { colleges, programs } from "@/app/api/collegeAndProgramData";
 import {
   deleteJobPosting,
   insertJobPosting,
@@ -79,6 +79,40 @@ const ManageJobPostingsComponent = () => {
     requirements: [],
   });
 
+  // Add new state for selected colleges
+  const [selectedColleges, setSelectedColleges] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Function to get programs for selected colleges
+  const getProgramsForCollege = (collegeKey: string) => {
+    return programs.filter((program) => program.college === collegeKey);
+  };
+
+  // Function to handle college selection
+  const handleCollegeSelection = (selectedKeys: any) => {
+    const typedKeys = selectedKeys as Set<string>;
+    setSelectedColleges(typedKeys);
+
+    // Get all programs for selected colleges
+    const newPrograms = Array.from(typedKeys).flatMap((college) =>
+      college === "all"
+        ? programs.map((p) => p.key)
+        : getProgramsForCollege(college).map((program) => program.key)
+    );
+
+    setJobForm((prev) => ({
+      ...prev,
+      programs: newPrograms,
+    }));
+  };
+
+  // Function to get college from program
+  const getCollegeFromProgram = (programKey: string): string | undefined => {
+    const program = programs.find((p) => p.key === programKey);
+    return program?.college;
+  };
+
   useEffect(() => {
     if (user) {
       setUserId(user.id);
@@ -90,35 +124,61 @@ const ManageJobPostingsComponent = () => {
 
   const totalPages = Math.ceil(totalJobPostings / rowsPerPage);
 
+  const isMoaExpired = () => {
+    if (!user?.user_metadata?.moa_year_end) return true;
+    const moaEndDate = new Date(user.user_metadata.moa_year_end);
+    const today = new Date();
+    return moaEndDate < today;
+  };
+
   const handleModalOpen = (type: "insert" | "update", job?: any) => {
+    if (type === "insert" && isMoaExpired()) {
+      alert(
+        "Your MOA has expired. Please update your MOA in your profile before creating new job postings."
+      );
+      return;
+    }
+
     setModalType(type);
     setOpenModal(true);
     if (type === "update" && job) {
-      let programsData = [];
-      if (Array.isArray(job.programs)) {
-        programsData = job.programs;
-      } else if (job.programs instanceof Set) {
-        programsData = Array.from(job.programs);
-      } else if (typeof job.programs === "string") {
-        programsData = job.programs
-          .split(",")
-          .map((p: any) => p.trim())
-          .filter(Boolean);
+      // Initialize programsData with an empty array if job.programs is null/undefined
+      let programsData: string[] = [];
+
+      if (job.programs) {
+        if (Array.isArray(job.programs)) {
+          programsData = job.programs;
+        } else if (job.programs instanceof Set) {
+          programsData = Array.from(job.programs);
+        } else if (typeof job.programs === "string") {
+          programsData = job.programs
+            .split(",")
+            .map((p: any) => p.trim())
+            .filter(Boolean);
+        }
       }
 
       setSelectedJob(job);
       setJobForm({
-        job_title: job.job_title,
-        job_description: job.job_description,
-        job_location: job.job_location,
-        job_type: job.job_type,
-        salary_range: job.salary_range,
-        industry: job.industry,
+        job_title: job.job_title || "",
+        job_description: job.job_description || "",
+        job_location: job.job_location || "",
+        job_type: job.job_type || "",
+        salary_range: job.salary_range || "",
+        industry: job.industry || "",
         programs: programsData,
-        application_deadline: job.application_deadline,
-        number_of_applicants: job.number_of_applicants,
-        requirements: job.requirements,
+        application_deadline: job.application_deadline || "",
+        number_of_applicants: job.number_of_applicants || 0,
+        requirements: job.requirements || [],
       });
+
+      // Only process colleges if there are programs
+      const collegesFromPrograms = new Set<string>(
+        programsData
+          .map(getCollegeFromProgram)
+          .filter((college: any): college is string => college !== undefined)
+      );
+      setSelectedColleges(collegesFromPrograms);
     } else {
       // Reset form for insert
       setJobForm({
@@ -134,6 +194,9 @@ const ManageJobPostingsComponent = () => {
         number_of_applicants: 0,
         requirements: [],
       });
+
+      // Reset selected colleges for insert
+      setSelectedColleges(new Set());
     }
   };
 
@@ -336,23 +399,51 @@ const ManageJobPostingsComponent = () => {
                     <SelectItem key="Work Portfolio">Work Portfolio</SelectItem>
                   </Select>
 
-                  <Select
-                    label="Filter courses"
-                    placeholder="Select courses to filter"
+                  <Select<any>
+                    label="Select Colleges"
+                    placeholder="Select colleges"
                     selectionMode="multiple"
-                    selectedKeys={selectedPrograms}
-                    onSelectionChange={(value) =>
-                      handleSelectMultipleChange(
-                        "programs",
-                        value as Set<string>
-                      )
-                    }
-                    className="col-span-2 md:col-span-2"
+                    selectedKeys={selectedColleges}
+                    onSelectionChange={handleCollegeSelection}
+                    className="col-span-2"
+                    items={[{ key: "all", label: "All Colleges" }, ...colleges]}
                   >
-                    {programs.map((item) => (
-                      <SelectItem key={item.key}>{item.label}</SelectItem>
-                    ))}
+                    {(college) => (
+                      <SelectItem key={college.key}>{college.label}</SelectItem>
+                    )}
                   </Select>
+
+                  {selectedColleges && selectedColleges.size > 0 && (
+                    <Select
+                      label="Programs"
+                      placeholder="Select specific programs"
+                      selectionMode="multiple"
+                      selectedKeys={new Set(jobForm.programs)}
+                      onSelectionChange={(value) => {
+                        handleSelectMultipleChange(
+                          "programs",
+                          value as Set<string>
+                        );
+                      }}
+                      className="col-span-2"
+                    >
+                      {Array.from(selectedColleges)
+                        .flatMap((collegeKey) =>
+                          collegeKey === "all"
+                            ? programs
+                            : getProgramsForCollege(collegeKey)
+                        )
+                        .map((program) => (
+                          <SelectItem
+                            key={program.key}
+                            textValue={program.label}
+                          >
+                            {program.label}
+                          </SelectItem>
+                        ))}
+                    </Select>
+                  )}
+
                   <Textarea
                     label="Job Description"
                     placeholder="Enter job description"
@@ -407,6 +498,7 @@ const ManageJobPostingsComponent = () => {
           <Button
             startContent={<IoAddCircleSharp size={20} />}
             onClick={() => handleModalOpen("insert")}
+            // isDisabled={isMoaExpired()}
           >
             Create New
           </Button>

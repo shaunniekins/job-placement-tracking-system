@@ -348,8 +348,8 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                       />
                       <div className="flex gap-2 items-center">
                         <Input
-                          type="number"
-                          label="Year Start"
+                          type="date"
+                          label="Start Date"
                           variant="bordered"
                           color="success"
                           isRequired
@@ -358,8 +358,8 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                         />
                         <span> - </span>
                         <Input
-                          type="text"
-                          label="Year End"
+                          type="date"
+                          label="End Date"
                           variant="bordered"
                           color="success"
                           isRequired

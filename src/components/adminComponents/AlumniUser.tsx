@@ -1,7 +1,5 @@
 "use client";
 
-import { RootState } from "@/app/reduxUtils/store";
-import useJobApplications from "@/hooks/useJobApplications";
 import { Key, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {

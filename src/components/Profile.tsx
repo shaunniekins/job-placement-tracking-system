@@ -47,6 +47,7 @@ import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
 import POEComponent from "./POEComponent";
 import { IoOptionsOutline } from "react-icons/io5";
 import PDSComponent from "./PDSComponent";
+import { insertMOAFiles } from "@/app/api/moaIUD";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user?.user);
@@ -83,6 +84,9 @@ const ProfileComponent = () => {
     company_name: "",
     company_type: "",
     valid_id: "",
+    moa_year_start: "",
+    moa_year_end: "",
+    moa_file: "",
 
     // alumni
     birth_date: "",
@@ -132,6 +136,9 @@ const ProfileComponent = () => {
         company_name,
         company_type,
         valid_id,
+        moa_year_start,
+        moa_year_end,
+        moa_file,
         birth_date,
         college,
         program,
@@ -160,6 +167,9 @@ const ProfileComponent = () => {
         company_name: "",
         company_type: "",
         valid_id: "",
+        moa_year_start: "",
+        moa_year_end: "",
+        moa_file: "",
         birth_date: "",
         college: "",
         program: "",
@@ -176,6 +186,9 @@ const ProfileComponent = () => {
           company_name: company_name || "",
           company_type: company_type || "",
           valid_id: valid_id || "",
+          moa_year_start: moa_year_start || "",
+          moa_year_end: moa_year_end || "",
+          moa_file: moa_file || "",
         });
 
         setTempUserInfo({
@@ -183,6 +196,9 @@ const ProfileComponent = () => {
           company_name: company_name || "",
           company_type: company_type || "",
           valid_id: valid_id || "",
+          moa_year_start: moa_year_start || "",
+          moa_year_end: moa_year_end || "",
+          moa_file: moa_file || "",
         });
       } else if (user.user_metadata.user_type === "alumni") {
         setUserInfo({
@@ -680,6 +696,72 @@ const ProfileComponent = () => {
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
                   />
+                  <Input
+                    label="Valid ID"
+                    name="valid_id"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.valid_id}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <Input
+                    label="MOA Start Date"
+                    name="moa_year_start"
+                    type="date"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.moa_year_start}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <Input
+                    label="MOA End Date"
+                    name="moa_year_end"
+                    type="date"
+                    color="success"
+                    variant="bordered"
+                    value={tempUserInfo.moa_year_end}
+                    onChange={handleUserInputChange}
+                    readOnly={!isUserEditing}
+                  />
+                  <div className="col-span-2 flex items-center gap-2">
+                    <Input
+                      type="file"
+                      label="MOA File"
+                      accept=".pdf,image/*"
+                      name="moa_file"
+                      color="success"
+                      variant="bordered"
+                      className={`${!isUserEditing && "hidden"}`}
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const moaFileUrl = await insertMOAFiles(
+                            userId,
+                            e.target.files[0]
+                          );
+                          if (moaFileUrl) {
+                            setTempUserInfo({
+                              ...tempUserInfo,
+                              moa_file: moaFileUrl,
+                            });
+                            setIsUserChanged(true);
+                          }
+                        }
+                      }}
+                    />
+                    {tempUserInfo.moa_file && (
+                      <Button
+                        color="primary"
+                        as="a"
+                        href={tempUserInfo.moa_file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View MOA
+                      </Button>
+                    )}
+                  </div>
                 </>
               )}
               {currentUserType === "alumni" && (
@@ -801,18 +883,6 @@ const ProfileComponent = () => {
                   color="success"
                   variant="bordered"
                   value={tempUserInfo.gender}
-                  onChange={handleUserInputChange}
-                  readOnly={!isUserEditing}
-                />
-              )}
-
-              {currentUserType === "agency" && (
-                <Input
-                  label="Valid ID"
-                  name="valid_id"
-                  color="success"
-                  variant="bordered"
-                  value={tempUserInfo.valid_id}
                   onChange={handleUserInputChange}
                   readOnly={!isUserEditing}
                 />
