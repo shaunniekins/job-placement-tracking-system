@@ -44,6 +44,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
   const [lastName, setLastName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
+  const [contactNumberError, setContactNumberError] = useState("");
 
   // exlusive for ageny
   const [validId, setValidId] = useState("");
@@ -68,11 +69,33 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
 
   const router = useRouter();
 
+  const validatePhoneNumber = (number: string) => {
+    const phoneRegex = /^\+639\d{9}$/;
+    return phoneRegex.test(number);
+  };
+
+  const handleContactNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setContactNumber(value);
+
+    if (value && !validatePhoneNumber(value)) {
+      setContactNumberError("Phone number must be in format: +639xxxxxxxxx");
+    } else {
+      setContactNumberError("");
+    }
+  };
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     if (currentViewInput === 1) {
       setCurrentViewInput(2);
+      return;
+    }
+
+    if (contactNumber && !validatePhoneNumber(contactNumber)) {
       return;
     }
 
@@ -324,11 +347,14 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                       <Input
                         type="text"
                         label="Contact Number"
+                        placeholder="+639xxxxxxxxx"
                         variant="bordered"
-                        color="success"
+                        color={contactNumberError ? "danger" : "success"}
                         isRequired
                         value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
+                        onChange={handleContactNumberChange}
+                        errorMessage={contactNumberError}
+                        isInvalid={!!contactNumberError}
                       />
                     </div>
                     <div className="w-full flex flex-col lg:flex-row gap-2">
@@ -395,11 +421,14 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                       <Input
                         type="text"
                         label="Contact Number"
+                        placeholder="+639xxxxxxxxx"
                         variant="bordered"
-                        color="success"
+                        color={contactNumberError ? "danger" : "success"}
                         isRequired
                         value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
+                        onChange={handleContactNumberChange}
+                        errorMessage={contactNumberError}
+                        isInvalid={!!contactNumberError}
                       />
                     </div>
 
@@ -499,6 +528,7 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                             firstName &&
                             lastName &&
                             contactNumber &&
+                            validatePhoneNumber(contactNumber) &&
                             (userType !== "agency" ||
                               (validId &&
                                 companyName &&

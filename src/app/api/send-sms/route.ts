@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await client.messages.create({
       body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: "JPTS",
       to: phone,
     });
 
