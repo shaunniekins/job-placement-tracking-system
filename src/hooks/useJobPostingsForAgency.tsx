@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
+import { insertNotification } from "@/app/api/notificationsIUD";
 
 const useJobPostingsForAgency = (
   rowsPerPage: number,
@@ -89,6 +90,44 @@ const useJobPostingsForAgency = (
           const shouldIncludeJob = (record: any) => {
             return !agencyId || record.agency_id === agencyId;
           };
+
+          // Check if accepted applicants reached the required number
+          if (
+            eventType === "UPDATE" &&
+            newRecord.accepted_applicants >= newRecord.number_of_applicants
+          ) {
+            // Close the job posting
+            await supabase
+              .from("JobPostings")
+              .update({ job_status: "closed" })
+              .eq("job_posting_id", newRecord.job_posting_id);
+
+            // Send notification to agency
+            const message = `Job posting "${newRecord.job_title}" has been automatically closed as the required number of applicants (${newRecord.number_of_applicants}) has been reached.`;
+
+            await insertNotification({
+              receiver_id: newRecord.agency_id,
+              message: message,
+            });
+
+            // Send SMS notification
+            const { data: agencyData }: { data: any } = await supabase
+              .from("users")
+              .select("raw_user_meta_data->contact_number as phone")
+              .eq("id", newRecord.agency_id)
+              .single();
+
+            if (agencyData?.phone) {
+              await fetch("/api/send-sms", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  phone: agencyData.phone,
+                  message: message,
+                }),
+              });
+            }
+          }
 
           switch (eventType) {
             case "INSERT":

@@ -49,6 +49,7 @@ interface JobForm {
   agency_id?: string; // Optional field
   number_of_applicants: number;
   requirements: string[];
+  accepted_applicants: number;
 }
 
 const ManageJobPostingsComponent = () => {
@@ -77,6 +78,7 @@ const ManageJobPostingsComponent = () => {
     agency_id: undefined,
     number_of_applicants: 0,
     requirements: [],
+    accepted_applicants: 0,
   });
 
   // Add new state for selected colleges
@@ -170,6 +172,7 @@ const ManageJobPostingsComponent = () => {
         application_deadline: job.application_deadline || "",
         number_of_applicants: job.number_of_applicants || 0,
         requirements: job.requirements || [],
+        accepted_applicants: job.accepted_applicants || 0,
       });
 
       // Only process colleges if there are programs
@@ -193,6 +196,7 @@ const ManageJobPostingsComponent = () => {
         agency_id: userId,
         number_of_applicants: 0,
         requirements: [],
+        accepted_applicants: 0,
       });
 
       // Reset selected colleges for insert

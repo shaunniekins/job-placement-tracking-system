@@ -11,6 +11,8 @@ SELECT
     jp.date_posted,
     jp.job_status,
     jp.programs,
+    jp.number_of_applicants,
+    jp.accepted_applicants,
     au.id AS agency_id,
     au.email AS agency_email,
     au.raw_user_meta_data->>'first_name' AS agency_first_name,

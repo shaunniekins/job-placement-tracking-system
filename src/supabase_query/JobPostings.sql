@@ -12,6 +12,8 @@ create table
     date_posted timestamp with time zone not null default now(),
     job_status text not null default 'pending'::text,
     programs text[] null,
+    number_of_applicants integer not null default 1,
+    accepted_applicants integer not null default 0,
     constraint JobPostings_pkey primary key (job_posting_id),
     constraint JobPostings_agency_id_fkey foreign key (agency_id) references auth.users (id) on update cascade on delete cascade
   ) tablespace pg_default;

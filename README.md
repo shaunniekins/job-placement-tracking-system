@@ -33,6 +33,19 @@
         MJ_EMAIL_REGISTERED=<your-registered-email>
         ```
 
+4. Create a Twilio account:
+    - Sign up at [twilio.com/](http://twilio.com/).
+    - Obtain the following keys from your Twiio account settings:
+        - `TWILIO_ACCOUNT_SID`
+        - `TWILIO_AUTH_TOKEN`
+        - `TWILIO_PHONE_NUMBER`
+    - Add these keys to your `.env.local` file:
+        ```env
+        TWILIO_ACCOUNT_SID=<your-twiio-account-sid-key>
+        TWILIO_AUTH_TOKEN=<your-twilio-auth-token-key>
+        TWILIO_PHONE_NUMBER=<your-twilio-phone-number>
+        ```
+
 4. Run the development server:
     ```sh
     npm run dev

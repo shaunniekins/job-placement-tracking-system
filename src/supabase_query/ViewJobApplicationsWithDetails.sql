@@ -25,6 +25,8 @@ SELECT
     jp.date_posted,
     jp.job_status,
     jp.programs,
+    jp.number_of_applicants,
+    jp.accepted_applicants,
     
     -- Agency details extracted from JSON
     ag.id AS agency_id,
