@@ -498,7 +498,7 @@ const ManageJobPostingsComponent = () => {
           <Button
             startContent={<IoAddCircleSharp size={20} />}
             onClick={() => handleModalOpen("insert")}
-            // isDisabled={isMoaExpired()}
+            isDisabled={isMoaExpired()}
           >
             Create New
           </Button>

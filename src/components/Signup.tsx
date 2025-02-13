@@ -28,6 +28,7 @@ import {
   scholarships,
 } from "@/app/api/collegeAndProgramData";
 import { insertMOAFiles } from "@/app/api/moaIUD";
+import { validatePhoneNumber } from "@/utils/compUtils";
 
 interface SignupComponentProps {
   userType: string;
@@ -68,11 +69,6 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
     useState(false);
 
   const router = useRouter();
-
-  const validatePhoneNumber = (number: string) => {
-    const phoneRegex = /^\+639\d{9}$/;
-    return phoneRegex.test(number);
-  };
 
   const handleContactNumberChange = (
     e: React.ChangeEvent<HTMLInputElement>

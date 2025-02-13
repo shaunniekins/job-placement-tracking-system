@@ -28,7 +28,11 @@ import { supabaseAdmin } from "@/utils/supabase";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import { MdDelete } from "react-icons/md";
-import { sendEmailNotification } from "@/utils/compUtils";
+import {
+  formatDate,
+  formatDateYearFirst,
+  sendEmailNotification,
+} from "@/utils/compUtils";
 import { insertNotification } from "@/app/api/notificationsIUD";
 import {
   useJobPostingsBadgeData,
@@ -406,14 +410,18 @@ JPTS Team`,
                     if (columnKey === "moa_file") {
                       return (
                         <TableCell className="text-center">
-                          <a
-                            href={item.meta_data.moa_file}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-500 underline"
-                          >
-                            View MOA
-                          </a>
+                          {item.meta_data.moa_file ? (
+                            <a
+                              href={item.meta_data.moa_file}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-500 underline cursor-pointer"
+                            >
+                              View MOA
+                            </a>
+                          ) : (
+                            <span>N/A</span>
+                          )}
                         </TableCell>
                       );
                     }
@@ -421,8 +429,8 @@ JPTS Team`,
                     if (columnKey === "moa_duration") {
                       return (
                         <TableCell className="text-center">
-                          {item.meta_data.moa_year_start} -{" "}
-                          {item.meta_data.moa_year_end}
+                          {formatDateYearFirst(item.meta_data.moa_year_start)} -{" "}
+                          {formatDateYearFirst(item.meta_data.moa_year_end)}
                         </TableCell>
                       );
                     }

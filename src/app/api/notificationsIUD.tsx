@@ -1,5 +1,22 @@
 import { supabase } from "@/utils/supabase";
 
+export const notificationCheckerToSendForSMS = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("Notifications")
+    .select("*")
+    .eq("receiver_id", userId)
+    .eq("message", "Your MOA has been expired!")
+    .order("created_at", { ascending: false }) // Assumes you have a created_at column
+    .limit(1);
+
+  if (error) {
+    console.error("Error checking notification:", error);
+    return null;
+  }
+
+  return data?.[0] || null; // Return the first (latest) item or null if none found
+};
+
 export const insertNotification = async (newNotification: any) => {
   try {
     const response = await supabase
@@ -15,6 +32,24 @@ export const insertNotification = async (newNotification: any) => {
   } catch (error: any) {
     console.error("Error inserting notification:", error);
     return null;
+  }
+};
+
+export const updateNotification = async (
+  notificationId: number,
+  updates: any
+) => {
+  try {
+    const { error } = await supabase
+      .from("Notifications")
+      .update(updates)
+      .eq("notification_id", notificationId);
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error("Error updating notification:", err);
   }
 };
 

@@ -17,6 +17,11 @@ export const formatDate = (dateString: string) => {
   return format(date, "dd MMM yyyy");
 };
 
+export const formatDateYearFirst = (dateString: string) => {
+  const date = new Date(dateString);
+  return format(date, "yyyy MMM dd");
+};
+
 export const formatDateSuffix = (timestamp: string) => {
   const date = parseISO(timestamp);
   const now = new Date();
@@ -73,4 +78,9 @@ export const sendSMSNotification = async (sendSMSData: any) => {
 
 export const formatActivityType = (text: string) => {
   return text.replace(/_/g, " ");
+};
+
+export const validatePhoneNumber = (number: string) => {
+  const phoneRegex = /^\+639\d{9}$/;
+  return phoneRegex.test(number);
 };
