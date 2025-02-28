@@ -6,6 +6,7 @@ create table
     date_initial_interview date null,
     description_initial_interview text null,
     date_exam date null,
+    description_exam text null,
     date_final date null,
     final_result text null,
     constraint ApplicationSTatus_pkey primary key (application_status_id),

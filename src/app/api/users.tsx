@@ -30,3 +30,18 @@ export const moaExpirationChecker = async (userId: string) => {
   // Return true if current date is within 2 months of expiration or after expiration
   return moaEndDate <= warningDate;
 };
+
+export const getUserInfo = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("ViewUsers")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error("Error getting user info:", error);
+    return null;
+  }
+
+  return data;
+};

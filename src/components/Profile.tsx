@@ -1,6 +1,7 @@
 "use client";
 
 import { RootState } from "@/app/reduxUtils/store";
+import { documentFiles } from "@/app/api/documentFiles";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -44,10 +45,9 @@ import {
 } from "@/app/api/collegeAndProgramData";
 import GTSComponent from "./GTS";
 import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
-import POEComponent from "./POEComponent";
 import { IoOptionsOutline } from "react-icons/io5";
-import PDSComponent from "./PDSComponent";
 import { insertMOAFiles } from "@/app/api/moaIUD";
+import DocumentComponent from "./DocumentComponent";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user?.user);
@@ -59,12 +59,10 @@ const ProfileComponent = () => {
 
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
 
-  const [POEFile, setPOEFile] = useState<File | null>(null);
-  const [PDSFile, setPDSFile] = useState<File | null>(null);
-
-  const [isPOEModalOpen, setIsPOEModalOpen] = useState(false);
-  const [isUploadAwardsModalOpen, setIsUploadAwardsModalOpen] = useState(false);
-  const [isPDSModalOpen, setIsPDSModalOpen] = useState(false);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState("");
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [employmentStatus, setEmploymentStatus] = useState("");
 
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
@@ -451,6 +449,10 @@ const ProfileComponent = () => {
     reloadUser();
   };
 
+  const handleEmploymentStatusChange = (status: string) => {
+    setEmploymentStatus(status);
+  };
+
   if (!user || isLoading) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -466,27 +468,20 @@ const ProfileComponent = () => {
         currentUserId={user.id}
         openGPTSModal={openGPTSModal}
         setOpenGPTSModal={setOpenGPTSModal}
+        onEmploymentStatusChange={handleEmploymentStatusChange}
       />
-      <POEComponent
+      <DocumentComponent
         userID={user.id}
-        tempUserInfo={tempUserInfo}
-        isPOEModalOpen={isPOEModalOpen}
-        setIsPOEModalOpen={setIsPOEModalOpen}
+        isDocumentModalOpen={isDocumentModalOpen}
+        setIsDocumentModalOpen={setIsDocumentModalOpen}
         reloadUser={reloadUser}
-        POEFile={POEFile}
-        setPOEFile={setPOEFile}
-      />
-      <PDSComponent
-        userID={user.id}
-        tempUserInfo={tempUserInfo}
-        isPDSModalOpen={isPDSModalOpen}
-        setIsPDSModalOpen={setIsPDSModalOpen}
-        reloadUser={reloadUser}
-        PDSFile={PDSFile}
-        setPDSFile={setPDSFile}
+        documentFile={documentFile}
+        setDocumentFile={setDocumentFile}
+        documentType={documentType}
+        employmentStatus={employmentStatus}
       />
       <Modal
-        size="xs"
+        size="2xl"
         isOpen={isOptionModalOpen}
         onOpenChange={setIsOptionModalOpen}
         onClose={() => {
@@ -538,32 +533,32 @@ const ProfileComponent = () => {
                     GTS
                   </Button>
 
-                  <Button
-                    startContent={<RiProfileLine />}
-                    color="primary"
-                    className={`${currentUserType !== "alumni" && "hidden"} `}
-                    onClick={() => setIsPOEModalOpen(true)}
-                  >
-                    Certificate of Employment
-                  </Button>
-                  <Button
-                    startContent={<RiAwardLine />}
-                    className={`${
-                      currentUserType !== "alumni" && "hidden"
-                    } bg-cyan-400 text-white hidden `}
-                    onClick={() => setIsUploadAwardsModalOpen(true)}
-                  >
-                    Upload Awards
-                  </Button>
-                  <Button
-                    startContent={<RiUpload2Line />}
-                    className={`${
-                      currentUserType !== "alumni" && "hidden"
-                    } bg-orange-400 text-white `}
-                    onClick={() => setIsPDSModalOpen(true)}
-                  >
-                    Upload PDS
-                  </Button>
+                  {/* map documents for buttons */}
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {documentFiles
+                      .filter(
+                        (document) =>
+                          !(
+                            document === "Certificate of Employment" &&
+                            employmentStatus === "Self-employed"
+                          )
+                      )
+                      .map((document) => (
+                        <Button
+                          key={document}
+                          color="primary"
+                          className={`${
+                            currentUserType !== "alumni" && "hidden"
+                          } `}
+                          onClick={() => {
+                            setDocumentType(document);
+                            setIsDocumentModalOpen(true);
+                          }}
+                        >
+                          {document}
+                        </Button>
+                      ))}
+                  </div>
                 </div>
               </ModalBody>
               <ModalFooter className="flex justify-end gap-2">
@@ -573,7 +568,7 @@ const ProfileComponent = () => {
                     setIsOptionModalOpen(false);
                   }}
                 >
-                  Cancel
+                  Close
                 </Button>
               </ModalFooter>
             </>

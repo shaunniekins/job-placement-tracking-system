@@ -10,10 +10,15 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import GTSComponent from "../GTS";
 import { useEffect, useState } from "react";
-import POEComponent from "../POEComponent";
+import DocumentComponent from "../DocumentComponent";
+import { documentFiles } from "@/app/api/documentFiles";
+import { formatDocumentKey, isMultipleDocumentType } from "@/utils/compUtils";
+import { isUserSelfEmployed } from "@/utils/documentUtils";
 
 interface AlumniProfileModalProps {
   alumniId: string;
@@ -56,7 +61,25 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   const [cleanAlumniData, setCleanAlumniData] = useState<AlumniData | null>(
     null
   );
-  const [openPOEModal, setOpenPOEModal] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [availableDocuments, setAvailableDocuments] = useState<string[]>([]);
+  const [employmentStatus, setEmploymentStatus] = useState("");
+
+  // Define all document options (including GTS)
+  const allDocumentOptions = [...documentFiles, "GTS"];
+
+  useEffect(() => {
+    // Check employment status from GTS
+    const checkEmploymentStatus = async () => {
+      if (alumniId && userType === "alumni") {
+        const isSelfEmployed = await isUserSelfEmployed(alumniId);
+        setEmploymentStatus(isSelfEmployed ? "Self-employed" : "");
+      }
+    };
+
+    checkEmploymentStatus();
+  }, [alumniId, userType]);
 
   useEffect(() => {
     if (alumniData) {
@@ -75,9 +98,61 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
           };
         });
         setCleanAlumniData(cleanedData[0] as AlumniData);
+
+        // Identify which documents are available
+        if (cleanedData[0]) {
+          const userData = cleanedData[0];
+
+          // Filter out COE if self-employed
+          let available = documentFiles.filter((docType) => {
+            if (
+              docType === "Certificate of Employment" &&
+              employmentStatus === "Self-employed"
+            ) {
+              return false;
+            }
+
+            const docKey = formatDocumentKey(docType);
+
+            // Check if document exists in user metadata
+            if (isMultipleDocumentType(docType)) {
+              // For multiple documents like training certificates
+              return (
+                userData[docKey] &&
+                Array.isArray(userData[docKey]) &&
+                userData[docKey].length > 0
+              );
+            } else {
+              // For single documents
+              return userData[docKey] && userData[docKey].trim() !== "";
+            }
+          });
+
+          // Always add GTS as an available option since it's a form
+          setAvailableDocuments([...available, "GTS"]);
+        }
       }
     }
-  }, [alumniData, alumniId]);
+  }, [alumniData, alumniId, employmentStatus]);
+
+  const handleOpenDocument = () => {
+    if (!selectedDocumentType) return;
+
+    if (selectedDocumentType === "GTS") {
+      // Open GTS modal
+      setOpenGPTSModal(true);
+    } else {
+      // Open document modal for other document types
+      setIsDocumentModalOpen(true);
+    }
+  };
+
+  const isDocumentAvailable = (docType: string) => {
+    // GTS is always available
+    if (docType === "GTS") return true;
+
+    return availableDocuments.includes(docType);
+  };
 
   return (
     <>
@@ -267,26 +342,43 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
                   </div>
                 </div>
               </ModalBody>
-              <ModalFooter className="flex justify-between gap-2">
+              <ModalFooter className="flex justify-between items-center gap-2">
                 <div
                   className={`${
                     userType !== "alumni" && "invisible"
-                  } flex gap-2`}
+                  } flex gap-2 items-center`}
                 >
-                  <Button
-                    color="success"
-                    className="text-white"
-                    onClick={() => setOpenPOEModal(true)}
-                  >
-                    POE
-                  </Button>
-                  <Button
-                    color="success"
-                    className="text-white"
-                    onClick={() => setOpenGPTSModal(true)}
-                  >
-                    GTS
-                  </Button>
+                  <div className="flex flex-col md:flex-row gap-2 items-center">
+                    <Select
+                      size="sm"
+                      className="flex-grow uppercase min-w-[200px]"
+                      label="Select Document"
+                      placeholder="Choose a document to view"
+                      defaultSelectedKeys={[]}
+                      disabledKeys={allDocumentOptions.filter(
+                        (doc) => !isDocumentAvailable(doc)
+                      )}
+                      value={selectedDocumentType || ""}
+                      onChange={(e) => setSelectedDocumentType(e.target.value)}
+                    >
+                      {allDocumentOptions.map((doc) => (
+                        <SelectItem key={doc} value={doc}>
+                          {doc}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    <Button
+                      color="success"
+                      className="text-white md:w-24"
+                      isDisabled={
+                        !selectedDocumentType ||
+                        !isDocumentAvailable(selectedDocumentType)
+                      }
+                      onClick={handleOpenDocument}
+                    >
+                      View
+                    </Button>
+                  </div>
                 </div>
                 <Button
                   color="secondary"
@@ -311,16 +403,19 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
             openGPTSModal={openGPTSModal}
             setOpenGPTSModal={setOpenGPTSModal}
             isReadOnly={true}
+            onEmploymentStatusChange={setEmploymentStatus}
           />
-          <POEComponent
+
+          <DocumentComponent
             userID={alumniId}
-            tempUserInfo={cleanAlumniData}
-            isPOEModalOpen={openPOEModal}
-            setIsPOEModalOpen={setOpenPOEModal}
+            isDocumentModalOpen={isDocumentModalOpen}
+            setIsDocumentModalOpen={setIsDocumentModalOpen}
             reloadUser={() => {}}
-            POEFile={null}
-            setPOEFile={() => {}}
+            documentFile={null}
+            setDocumentFile={() => {}}
+            documentType={selectedDocumentType}
             isReadOnly={true}
+            employmentStatus={employmentStatus}
           />
         </>
       )}

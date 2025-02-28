@@ -24,6 +24,7 @@ import {
   updateGraduateTracerStudy,
 } from "@/app/api/graduteTracerStudyIUD";
 import useGTS from "@/hooks/useGTS";
+import { deleteCOEIfSelfEmployed } from "@/utils/documentUtils";
 
 interface EducationalBackground {
   degree: string;
@@ -62,6 +63,7 @@ interface GTSComponentProps {
   openGPTSModal: boolean;
   setOpenGPTSModal: (isOpen: boolean) => void;
   isReadOnly?: boolean;
+  onEmploymentStatusChange?: (status: string) => void;
 }
 
 const GTSComponent: React.FC<GTSComponentProps> = ({
@@ -70,6 +72,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
   openGPTSModal,
   setOpenGPTSModal,
   isReadOnly = false,
+  onEmploymentStatusChange,
 }) => {
   const [currentView, setCurrentView] = useState("A");
 
@@ -536,6 +539,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     try {
       const cleanedFormData = { ...formData, alumni_id: currentUserId };
 
+      // Check if employment status has changed to self-employed
+      if (formData.present_employment_status === "Self-employed") {
+        // Delete COE if it exists
+        await deleteCOEIfSelfEmployed(currentUserId);
+      }
+
       const dataAlreadyCreated = await checkIfExistingGTS(currentUserId);
       let response;
 
@@ -553,11 +562,31 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         console.error("Failed to insert graduate tracer study.");
       }
 
+      // Notify parent component about employment status change
+      if (onEmploymentStatusChange && !isReadOnly) {
+        onEmploymentStatusChange(formData.present_employment_status);
+      }
+
       setOpenGPTSModal(false);
     } catch (error) {
       console.error("Error during submission:", error);
     }
   };
+
+  // Add a useEffect to notify parent when status changes in the form
+  useEffect(() => {
+    if (
+      onEmploymentStatusChange &&
+      !isReadOnly &&
+      formData.present_employment_status
+    ) {
+      onEmploymentStatusChange(formData.present_employment_status);
+    }
+  }, [
+    formData.present_employment_status,
+    onEmploymentStatusChange,
+    isReadOnly,
+  ]);
 
   return (
     <Modal

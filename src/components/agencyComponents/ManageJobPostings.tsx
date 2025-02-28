@@ -271,7 +271,7 @@ const ManageJobPostingsComponent = () => {
         return sendEmailNotification(alumniSendEmailData);
       });
 
-      await Promise.all(emailNotifications);
+      // await Promise.all(emailNotifications);
     } else if (modalType === "update" && selectedJob) {
       const res = await updateJobPosting(selectedJob.job_posting_id, jobForm);
     }
@@ -375,7 +375,7 @@ const ManageJobPostingsComponent = () => {
                     onChange={handleInputChange}
                     className="col-span-2 md:col-span-1"
                   />
-                  {/* Requiments: PDS, Civil Service Exam Eligibility, Certificate of Training/s and Seminars and Certificate of Employment, TOR, and Work Portfolio */}
+                  {/* Requiments: PDS, Civil Service Exam Eligibility, Certificate of Trainings and Seminars and Certificate of Employment, TOR, and Work Portfolio */}
                   <Select
                     label="Requirements"
                     placeholder="Select requirements"
@@ -393,8 +393,8 @@ const ManageJobPostingsComponent = () => {
                     <SelectItem key="Civil Service Exam Eligibility">
                       Civil Service Exam Eligibility
                     </SelectItem>
-                    <SelectItem key="Certificate of Training/s and Seminars">
-                      Certificate of Training/s and Seminars
+                    <SelectItem key="Certificate of Trainings and Seminars">
+                      Certificate of Trainings and Seminars
                     </SelectItem>
                     <SelectItem key="Certificate of Employment">
                       Certificate of Employment

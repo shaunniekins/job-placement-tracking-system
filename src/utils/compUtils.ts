@@ -84,3 +84,40 @@ export const validatePhoneNumber = (number: string) => {
   const phoneRegex = /^\+639\d{9}$/;
   return phoneRegex.test(number);
 };
+
+export const formatDocumentKey = (documentType: string): string => {
+  // Special case for training certificates - use a different key format
+  if (documentType === "Certificate of Trainings and Seminars") {
+    return "training-certificates";
+  }
+  return documentType.toLowerCase().replace(/\s+/g, "-");
+};
+
+// Add new functions for handling multiple documents
+export const isMultipleDocumentType = (documentType: string): boolean => {
+  return documentType === "Certificate of Trainings and Seminars";
+};
+
+// Function to check if a document exists in user metadata
+export const documentExists = (
+  userData: any,
+  documentType: string
+): boolean => {
+  if (!userData) return false;
+
+  const docKey = formatDocumentKey(documentType);
+
+  if (isMultipleDocumentType(documentType)) {
+    return (
+      userData[docKey] &&
+      Array.isArray(userData[docKey]) &&
+      userData[docKey].length > 0
+    );
+  } else {
+    return (
+      userData[docKey] &&
+      typeof userData[docKey] === "string" &&
+      userData[docKey].trim() !== ""
+    );
+  }
+};

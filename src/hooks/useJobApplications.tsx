@@ -26,7 +26,7 @@ const useJobApplications = (
       let query = supabase
         .from("ViewJobApplicationsWithDetails")
         .select("*", { count: "exact" })
-        .order("date_posted", { ascending: true });
+        .order("application_date", { ascending: false });
 
       if (agencyId && !applicantId) {
         query = query.eq("agency_id", agencyId);
