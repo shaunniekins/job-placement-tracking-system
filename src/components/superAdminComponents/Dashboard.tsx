@@ -287,17 +287,21 @@ const DefaultView = () => {
     data: any;
     colors: any;
   }) => (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
-        <h1 className="text-sm font-medium">{title}</h1>
+    <Card className="w-full print:shadow-none print:border print:border-gray-300">
+      <CardHeader className="pb-2 print:pb-1">
+        <h1 className="text-sm font-medium print:text-xs">{title}</h1>
       </CardHeader>
-      <CardBody>
-        <div className="h-48">
+      <CardBody className="print:p-1">
+        <div className="h-48 print:h-[150px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <XAxis dataKey="category" fontSize={12} />
-              <YAxis fontSize={12} />
-              <Tooltip />
+            <BarChart
+              data={data}
+              margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="category" fontSize={10} interval={0} />
+              <YAxis fontSize={10} />
+              <Tooltip wrapperStyle={{ fontSize: "10px" }} />
               <Bar dataKey="value">
                 {data.map((entry: any, index: any) => (
                   <Cell key={`cell-${index}`} fill={colors[entry.category]} />
@@ -321,45 +325,50 @@ const DefaultView = () => {
     const data = getCollegeData(college.key, batchYear);
 
     return (
-      <Card className="w-full mb-6 print:break-inside-avoid">
-        <CardHeader className="w-full pb-2">
+      <Card className="w-full mb-4 print:mb-2 print:break-inside-avoid print:shadow-none print:border-none">
+        <CardHeader className="w-full pb-2 print:pb-1">
           <div
-            className="w-full flex items-center gap-3"
+            className="w-full flex items-center gap-3 cursor-pointer print:cursor-default"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             <Button
               size="sm"
               color="success"
               isIconOnly
-              className="text-white rounded-full"
-              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-white rounded-full print:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
             >
               {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
             </Button>
-            <h1 className="text-xl font-bold text-[#008B47]">{college.name}</h1>
+            <h1 className="text-xl font-bold text-[#008B47] print:text-lg">
+              {college.name}
+            </h1>
           </div>
         </CardHeader>
-        {isExpanded && (
-          <CardBody>
-            <div className="grid grid-cols-1 lg:grid-cols-3 print:grid-cols-3 gap-4">
-              <MetricChart
-                title="Graduates"
-                data={data.graduates}
-                colors={colors}
-              />
-              <MetricChart
-                title="Scholar Distribution"
-                data={data.scholars}
-                colors={colors}
-              />
-              <MetricChart
-                title="Job Alignment"
-                data={data.alignment}
-                colors={colors}
-              />
-            </div>
-          </CardBody>
-        )}
+        <CardBody
+          className={`${isExpanded ? "block" : "hidden"} print:block print:p-1`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 print:grid-cols-3 gap-4 print:gap-2">
+            <MetricChart
+              title="Graduates"
+              data={data.graduates}
+              colors={colors}
+            />
+            <MetricChart
+              title="Scholar Distribution"
+              data={data.scholars}
+              colors={colors}
+            />
+            <MetricChart
+              title="Job Alignment"
+              data={data.alignment}
+              colors={colors}
+            />
+          </div>
+        </CardBody>
       </Card>
     );
   };
@@ -386,7 +395,7 @@ const DefaultView = () => {
 
   return (
     <div className="h-full w-full flex flex-col gap-3 pb-[6.3rem]">
-      <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-between gap-3">
+      <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-between gap-3 print:hidden">
         <Select
           items={batchYearFormatted}
           label="Year"
@@ -413,13 +422,19 @@ const DefaultView = () => {
       </div>
 
       <div
-        className="h-full w-full flex flex-col overflow-y-auto print-center"
+        className="h-full w-full flex flex-col overflow-y-auto print:overflow-visible"
         ref={printRef}
       >
-        <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7 uppercase">
-          College Data Visualizations
+        <div className="hidden print:block pt-2 pb-4 w-full text-center">
+          <h1 className="text-xl font-bold text-green-700 uppercase">
+            College Data Visualizations
+          </h1>
+          <p className="text-sm">
+            Batch Year:{" "}
+            {batchYearFilter === "all" ? "All Years" : batchYearFilter}
+          </p>
         </div>
-        <div className="h-fit w-full flex flex-col">
+        <div className="h-fit w-full flex flex-col print:gap-2">
           {colleges.map((college) => (
             <CollegeSection
               key={college.key}
@@ -475,7 +490,18 @@ const SelectedCollegeView = ({
   const formatTableData = useCallback(() => {
     if (!collegeStats || !filteredPrograms) return [];
 
-    return filteredPrograms.map((program) => {
+    const programsWithData = filteredPrograms.filter((program) => {
+      const programStats = collegeStats.filter(
+        (stat) => stat.program.toLowerCase() === program.key.toLowerCase()
+      );
+      const totalPopulation = programStats.reduce(
+        (sum, stat) => sum + stat.total_population,
+        0
+      );
+      return totalPopulation > 0;
+    });
+
+    return programsWithData.map((program) => {
       const programStats = collegeStats.filter(
         (stat) => stat.program.toLowerCase() === program.key.toLowerCase()
       );
@@ -498,13 +524,7 @@ const SelectedCollegeView = ({
         graduates: (
           <div
             className="cursor-pointer hover:text-green-600"
-            onClick={() => {
-              if (totalPopulation === 0) {
-                alert("No data to show");
-              } else {
-                setSelectedProgram(program.key);
-              }
-            }}
+            onClick={() => setSelectedProgram(program.key)}
           >
             {program.label}
           </div>
