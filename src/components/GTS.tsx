@@ -101,6 +101,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     present_occupation: "",
     major_line_of_business: "",
     place_of_work: "",
+    agency: "", // Add agency field
     is_first_time_job_after_college: "",
     staying_on_job_reasons: [] as any,
     other_staying_on_job_reason: "",
@@ -1351,6 +1352,18 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     color="success"
                     variant="bordered"
                     value={formData.present_occupation}
+                    onChange={handleChange}
+                    readOnly={isReadOnly}
+                  />
+
+                  {/* Add Agency Input Field Here */}
+                  <Input
+                    label="Agency/Company Name"
+                    placeholder="Enter the name of the agency or company"
+                    name="agency"
+                    color="success"
+                    variant="bordered"
+                    value={formData.agency}
                     onChange={handleChange}
                     readOnly={isReadOnly}
                   />
