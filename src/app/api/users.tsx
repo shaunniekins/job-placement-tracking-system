@@ -32,16 +32,29 @@ export const moaExpirationChecker = async (userId: string) => {
 };
 
 export const getUserInfo = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("ViewUsers")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
-  if (error) {
-    console.error("Error getting user info:", error);
+  // Add guard clause for invalid userId
+  if (!userId || typeof userId !== "string" || userId.trim() === "") {
+    console.error("getUserInfo called with invalid userId:", userId);
     return null;
   }
 
-  return data;
+  try {
+    // Wrap existing logic in try block
+    const { data, error } = await supabase
+      .from("ViewUsers")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error getting user info:", error);
+      return null;
+    }
+
+    return data;
+  } catch (catchError) {
+    // Add catch block
+    console.error("Caught exception in getUserInfo:", catchError);
+    return null;
+  }
 };

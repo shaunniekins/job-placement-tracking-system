@@ -35,15 +35,16 @@ import {
 import { insertNotification } from "@/app/api/notificationsIUD";
 import useActivities from "@/hooks/useActivities";
 import { insertApplicationStatus } from "@/app/api/applicationStatusIUD";
+import { checkUserDocuments } from "@/utils/documentUtils";
 
 const AlumniDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
 
   const [jobPostingPage, setJobPostingPage] = useState(1);
-  const jobPostingRowsPerPage = 15;
+  const jobPostingRowsPerPage = 14;
 
   const [activitiesPage, setActivitiesPage] = useState(1);
-  const activitiesRowsPerPage = 15;
+  const activitiesRowsPerPage = 14;
 
   const [currentView, setCurrentView] = useState("jobPostings");
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
@@ -62,10 +63,6 @@ const AlumniDashboardComponent = () => {
     searchInput
   );
 
-  // useEffect(() => {
-  //   console.log("jobPostings: ", jobPostings);
-  // }, [jobPostings]);
-
   const jobPostingTotalPages = Math.ceil(
     totalJobPostings / jobPostingRowsPerPage
   );
@@ -74,10 +71,6 @@ const AlumniDashboardComponent = () => {
     activitiesRowsPerPage,
     activitiesPage
   );
-
-  // useEffect(() => {
-  //   console.log("activities: ", activities);
-  // }, [activities]);
 
   const activitiesTotalPages = Math.ceil(
     totalActivities / activitiesRowsPerPage
@@ -371,12 +364,23 @@ const JobPostingDetails = ({
 }) => {
   const [visible, setVisible] = useState(false);
   const [isApplied, setIsApplied] = useState<boolean | null>(null);
+  const [isLoadingApply, setIsLoadingApply] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const currentDate = new Date();
   const applicationDeadline = new Date(job?.application_deadline);
 
+  const isJobClosed = job?.job_status === "closed";
+  const isDeadlinePassed = applicationDeadline < currentDate;
+  const isApplicantLimitReached =
+    job?.number_of_applicants > 0 &&
+    job?.accepted_applicants >= job?.number_of_applicants;
+
   const isInactive =
-    job?.job_status === "inactive" || applicationDeadline < currentDate;
+    job?.job_status === "inactive" ||
+    isDeadlinePassed ||
+    isJobClosed ||
+    isApplicantLimitReached;
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -385,73 +389,105 @@ const JobPostingDetails = ({
     };
 
     fetchStatus();
-  }, [job]);
+  }, [job, userId]);
 
   const fetchApplicationStatus = async (jobPostingId: number) => {
+    if (!userId) return false;
     return await checkIfApplied(userId, jobPostingId);
   };
 
   const handleSubmit = async () => {
     setVisible(false);
+    setIsLoadingApply(true);
+    setApplyError(null);
 
-    const newJobApplication = {
-      applicant_id: userId,
-      job_posting_id: job.job_posting_id,
-    };
+    if (!userId) {
+      setApplyError("User ID not found. Cannot apply.");
+      setIsLoadingApply(false);
+      alert("User ID not found. Cannot apply.");
+      return;
+    }
 
-    const response = await insertJobApplication(newJobApplication);
+    const hasRequiredDocuments: boolean = await checkUserDocuments(
+      userId,
+      job.requirements
+    );
 
-    if (response) {
-      await insertApplicationStatus({
-        job_application_id: response[0].job_application_id,
-        date_applied: new Date().toISOString(),
-      });
+    if (!hasRequiredDocuments) {
+      setApplyError(
+        "You are missing required documents for this application. Please update your profile."
+      );
+      setIsLoadingApply(false);
+      alert(
+        "You are missing required documents for this application. Please update your profile."
+      );
+      return;
+    }
 
-      // notify agency
-      await insertNotification({
-        receiver_id: job.agency_id,
-        message: `New application for job posting: ${job.job_title} by ${userName}.`,
-      });
-
-      const agencySendEmailData = {
-        email: job.agency_email,
-        recipient_name: job.agency_name,
-        subject: "New Job Application",
-        message: `
-        Greetings!
-
-        There is a new application for the job posting: ${job.job_title} by ${userName}. Please check your dashboard for more details.
-
-        Best regards,
-        JPTS Team`,
+    try {
+      const newJobApplication = {
+        applicant_id: userId,
+        job_posting_id: job.job_posting_id,
       };
 
-      await sendEmailNotification(agencySendEmailData);
-      //
+      const response = await insertJobApplication(newJobApplication);
 
-      // notify alumni user
-      await insertNotification({
-        receiver_id: userId,
-        message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
-      });
+      if (response && response.length > 0) {
+        await insertApplicationStatus({
+          job_application_id: response[0].job_application_id,
+          date_applied: new Date().toISOString(),
+        });
 
-      const alumniSendEmailData = {
-        email: userEmail,
-        recipient_name: userName,
-        subject: "Job Application Confirmation",
-        message: `
-        Greetings!
+        await insertNotification({
+          receiver_id: job.agency_id,
+          message: `New application for job posting: ${job.job_title} by ${userName}.`,
+        });
 
-        You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency. Thank you!
-        
-        Best regards,
-        JPTS Team`,
-      };
+        const agencySendEmailData = {
+          email: job.agency_email,
+          recipient_name: job.agency_name,
+          subject: "New Job Application",
+          message: `
+          Greetings!
 
-      await sendEmailNotification(alumniSendEmailData);
-      //
+          There is a new application for the job posting: ${job.job_title} by ${userName}. Please check your dashboard for more details.
 
-      setIsApplied(true);
+          Best regards,
+          JPTS Team`,
+        };
+
+        await sendEmailNotification(agencySendEmailData);
+
+        await insertNotification({
+          receiver_id: userId,
+          message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
+        });
+
+        const alumniSendEmailData = {
+          email: userEmail,
+          recipient_name: userName,
+          subject: "Job Application Confirmation",
+          message: `
+          Greetings!
+
+          You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency. Thank you!
+          
+          Best regards,
+          JPTS Team`,
+        };
+
+        await sendEmailNotification(alumniSendEmailData);
+
+        setIsApplied(true);
+      } else {
+        throw new Error("Failed to insert job application.");
+      }
+    } catch (error: any) {
+      console.error("Error submitting application:", error);
+      setApplyError(error.message || "An error occurred while applying.");
+      alert(`Error applying: ${error.message || "An unknown error occurred."}`);
+    } finally {
+      setIsLoadingApply(false);
     }
   };
 
@@ -523,10 +559,24 @@ const JobPostingDetails = ({
                 </p>
                 <p>
                   <strong>Eligible Programs:</strong>{" "}
-                  {job?.programs
-                    ?.map((program: string) => program.toUpperCase())
-                    .join(", ")}
+                  {job?.programs && Array.isArray(job.programs)
+                    ? job.programs
+                        .map((program: string) => program.toUpperCase())
+                        .join(", ")
+                    : "All Programs"}
                 </p>
+                {job?.requirements &&
+                  Array.isArray(job.requirements) &&
+                  job.requirements.length > 0 && (
+                    <div>
+                      <strong>Requirements:</strong>
+                      <ul className="list-disc list-inside ml-4 text-sm">
+                        {job.requirements.map((req: string, index: number) => (
+                          <li key={index}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 <div className="flex flex-col gap-2 mt-4">
                   <h2 className="font-bold text-lg">About the Job</h2>
                   <div className="w-full text-justify">
@@ -535,6 +585,9 @@ const JobPostingDetails = ({
                     </p>
                   </div>
                 </div>
+                {applyError && (
+                  <p className="text-danger text-sm mt-2">{applyError}</p>
+                )}
               </ModalBody>
               <ModalFooter className="flex justify-between items-center">
                 <p className="flex flex-col items-center">
@@ -544,16 +597,34 @@ const JobPostingDetails = ({
                 <Button
                   size="sm"
                   color={
-                    isApplied ? "default" : isInactive ? "danger" : "success"
+                    isApplied
+                      ? "default"
+                      : isJobClosed
+                      ? "warning"
+                      : isApplicantLimitReached
+                      ? "warning"
+                      : isInactive
+                      ? "danger"
+                      : "success"
                   }
-                  isDisabled={isApplied || isInactive}
-                  onPress={() => setVisible(true)}
+                  isDisabled={isApplied || isInactive || isLoadingApply}
+                  isLoading={isLoadingApply}
+                  onPress={() => {
+                    setApplyError(null);
+                    setVisible(true);
+                  }}
                   className={`${!isApplied && !isInactive && "text-white"}`}
                 >
                   {isApplied
-                    ? "You already applied"
+                    ? "Applied"
+                    : isJobClosed
+                    ? "Closed"
+                    : isApplicantLimitReached
+                    ? "Full"
                     : isInactive
                     ? "Inactive"
+                    : isLoadingApply
+                    ? "Applying..."
                     : "Apply"}
                 </Button>
               </ModalFooter>

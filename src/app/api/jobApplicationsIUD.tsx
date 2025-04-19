@@ -37,20 +37,41 @@ export const updateJobApplication = async (
   jobApplicationId: number,
   updatedJobApplication: any
 ) => {
+  console.log(
+    `Attempting to update JobApplication ID: ${jobApplicationId} with data:`,
+    updatedJobApplication
+  );
   try {
+    // Log the exact object being passed to update
+    console.log(
+      `[updateJobApplication] Payload for Supabase update:`,
+      updatedJobApplication
+    );
+
     const response = await supabase
       .from("JobApplications")
-      .update(updatedJobApplication)
+      .update(updatedJobApplication) // Make sure this object has 'application_status' key
       .eq("job_application_id", jobApplicationId)
       .select();
 
     if (response.error) {
+      console.error(
+        `Supabase error updating JobApplication ID ${jobApplicationId}:`,
+        response.error
+      );
       throw response.error;
     }
 
+    console.log(
+      `Successfully updated JobApplication ID ${jobApplicationId}. Response:`,
+      response.data
+    );
     return response.data;
   } catch (error: any) {
-    console.error("Error updating job application:", error);
+    console.error(
+      `Caught error updating JobApplication ID ${jobApplicationId}:`,
+      error
+    );
     return null;
   }
 };

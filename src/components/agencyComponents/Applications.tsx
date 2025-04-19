@@ -36,6 +36,12 @@ const ApplicationsComponent = () => {
   const [currentJobTitle, setCurrentJobTitle] = useState("");
   const [currentApplicantId, setCurrentApplicantId] = useState("");
   const [currentApplicantEmail, setCurrentApplicantEmail] = useState("");
+  const [currentApplicantFirstName, setCurrentApplicantFirstName] =
+    useState(""); // Add state
+  const [currentApplicantLastName, setCurrentApplicantLastName] = useState(""); // Add state
+  const [currentJobPostingId, setCurrentJobPostingId] = useState<number | null>(
+    null
+  );
   const [searchInput, setSearchInput] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
 
@@ -79,6 +85,9 @@ const ApplicationsComponent = () => {
         jobTitle={currentJobTitle}
         applicantId={currentApplicantId}
         applicantEmail={currentApplicantEmail}
+        applicantFirstName={currentApplicantFirstName} // Pass prop
+        applicantLastName={currentApplicantLastName} // Pass prop
+        jobPostingId={currentJobPostingId}
       />
       <div className="h-full w-full flex flex-col gap-2">
         <div
@@ -198,6 +207,13 @@ const ApplicationsComponent = () => {
                                   setCurrentApplicantEmail(
                                     item.applicant_email
                                   );
+                                  setCurrentApplicantFirstName(
+                                    item.applicant_first_name
+                                  ); // Set state
+                                  setCurrentApplicantLastName(
+                                    item.applicant_last_name
+                                  ); // Set state
+                                  setCurrentJobPostingId(item.job_posting_id);
                                   setIsActionModal(true);
                                 }}
                               >

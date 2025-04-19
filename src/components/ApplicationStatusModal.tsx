@@ -26,6 +26,9 @@ interface ApplicationStatusModalProps {
   jobTitle?: string;
   applicantId?: string;
   applicantEmail?: string;
+  applicantFirstName?: string;
+  applicantLastName?: string;
+  jobPostingId: number | null;
 }
 
 const ApplicationStatusModalComponent: React.FC<
@@ -38,6 +41,9 @@ const ApplicationStatusModalComponent: React.FC<
   jobTitle,
   applicantId,
   applicantEmail,
+  applicantFirstName,
+  applicantLastName,
+  jobPostingId,
 }) => {
   const { applicationStatus } = useApplicationStatus(currentJobApplicationId);
 
@@ -88,12 +94,13 @@ const ApplicationStatusModalComponent: React.FC<
   };
 
   const handleUpdate = async () => {
-    if (currentStep && applicationStatus) {
+    if (currentStep && applicationStatus && applicantId && jobPostingId) {
       let updatedApplicationStatus: any = {
         [currentStep]: newDate || null,
       };
 
       let newStatus = "";
+      let isAccepted = false;
 
       if (currentStep === "date_initial_interview") {
         newStatus = "interview";
@@ -105,6 +112,9 @@ const ApplicationStatusModalComponent: React.FC<
           final_result: finalResult || null,
         };
         newStatus = finalResult;
+        if (finalResult === "accepted") {
+          isAccepted = true;
+        }
       }
 
       const response = await updateApplicationStatus(
@@ -115,6 +125,9 @@ const ApplicationStatusModalComponent: React.FC<
       );
 
       if (!response && newStatus) {
+        console.log(
+          `[handleUpdate] Attempting updateJobApplication for ID: ${currentJobApplicationId} with status: ${newStatus}`
+        );
         const responseJA = await updateJobApplication(
           parseInt(currentJobApplicationId),
           {
@@ -122,11 +135,48 @@ const ApplicationStatusModalComponent: React.FC<
           }
         );
 
-        if (responseJA) {
+        console.log(
+          `[handleUpdate] Response from updateJobApplication:`,
+          responseJA
+        );
+
+        if (responseJA && responseJA.length > 0) {
+          console.log(
+            `[handleUpdate] updateJobApplication successful for ID: ${currentJobApplicationId}. Proceeding with further actions.`
+          );
+
+          if (isAccepted) {
+            try {
+              const apiResponse = await fetch("/api/update-user-employment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId: applicantId,
+                  isEmployed: true,
+                  jobTitle: jobTitle,
+                }),
+              });
+
+              if (!apiResponse.ok) {
+                const errorData = await apiResponse.json();
+                console.error(
+                  "Failed to update user employment status via API:",
+                  errorData.error
+                );
+              } else {
+                console.log(
+                  `Successfully marked user ${applicantId} as employed.`
+                );
+              }
+            } catch (apiError) {
+              console.error("Error calling employment update API:", apiError);
+            }
+          }
+
           let message = "";
           switch (newStatus) {
             case "accepted":
-              message = `Congratulations! Your application for the job posting: ${jobTitle} has been accepted.`;
+              message = `Congratulations! Your application for the job posting: ${jobTitle} has been accepted. Your employment status has been updated.`;
               break;
             case "rejected":
               message = `We are sorry to inform you that your application for the job posting: ${jobTitle} has been rejected.`;
@@ -148,19 +198,41 @@ const ApplicationStatusModalComponent: React.FC<
 
             const alumniSendEmailData = {
               email: applicantEmail,
-              recipient_name: "Applicant",
+              recipient_name: `${applicantFirstName || "Applicant"} ${
+                applicantLastName || ""
+              }`.trim(),
               subject: "Application Status Update",
               message: message,
             };
 
             await sendEmailNotification(alumniSendEmailData);
           }
+        } else {
+          console.error(
+            `[handleUpdate] updateJobApplication failed or returned empty for ID: ${currentJobApplicationId}. Aborting further actions like incrementing count.`
+          );
         }
 
         setIsUpdateModalOpen(false);
         setNewDate("");
         setFinalResult("");
+      } else if (response) {
+        console.error(
+          "[handleUpdate] Error updating ApplicationStatus table:",
+          response
+        );
+      } else if (!newStatus) {
+        console.warn(
+          "[handleUpdate] No new status determined, skipping JobApplications update."
+        );
       }
+    } else {
+      console.error("Missing data for update:", {
+        currentStep,
+        applicationStatus,
+        applicantId,
+        jobPostingId,
+      });
     }
   };
 

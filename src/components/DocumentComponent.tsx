@@ -55,17 +55,36 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
   const [isSelfEmployed, setIsSelfEmployed] = useState(false);
 
   const fetchUser = async () => {
+    // Add check for valid userID
+    if (!userID || typeof userID !== "string" || userID.trim() === "") {
+      console.warn(
+        "fetchUser called with invalid userID in DocumentComponent. Skipping fetch."
+      );
+      setUserData({}); // Reset user data if ID is invalid
+      return;
+    }
     try {
       const userData1 = await getUserInfo(userID);
-      setUserData(userData1.meta_data);
+      // Add null check for userData1 before accessing meta_data
+      if (userData1 && userData1.meta_data) {
+        setUserData(userData1.meta_data);
 
-      // Check if the user is self-employed from GTS
-      if (documentType === "Certificate of Employment") {
-        const selfEmployed = await isUserSelfEmployed(userID);
-        setIsSelfEmployed(selfEmployed);
+        // Check if the user is self-employed from GTS
+        if (documentType === "Certificate of Employment") {
+          const selfEmployed = await isUserSelfEmployed(userID);
+          setIsSelfEmployed(selfEmployed);
+        }
+      } else {
+        // Handle case where getUserInfo returns null or meta_data is missing
+        console.error(
+          "Failed to fetch valid user data or meta_data missing for userID:",
+          userID
+        );
+        setUserData({}); // Reset or set to a default state
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      setUserData({}); // Reset user data on error
     }
   };
 
@@ -73,7 +92,6 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
     // Format the document type to match the key in metadata
     const formattedKey = formatDocumentKey(documentType);
     setFormattedDocType(formattedKey);
-
     fetchUser();
   }, [userID, documentType]);
 

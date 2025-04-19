@@ -56,3 +56,26 @@ export const deleteJobPosting = async (jobPostingId: any) => {
     return null;
   }
 };
+
+/**
+ * Increments the accepted_applicants count for a specific job posting.
+ * @param jobPostingId The ID of the job posting to update.
+ */
+export const incrementAcceptedApplicants = async (jobPostingId: number) => {
+  try {
+    const { error } = await supabase.rpc("increment_accepted_applicants", {
+      p_job_posting_id: jobPostingId,
+    });
+
+    if (error) {
+      throw error;
+    }
+    console.log(
+      `Incremented accepted_applicants for job_posting_id: ${jobPostingId}`
+    );
+    return true;
+  } catch (error: any) {
+    console.error("Error incrementing accepted applicants:", error);
+    return false;
+  }
+};
