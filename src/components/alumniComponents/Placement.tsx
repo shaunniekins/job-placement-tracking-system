@@ -25,6 +25,9 @@ const PlacementComponent = () => {
   const rowsPerPage = 15;
   const [isActionModal, setIsActionModal] = useState(false);
   const [currentJobApplicationId, setCurrentJobApplicationId] = useState("");
+  const [currentJobPostingId, setCurrentJobPostingId] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     if (user) {
@@ -64,6 +67,7 @@ const PlacementComponent = () => {
         setIsOpen={setIsActionModal}
         currentJobApplicationId={currentJobApplicationId}
         isReadOnly={true}
+        jobPostingId={currentJobPostingId}
       />
       <div className="h-full w-full flex flex-col gap-2">
         <div
@@ -173,6 +177,7 @@ const PlacementComponent = () => {
                                   setCurrentJobApplicationId(
                                     item.job_application_id
                                   );
+                                  setCurrentJobPostingId(item.job_posting_id);
                                   setIsActionModal(true);
                                 }}
                               >
