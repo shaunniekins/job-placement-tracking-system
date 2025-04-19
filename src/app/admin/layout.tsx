@@ -61,7 +61,7 @@ export default function AdminSlugLayout({
               }
             >
               <div
-                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5"
+                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 pt-0 lg:p-10 lg:pt-0"
                 onClick={handleContentClick}
               >
                 {children}

@@ -2,6 +2,7 @@
 
 import { Key, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { RootState } from "@/app/reduxUtils/store";
 import {
   Table,
   TableHeader,
@@ -29,16 +30,30 @@ import useBatchYears from "@/hooks/useBatchYears";
 import { IoAdd, IoAddOutline } from "react-icons/io5";
 import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
-import { colleges } from "@/app/api/collegeAndProgramData";
+import { colleges, programs } from "@/app/api/collegeAndProgramData";
 
 const AlumniUserComponent = () => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 13;
   const [searchInput, setSearchInput] = useState("");
-  // const [totalPages, setTotalPages] = useState(0);
-  const [collegeFilter, setCollegeFilter] = useState("all");
+  const [programFilter, setProgramFilter] = useState("all");
   const [batchYearFilter, setBatchYearFilter] = useState("all");
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
+  const user = useSelector((state: RootState) => state.user.user);
+  const userCollege = user?.user_metadata?.college;
+
+  const [collegePrograms, setCollegePrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (userCollege) {
+      const filtered = programs
+        .filter((p) => p.college === userCollege)
+        .map((p) => ({ key: p.key, label: p.label }));
+      setCollegePrograms([{ key: "all", label: "All Programs" }, ...filtered]);
+    } else {
+      setCollegePrograms([{ key: "all", label: "All Programs" }]);
+    }
+  }, [userCollege]);
 
   const {
     usersData,
@@ -50,9 +65,10 @@ const AlumniUserComponent = () => {
     page,
     "alumni",
     "approved",
-    collegeFilter,
+    userCollege,
     searchInput,
-    batchYearFilter
+    batchYearFilter,
+    programFilter
   );
 
   const totalPages = Math.ceil(totalUserEntries / rowsPerPage);
@@ -60,13 +76,11 @@ const AlumniUserComponent = () => {
   const { batchYears, isBatchYearsLoading } = useBatchYears();
 
   useEffect(() => {
-    // Transform the batchYears data
     const formattedData = batchYears.map((item: any) => ({
       key: item.batch_year.toString(),
       label: item.batch_year.toString(),
     }));
 
-    // Append the "all" option
     formattedData.unshift({ key: "all", label: "All" });
 
     setBatchYearFormatted(formattedData);
@@ -74,6 +88,7 @@ const AlumniUserComponent = () => {
 
   const columns = [
     { key: "full_name", label: "Full Name" },
+    { key: "program", label: "Program" },
     { key: "employment_status", label: "Employment Status" },
     { key: "job_alignment", label: "Job Alignment" },
     { key: "scholarship", label: "Scholarship" },
@@ -108,33 +123,30 @@ const AlumniUserComponent = () => {
 
           <div className="flex gap-3">
             <Select
-              label="College Filter"
+              items={collegePrograms}
+              label="Program Filter"
               disallowEmptySelection={true}
               size="sm"
-              className={`max-w-32`}
+              className={`max-w-xs`}
               defaultSelectedKeys={["all"]}
-              selectedKeys={new Set([collegeFilter])}
+              selectedKeys={new Set([programFilter])}
               onSelectionChange={(keys) => {
-                if (keys !== "all" && keys instanceof Set) {
-                  const selectedKey = Array.from(keys)[0]; // Assuming single selection
+                if (keys instanceof Set) {
+                  const selectedKey = Array.from(keys)[0];
                   if (typeof selectedKey === "string") {
-                    setCollegeFilter(selectedKey);
+                    setProgramFilter(selectedKey);
                   }
                 }
               }}
             >
-              <SelectItem key={"all"}>All</SelectItem>
-              <SelectItem key={"CA"}>CA</SelectItem>
-              <SelectItem key={"CAS"}>CAS</SelectItem>
-              <SelectItem key={"CBA"}>CBA</SelectItem>
-              <SelectItem key={"CCIS"}>CCIS</SelectItem>
-              <SelectItem key={"CEIT"}>CEIT</SelectItem>
-              <SelectItem key={"CTE"}>CTE</SelectItem>
+              {collegePrograms.map((program) => (
+                <SelectItem key={program.key}>{program.label}</SelectItem>
+              ))}
             </Select>
 
             <Input
               size="sm"
-              className="max-w-32"
+              className="max-w-60"
               label="Search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -147,6 +159,10 @@ const AlumniUserComponent = () => {
               color="default"
               page={page}
               total={totalPages}
+              className={`${
+                (usersData.length === 0 || rowsPerPage > usersData.length) &&
+                "hidden"
+              } flex justify-center items-center`}
               onChange={(newPage) => setPage(newPage)}
             />
           </div>
@@ -189,6 +205,14 @@ const AlumniUserComponent = () => {
                     return (
                       <TableCell className="text-center">
                         {item.meta_data.first_name} {item.meta_data.last_name}
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "program") {
+                    return (
+                      <TableCell className="text-center uppercase">
+                        {item.meta_data.program || "N/A"}
                       </TableCell>
                     );
                   }
