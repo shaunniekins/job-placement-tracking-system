@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Input,
   Radio,
@@ -75,57 +74,62 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
   onEmploymentStatusChange,
 }) => {
   const [currentView, setCurrentView] = useState("A");
+  const initialFormState = useMemo(
+    () => ({
+      contact_numbers: "",
+      civil_status: "",
+      sex: "",
+      region: "",
+      province: "",
+      location_of_residence: "",
+      educational_background: [] as EducationalBackground[],
+      professional_examination: [] as ProfessionalExamination[],
+      course_reasons: {
+        undergraduate: [],
+        graduate: [],
+        other_undergraduate: "",
+        other_graduate: "",
+      } as CourseReasons,
+      training_after_college: [] as TrainingAfterCollege[],
+      advance_studies_reason: "",
+      other_advance_studies_reason: "",
+      employment_status: "",
+      unemployment_reasons: [] as any,
+      other_unemployment_reason: "",
+      present_employment_status: "",
+      present_occupation: "",
+      major_line_of_business: "",
+      place_of_work: "",
+      agency: "",
+      is_first_time_job_after_college: "",
+      staying_on_job_reasons: [] as any,
+      other_staying_on_job_reason: "",
+      is_first_job_related_to_course: "",
+      first_job_related_to_course_reasons: [] as any,
+      other_first_job_related_to_course_reason: "",
+      leaving_job_reasons: [] as any,
+      other_leaving_job_reason: "",
+      staying_duration_in_first_job: [] as any,
+      other_staying_duration_in_first_job: "",
+      first_job_found_through: [] as any,
+      other_first_job_found_through: "",
+      duration_before_first_job: [] as any,
+      other_duration_before_first_job: "",
+      job_levels: {
+        first_job: [],
+        current_job: [],
+      } as JobLevels,
+      initial_gross_first_job: "",
+      is_curriculum_relevant_in_first_job: "",
+      learned_competencies: [] as any,
+      other_learned_competencies: "",
+      suggestions: "",
+    }),
+    []
+  );
 
-  const [formData, setFormData] = useState({
-    contact_numbers: "",
-    civil_status: "",
-    sex: "",
-    region: "",
-    province: "",
-    location_of_residence: "",
-    educational_background: [] as EducationalBackground[],
-    professional_examination: [] as ProfessionalExamination[],
-    course_reasons: {
-      undergraduate: [],
-      graduate: [],
-      other_undergraduate: "",
-      other_graduate: "",
-    } as CourseReasons,
-    training_after_college: [] as TrainingAfterCollege[],
-    advance_studies_reason: "",
-    other_advance_studies_reason: "",
-    employment_status: "",
-    unemployment_reasons: [] as any,
-    other_unemployment_reason: "",
-    present_employment_status: "",
-    present_occupation: "",
-    major_line_of_business: "",
-    place_of_work: "",
-    agency: "", // Add agency field
-    is_first_time_job_after_college: "",
-    staying_on_job_reasons: [] as any,
-    other_staying_on_job_reason: "",
-    is_first_job_related_to_course: "",
-    first_job_related_to_course_reasons: [] as any,
-    other_first_job_related_to_course_reason: "",
-    leaving_job_reasons: [] as any,
-    other_leaving_job_reason: "",
-    staying_duration_in_first_job: [] as any,
-    other_staying_duration_in_first_job: "",
-    first_job_found_through: [] as any,
-    other_first_job_found_through: "",
-    duration_before_first_job: [] as any,
-    other_duration_before_first_job: "",
-    job_levels: {
-      first_job: [],
-      current_job: [],
-    } as JobLevels,
-    initial_gross_first_job: "",
-    is_curriculum_relevant_in_first_job: "",
-    learned_competencies: [] as any,
-    other_learned_competencies: "",
-    suggestions: "",
-  });
+  const [formData, setFormData] = useState(initialFormState);
+  const [initialFormData, setInitialFormData] = useState(initialFormState);
 
   const { gts, loadingGTS, errorGTS } = useGTS(currentUserId);
 
@@ -142,9 +146,19 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         ...cleanedGTS
       } = gts[0];
 
-      setFormData(cleanedGTS);
+      const completeGTSData = { ...initialFormState, ...cleanedGTS };
+
+      setFormData(completeGTSData);
+      setInitialFormData(completeGTSData);
+    } else {
+      setFormData(initialFormState);
+      setInitialFormData(initialFormState);
     }
-  }, [gts]);
+  }, [gts, initialFormState]);
+
+  const isFormChanged = () => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -160,8 +174,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       [name]: value,
     }));
   };
-
-  // 12. Educational Attainment
 
   const handleEducationChange = (
     index: number,
@@ -199,7 +211,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 13. Professional Examination(s) Passed
   const handleProfessionalChange = (
     index: number,
     field: keyof ProfessionalExamination,
@@ -234,8 +245,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       ),
     }));
   };
-
-  // 14. Reason(s) for taking the course(s) or pursuing degree(s).
 
   const reasons = [
     "High grades in the course or subject area(s) related to the course",
@@ -282,8 +291,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 15.a Training(s)/Advance Studies Attended After College
-
   const handleTrainingChange = (
     index: number,
     field: keyof TrainingAfterCollege,
@@ -319,8 +326,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 15.b What made you pursue advance studies?
-
   const handleAdvanceStudiesReasonChange = (value: string) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -339,7 +344,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 17. Employment Data
   const handleUnemploymentReasonChange = (
     reason: string,
     isChecked: boolean
@@ -361,8 +365,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 23. What are your reason(s) for staying on the job?
-
   const handleStayingReasonChange = (reason: string, isChecked: boolean) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -380,8 +382,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       other_staying_on_job_reason: e.target.value,
     }));
   };
-
-  // 25. What were your reason(s) for accepting the job?
 
   const handleIsFirstJobRelatedToCourseReasonChange = (
     reason: string,
@@ -406,7 +406,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 26. What were your reasons for leaving the job?
   const handleLeavingJobReasonChange = (reason: string, isChecked: boolean) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -425,7 +424,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 27. How long did you stay in your first job?
   const handleStayingDurationInFirstJobChange = (
     reason: string,
     isChecked: boolean
@@ -449,7 +447,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 28. How did you find your first job?
   const handleFirstJobFoundThroughChange = (
     reason: string,
     isChecked: boolean
@@ -471,7 +468,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 29. How long did it take you to find your first job?
   const handleDurationBeforeFirstJobChange = (
     reason: string,
     isChecked: boolean
@@ -483,8 +479,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         : prevState.duration_before_first_job.filter((r: any) => r !== reason),
     }));
   };
-
-  // 30. Job Level
 
   const levels = [
     "Rank or Clerical",
@@ -517,7 +511,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }));
   };
 
-  // 33. Learned Competencies
   const handleLearnedCompetencies = (reason: string, isChecked: boolean) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -540,16 +533,13 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     try {
       const cleanedFormData = { ...formData, alumni_id: currentUserId };
 
-      // Check if employment status has changed to self-employed
       if (formData.present_employment_status === "Self-employed") {
-        // Delete COE if it exists
         await deleteCOEIfSelfEmployed(currentUserId);
       }
 
       const dataAlreadyCreated = await checkIfExistingGTS(currentUserId);
       let response;
 
-      // Call the insertGraduateTracerStudy or updateGraduateTracerStudy function with formData
       if (dataAlreadyCreated) {
         response = await updateGraduateTracerStudy(
           currentUserId,
@@ -563,7 +553,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         console.error("Failed to insert graduate tracer study.");
       }
 
-      // Notify parent component about employment status change
       if (onEmploymentStatusChange && !isReadOnly) {
         onEmploymentStatusChange(formData.present_employment_status);
       }
@@ -574,7 +563,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     }
   };
 
-  // Add a useEffect to notify parent when status changes in the form
   useEffect(() => {
     if (
       onEmploymentStatusChange &&
@@ -606,7 +594,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                   <h1 className="lg:col-span-2 font-semibold justify-start place-content-start">
                     A. GENERAL INFORMATION
                   </h1>
-                  {/* Name */}
                   <Input
                     label="1. Name"
                     name="name"
@@ -615,8 +602,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     value={`${userInfo.first_name} ${userInfo.middle_name} ${userInfo.last_name}`}
                     readOnly
                   />
-
-                  {/* Permanent Address */}
                   <Input
                     label="2. Permanent Address"
                     name="address"
@@ -625,8 +610,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     value={userInfo.address}
                     readOnly
                   />
-
-                  {/* Email Address */}
                   <Input
                     label="3. Email Address"
                     type="email"
@@ -636,8 +619,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     value={userInfo.email}
                     readOnly
                   />
-
-                  {/* Contact Numbers */}
                   <Input
                     label="4. Telephone or Contact Number(s)"
                     placeholder="Enter your contact numbers"
@@ -648,8 +629,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     onChange={handleChange}
                     readOnly={isReadOnly}
                   />
-
-                  {/* Mobile Number */}
                   <Input
                     label="5. Mobile Number"
                     name="mobile_number"
@@ -658,8 +637,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     value={userInfo.contact_number}
                     readOnly
                   />
-
-                  {/* Civil Status */}
                   <div>
                     {!isReadOnly ? (
                       <>
@@ -693,8 +670,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     )}
                   </div>
-
-                  {/* Sex */}
                   <div>
                     {!isReadOnly ? (
                       <>
@@ -725,19 +700,14 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     )}
                   </div>
-
-                  {/* Birthday */}
                   <Input
                     label="8. Birthday"
-                    // type="date"
                     name="birthday"
                     color="success"
                     variant="bordered"
                     value={userInfo.birth_date}
                     readOnly
                   />
-
-                  {/* Region of Origin */}
                   <div>
                     {!isReadOnly ? (
                       <>
@@ -787,8 +757,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     )}
                   </div>
-
-                  {/* Province */}
                   <Input
                     label="10. Province"
                     name="province"
@@ -798,8 +766,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     onChange={handleChange}
                     readOnly={isReadOnly}
                   />
-
-                  {/* Location of Residence */}
                   <div>
                     {!isReadOnly ? (
                       <>
@@ -836,14 +802,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                 </>
               </ModalBody>
             )}
-
             {currentView === "B" && (
               <ModalBody className="h-full w-full overflow-y-auto">
                 <>
                   <h1 className="lg:col-span-2 font-semibold justify-start place-content-start">
                     B. EDUCATIONAL BACKGROUND
                   </h1>
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       12. Educational Attainment (Baccalaureate Degree only)
@@ -858,7 +822,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       Add Education
                     </Button>
                   </div>
-
                   {formData.educational_background.map((edu, index) => (
                     <div
                       key={index}
@@ -871,7 +834,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           variant="light"
                           className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
-                          // className="absolute -top-2 -right-2"
                           onClick={() => removeEducation(index)}
                         >
                           Remove
@@ -931,7 +893,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     </div>
                   ))}
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       13. Professional Examination(s) Passed
@@ -946,7 +907,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       Add Professional Examination
                     </Button>
                   </div>
-
                   {formData.professional_examination.map((prof, index) => (
                     <div
                       key={index}
@@ -959,7 +919,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           variant="light"
                           className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
-                          // className="absolute -top-2 -right-2"
                           onClick={() => removeProfessional(index)}
                         >
                           Remove
@@ -1013,14 +972,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     </div>
                   ))}
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       14. Reason(s) for taking the course(s) or pursuing
                       degree(s).
                     </label>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h3 className="text-center text-xs font-semibold text-green-500">
@@ -1091,14 +1048,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                 </>
               </ModalBody>
             )}
-
             {currentView === "C" && (
               <ModalBody className="h-full w-full overflow-y-auto">
                 <>
                   <h1 className="lg:col-span-2 font-semibold justify-start place-content-start">
                     C. TRAINING(S)/ADVANCE STUDIES ATTENDED AFTER COLLEGE
                   </h1>
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       15a. Please list down all professional or work-related
@@ -1115,7 +1070,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       Add Training
                     </Button>
                   </div>
-
                   {formData.training_after_college.map((training, index) => (
                     <div
                       key={index}
@@ -1128,7 +1082,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           variant="light"
                           className={`${isReadOnly && "hidden"}`}
                           startContent={<IoRemoveCircleOutline />}
-                          // className="absolute -top-2 -right-2"
                           onClick={() => removeTraining(index)}
                         >
                           Remove
@@ -1181,13 +1134,11 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     </div>
                   ))}
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       15b. What made you pursue advance studies?
                     </label>
                   </div>
-
                   <RadioGroup
                     color="success"
                     isReadOnly={isReadOnly}
@@ -1213,7 +1164,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                 </>
               </ModalBody>
             )}
-
             {currentView === "D" && (
               <ModalBody className="h-full w-full overflow-y-auto">
                 <>
@@ -1250,7 +1200,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {(formData.employment_status === "No" ||
                     formData.employment_status === "Never Employed") && (
                     <>
@@ -1260,7 +1209,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           employed. You may check (✓) more than one answer.
                         </label>
                       </div>
-
                       <div className="flex flex-col gap-2">
                         {[
                           "Advance or further study",
@@ -1344,7 +1292,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   <Input
                     label="19. Present occupation"
                     placeholder="(Ex. Grade School Teacher, Electrical Engineer, Self-employed)"
@@ -1355,8 +1302,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     onChange={handleChange}
                     readOnly={isReadOnly}
                   />
-
-                  {/* Add Agency Input Field Here */}
                   <Input
                     label="Agency/Company Name"
                     placeholder="Enter the name of the agency or company"
@@ -1367,7 +1312,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     onChange={handleChange}
                     readOnly={isReadOnly}
                   />
-
                   {!isReadOnly ? (
                     <Select
                       label="20. Major line of business of the company you are presently employed in."
@@ -1438,7 +1382,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {!isReadOnly ? (
                     <Select
                       label="21. Place of work"
@@ -1466,7 +1409,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {!isReadOnly ? (
                     <Select
                       label="22. Is this your first job after college?"
@@ -1496,7 +1438,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {formData.is_first_time_job_after_college === "Yes" && (
                     <>
                       <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
@@ -1505,7 +1446,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           You may check (✓) more than one answer.
                         </label>
                       </div>
-
                       <div className="flex flex-col gap-2">
                         {[
                           "Salaries and benefits",
@@ -1554,7 +1494,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           />
                         )}
                       </div>
-
                       {!isReadOnly ? (
                         <Select
                           label="24. Is your first job related to the course you took up in college? You may check (✓) more than one answer."
@@ -1584,7 +1523,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           readOnly
                         />
                       )}
-
                       {formData.is_first_job_related_to_course === "Yes" && (
                         <>
                           <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
@@ -1593,7 +1531,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                               job? You may check (✓) more than one answer.
                             </label>
                           </div>
-
                           <div className="flex flex-col gap-2">
                             {[
                               "Salaries and benefits",
@@ -1656,7 +1593,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       )}
                     </>
                   )}
-
                   {formData.is_first_job_related_to_course === "Yes" && (
                     <>
                       <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
@@ -1665,7 +1601,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           check (✓) more than one answer.
                         </label>
                       </div>
-
                       <div className="flex flex-col gap-2">
                         {[
                           "Salaries and benefits",
@@ -1688,7 +1623,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             {reason}
                           </Checkbox>
                         ))}
-
                         <Checkbox
                           isSelected={formData.leaving_job_reasons.includes(
                             "Other"
@@ -1713,13 +1647,11 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           />
                         )}
                       </div>
-
                       <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                         <label className="text-xs font-medium text-green-500">
                           27. How long did you stay in your first job?
                         </label>
                       </div>
-
                       <div className="flex flex-col gap-2">
                         {[
                           "Less than a month",
@@ -1777,13 +1709,11 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       </div>
                     </>
                   )}
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       28. How did you find your first job?
                     </label>
                   </div>
-
                   <div className="flex flex-col gap-2">
                     {[
                       "Response to an advertisement",
@@ -1832,13 +1762,11 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     )}
                   </div>
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       29. How long did it take you to land your first job?
                     </label>
                   </div>
-
                   <div className="flex flex-col gap-2">
                     {[
                       "Less than a month",
@@ -1886,13 +1814,11 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       />
                     )}
                   </div>
-
                   <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                     <label className="text-xs font-medium text-green-500">
                       30. Job Level Position
                     </label>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h3 className="text-center text-xs font-semibold text-green-500">
@@ -1912,7 +1838,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         </Checkbox>
                       ))}
                     </div>
-
                     <div>
                       <h3 className="text-center text-xs font-semibold text-green-500">
                         30.2. Current or Present Job
@@ -1934,7 +1859,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       ))}
                     </div>
                   </div>
-
                   {!isReadOnly ? (
                     <Select
                       label="31. What is your initial gross monthly earning in your first job after college?"
@@ -1978,7 +1902,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {!isReadOnly ? (
                     <Select
                       label="32. Was the curriculum you had in college relevant to your first job?"
@@ -2008,7 +1931,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       readOnly
                     />
                   )}
-
                   {formData.is_curriculum_relevant_in_first_job === "Yes" && (
                     <>
                       <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
@@ -2018,7 +1940,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           (✓) more than one answer.
                         </label>
                       </div>
-
                       <div className="flex flex-col gap-2">
                         {[
                           "Communication skills",
@@ -2067,7 +1988,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       </div>
                     </>
                   )}
-
                   <Textarea
                     label="34. List down suggestions to further improve your course curriculum"
                     color="success"
@@ -2081,7 +2001,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                 </>
               </ModalBody>
             )}
-
             <ModalFooter>
               <Button
                 color="success"
@@ -2098,32 +2017,36 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
               >
                 Prev
               </Button>
+              {currentView !== "D" && (
+                <Button
+                  color="success"
+                  className="text-white"
+                  onClick={() => {
+                    if (currentView === "A") {
+                      setCurrentView("B");
+                    } else if (currentView === "B") {
+                      setCurrentView("C");
+                    } else if (currentView === "C") {
+                      setCurrentView("D");
+                    }
+                  }}
+                >
+                  Next
+                </Button>
+              )}
               <Button
                 color="success"
-                // className={currentView === "D" ? "invisible" : "text-white"}
-                // className={currentView === "D" ? "hidden" : "text-white"}
                 className="text-white"
+                isDisabled={isReadOnly || !isFormChanged()}
                 onClick={() => {
-                  if (currentView === "A") {
-                    setCurrentView("B");
-                  } else if (currentView === "B") {
-                    setCurrentView("C");
-                  } else if (currentView === "C") {
-                    setCurrentView("D");
+                  if (!isReadOnly) {
+                    handleSubmit();
                   } else {
-                    if (!isReadOnly) {
-                      handleSubmit();
-                    } else {
-                      setOpenGPTSModal(false);
-                    }
+                    setOpenGPTSModal(false);
                   }
                 }}
               >
-                {isReadOnly && currentView === "D"
-                  ? "Close"
-                  : !isReadOnly && currentView === "D"
-                  ? "Submit"
-                  : "Next"}
+                Submit
               </Button>
             </ModalFooter>
           </>
