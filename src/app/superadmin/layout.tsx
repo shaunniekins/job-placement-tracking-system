@@ -62,7 +62,7 @@ export default function SuperAdminSlugLayout({
               }
             >
               <div
-                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 lg:p-10"
+                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 pt-0 lg:p-10 lg:pt-0"
                 onClick={handleContentClick}
               >
                 {children}

@@ -40,6 +40,8 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
   const [signupPending, setSignUpPending] = useState(false);
 
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState(""); // Add state for email error
+  const [isEmailErrorModalOpen, setIsEmailErrorModalOpen] = useState(false); // State for error modal
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -80,6 +82,13 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
       setContactNumberError("Phone number must be in format: +639xxxxxxxxx");
     } else {
       setContactNumberError("");
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (emailError) {
+      setEmailError(""); // Clear error when user types
     }
   };
 
@@ -164,7 +173,15 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
       router.push(`/ident/confirmation`);
     } catch (error: any) {
       console.error("Error during signup:", error.message);
-      alert(error.message);
+      // Check for specific Supabase email already registered error
+      if (error.message && error.message.includes("User already registered")) {
+        const errorMessage = "This email address is already registered.";
+        setEmailError(errorMessage);
+        setIsEmailErrorModalOpen(true); // Open the error modal
+        setCurrentViewInput(1); // Go back to the first view where email input is
+      } else {
+        alert(error.message); // Show generic error for other issues
+      }
       setSignUpPending(false);
     }
   };
@@ -212,6 +229,32 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
           )}
         </ModalContent>
       </Modal>
+
+      <Modal
+        backdrop="blur"
+        isOpen={isEmailErrorModalOpen}
+        onOpenChange={setIsEmailErrorModalOpen}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col text-danger-500">
+                Registration Error
+              </ModalHeader>
+              <ModalBody>
+                <p>{emailError}</p>
+                <p>Please use a different email address or try signing in.</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       <div className="w-full h-full flex flex-col justify-center items-center relative">
         {signupPending && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
@@ -263,10 +306,12 @@ const SignupComponent = ({ userType }: SignupComponentProps) => {
                         type="email"
                         label="Email"
                         variant="bordered"
-                        color="success"
+                        color={emailError ? "danger" : "success"} // Change color on error
                         isRequired
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={handleEmailChange} // Use updated handler
+                        isInvalid={!!emailError} // Set invalid state based on error
+                        errorMessage={emailError} // Display error message
                       />
                       <Input
                         type={isInputUserPasswordVisible ? "text" : "password"}

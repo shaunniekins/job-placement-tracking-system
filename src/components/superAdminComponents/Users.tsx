@@ -1,7 +1,7 @@
 "use client";
 
 import { RootState } from "@/app/reduxUtils/store";
-import { Key, useEffect, useState } from "react";
+import { Key, useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -34,6 +34,14 @@ import { colleges } from "@/app/api/collegeAndProgramData";
 import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 import { MdDelete } from "react-icons/md";
 import { sendEmailNotification } from "@/utils/compUtils";
+import Papa from "papaparse";
+import { toast } from "react-toastify";
+
+interface CsvError {
+  row?: number;
+  email?: string;
+  message: string;
+}
 
 const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -56,6 +64,12 @@ const UserComponent = () => {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
 
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [isUploadingCSV, setIsUploadingCSV] = useState(false);
+  const [csvUploadErrors, setCsvUploadErrors] = useState<CsvError[]>([]);
+  const [isCsvErrorModalOpen, setIsCsvErrorModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (user) {
       setUserId(user.id);
@@ -66,6 +80,7 @@ const UserComponent = () => {
     const keyString = key.toString();
     if (keyString !== currentView) {
       setCurrentView(keyString);
+      setCsvFile(null);
     }
   };
 
@@ -87,17 +102,15 @@ const UserComponent = () => {
   const { batchYears } = useBatchYears();
 
   useEffect(() => {
-    // Transform the batchYears data
     const formattedData = batchYears.map((item: any) => ({
       key: item.batch_year.toString(),
       label: item.batch_year.toString(),
     }));
 
-    // Append the "all" option
     formattedData.unshift({ key: "all", label: "All" });
 
     setBatchYearFormatted(formattedData);
-    console.log("formattedData", formattedData);
+    // console.log("formattedData", formattedData);
   }, [batchYears]);
 
   const agencyColumns = [
@@ -116,12 +129,7 @@ const UserComponent = () => {
 
   const [currentColumns, setCurrentColumns] = useState(agencyColumns);
 
-  // useEffect(() => {
-  //   setPage(1);
-  // }, [totalUserEntries]);
-
   useEffect(() => {
-    // setPage(1);
     setCurrentColumns([]);
     setCurrentViewContent([]);
     setTotalPages(0);
@@ -136,8 +144,6 @@ const UserComponent = () => {
     }
     setCurrentViewContent(usersData);
     setTotalPages(Math.ceil(totalUserEntries / rowsPerPage));
-
-    // setCurrentViewContent(usersData);
   }, [currentView, usersData, totalUserEntries, collegeFilter, searchInput]);
 
   const [isAddNewAdminModalOpen, setIsAddNewAdminModalOpen] = useState(false);
@@ -150,10 +156,197 @@ const UserComponent = () => {
   const [lastName, setLastName] = useState("");
   const [college, setCollege] = useState("");
 
-  if (isLoadingUsers) {
+  const handleFileSelectClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCsvFile(e.target.files ? e.target.files[0] : null);
+  };
+
+  const handleCSVUpload = () => {
+    if (!csvFile) {
+      toast.error("Please select a CSV file first.");
+      return;
+    }
+
+    // console.log("Starting CSV upload process...");
+    setIsUploadingCSV(true);
+    toast.info("Processing CSV file...");
+
+    Papa.parse(csvFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        // console.log("Papa.parse complete callback entered.");
+        // console.log("Parsed results:", results);
+
+        const usersToCreate = results.data as any[];
+        let successCount = 0;
+        let errorCount = 0;
+        const collectedErrors: CsvError[] = [];
+
+        if (!usersToCreate || usersToCreate.length === 0) {
+          console.error("CSV parsing resulted in empty data.");
+          toast.error("CSV file is empty or invalid.");
+          setIsUploadingCSV(false);
+          return;
+        }
+
+        const expectedHeaders = [
+          "ID NUMBER",
+          "LASTNAME",
+          "FIRSTNAME",
+          "GENDER",
+          "CONTACT NUMBER",
+          "INSTITUTIONAL EMAIL",
+          "PASSWORD",
+          "BATCH",
+        ];
+        const actualHeaders = Object.keys(usersToCreate[0]);
+        // console.log("Actual CSV Headers:", actualHeaders);
+        const missingHeaders = expectedHeaders.filter(
+          (header) => !actualHeaders.includes(header)
+        );
+
+        if (missingHeaders.length > 0) {
+          console.error("Missing Required CSV Headers:", missingHeaders);
+          collectedErrors.push({
+            message: `CSV file is missing required headers: ${missingHeaders.join(
+              ", "
+            )}`,
+          });
+          setCsvUploadErrors(collectedErrors);
+          setIsCsvErrorModalOpen(true);
+          setIsUploadingCSV(false);
+          return;
+        }
+
+        // console.log(`Attempting to create ${usersToCreate.length} users...`);
+
+        const creationPromises = usersToCreate.map(async (userRow, index) => {
+          const rowNumber = index + 2;
+          const email = userRow["INSTITUTIONAL EMAIL"]?.trim();
+          const password = userRow["PASSWORD"]?.trim();
+          const idNumber = userRow["ID NUMBER"]?.trim();
+          const lastName = userRow["LASTNAME"]?.trim();
+          const firstName = userRow["FIRSTNAME"]?.trim();
+          const middleName = userRow["MIDDLENAME"]?.trim() || "";
+          const gender = userRow["GENDER"]?.trim();
+          const contactNumber = userRow["CONTACT NUMBER"]?.trim();
+          const batchYear = userRow["BATCH"]?.trim();
+          const college = userRow["COLLEGE"]?.trim() || "";
+          const program = userRow["PROGRAM"]?.trim() || "";
+          const scholarship = userRow["SCHOLARSHIP"]?.trim() || "n/a";
+
+          if (
+            !email ||
+            !password ||
+            !idNumber ||
+            !lastName ||
+            !firstName ||
+            !batchYear
+          ) {
+            const errorMessage = `Missing required fields (Email, Password, ID Number, Last Name, First Name, Batch Year).`;
+            console.warn(`Row ${rowNumber}: ${errorMessage}`, userRow);
+            collectedErrors.push({
+              row: rowNumber,
+              email: email || "N/A",
+              message: errorMessage,
+            });
+            errorCount++;
+            return Promise.resolve();
+          }
+
+          try {
+            const { error } = await supabaseAdmin.auth.admin.createUser({
+              email: email,
+              password: password,
+              email_confirm: true,
+              user_metadata: {
+                account_status: "approved",
+                profile_picture: "",
+                email: email,
+                user_type: "alumni",
+                first_name: firstName,
+                last_name: lastName,
+                middle_name: middleName,
+                contact_number: contactNumber,
+                gender: gender,
+                birth_date: "",
+                address: "",
+                batch_year: batchYear,
+                id_number: idNumber,
+                college: college,
+                program: program,
+                scholarship: scholarship,
+                profile_of_employment: "",
+              },
+            });
+
+            if (error) {
+              throw new Error(error.message);
+            }
+            successCount++;
+          } catch (error: any) {
+            const errorMessage = error.message;
+            console.error(
+              `Error creating user for row ${rowNumber} (${email}):`,
+              errorMessage,
+              error
+            );
+            collectedErrors.push({
+              row: rowNumber,
+              email: email,
+              message: errorMessage,
+            });
+            errorCount++;
+          }
+        });
+
+        await Promise.allSettled(creationPromises);
+
+        setIsUploadingCSV(false);
+        setCsvFile(null);
+
+        if (errorCount > 0) {
+          setCsvUploadErrors(collectedErrors);
+          setIsCsvErrorModalOpen(true);
+          toast.warning(
+            `${successCount} users created. ${errorCount} failed. Click details for more info.`,
+            { autoClose: 7000 }
+          );
+        } else if (successCount > 0) {
+          toast.success(`Successfully created ${successCount} alumni users.`);
+        } else {
+          if (collectedErrors.length > 0) {
+            setCsvUploadErrors(collectedErrors);
+            setIsCsvErrorModalOpen(true);
+          } else {
+            toast.info("No new users were created from the CSV file.");
+          }
+        }
+
+        fetchAndSubscribeUsers();
+      },
+      error: (error: any) => {
+        setIsUploadingCSV(false);
+        const errorMessage = `Error parsing CSV file: ${error.message}`;
+        toast.error(errorMessage);
+        setCsvUploadErrors([{ message: errorMessage }]);
+        setIsCsvErrorModalOpen(true);
+        console.error("CSV Parsing Error:", error);
+      },
+    });
+  };
+
+  if (isLoadingUsers || isUploadingCSV) {
     return (
       <div className="h-full w-full flex justify-center items-center">
-        <Spinner color="success" />
+        <Spinner
+          color="success"
+          label={isUploadingCSV ? "Processing CSV..." : ""}
+        />
       </div>
     );
   }
@@ -368,44 +561,142 @@ JPTS Team`,
           )}
         </ModalContent>
       </Modal>
-      <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
-        <div className="flex gap-3">
-          <Tabs
-            aria-label="Tab Options"
-            selectedKey={currentView}
-            color="success"
-            size="lg"
-            fullWidth={true}
-            variant="underlined"
-            onSelectionChange={handleTabSelectionChange}
-          >
-            <Tab
-              key="agency"
-              title={
-                <div className="flex items-center space-x-2">
-                  <span>Agency</span>
-                </div>
-              }
-            />
-            <Tab
-              key="alumni"
-              title={
-                <div className="flex items-center space-x-2">
-                  <span>Alumni</span>
-                </div>
-              }
-            />
-            <Tab
-              key="admin"
-              title={
-                <div className="flex items-center space-x-2">
-                  <span>Admin</span>
-                </div>
-              }
-            />
-          </Tabs>
+
+      <Modal
+        size="3xl"
+        scrollBehavior="inside"
+        isOpen={isCsvErrorModalOpen}
+        onOpenChange={setIsCsvErrorModalOpen}
+        onClose={() => setCsvUploadErrors([])}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col text-warning-500">
+                CSV Upload Issues
+              </ModalHeader>
+              <ModalBody>
+                <p>
+                  The following errors occurred during the CSV upload process:
+                </p>
+                {csvUploadErrors.length > 0 ? (
+                  <ul className="list-disc pl-5 space-y-1 max-h-96 overflow-y-auto">
+                    {csvUploadErrors.map((err, index) => (
+                      <li key={index}>
+                        {err.row && <strong>Row {err.row}</strong>}
+                        {err.email && ` (${err.email})`}: {err.message}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No specific errors were recorded.</p>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button color="warning" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Controls Section - Rearranged */}
+      <div className="w-full flex flex-col gap-3">
+        {/* First Row: Tabs and Pagination */}
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
+          <div className="flex gap-3">
+            <Tabs
+              aria-label="Tab Options"
+              selectedKey={currentView}
+              color="success"
+              size="lg"
+              variant="underlined"
+              onSelectionChange={handleTabSelectionChange}
+            >
+              <Tab
+                key="agency"
+                title={
+                  <div className="flex items-center space-x-2">
+                    <span>Agency</span>
+                  </div>
+                }
+              />
+              <Tab
+                key="alumni"
+                title={
+                  <div className="flex items-center space-x-2">
+                    <span>Alumni</span>
+                  </div>
+                }
+              />
+              <Tab
+                key="admin"
+                title={
+                  <div className="flex items-center space-x-2">
+                    <span>Admin</span>
+                  </div>
+                }
+              />
+            </Tabs>
+          </div>
+          <Pagination
+            isCompact
+            showControls
+            showShadow
+            color="default"
+            page={page}
+            total={totalPages}
+            onChange={(newPage) => setPage(newPage)}
+            className={`${currenViewContent.length === 0 && "hidden"}`}
+          />
         </div>
-        <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-end gap-3">
+
+        {/* Second Row: Filters and Buttons */}
+        <div className="w-full flex flex-col md:flex-row justify-end items-center gap-3">
+          {/* Custom CSV Upload for Alumni */}
+          {currentView === "alumni" && (
+            <div className="flex gap-2 items-center">
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+              />
+              {/* Button to trigger file selection */}
+              <Button
+                // size="sm"
+                variant="bordered"
+                color="primary"
+                onClick={handleFileSelectClick}
+                isDisabled={isUploadingCSV}
+              >
+                Select CSV
+              </Button>
+              {/* Display selected file name */}
+              {csvFile && (
+                <span className="text-sm text-gray-600 truncate max-w-[150px]">
+                  {csvFile.name}
+                </span>
+              )}
+              {/* Upload Button */}
+              <Button
+                // size="sm"
+                color="secondary"
+                onClick={handleCSVUpload}
+                isDisabled={!csvFile || isUploadingCSV}
+                className={`${!csvFile && "hidden"}`}
+                isLoading={isUploadingCSV}
+              >
+                Upload
+              </Button>
+            </div>
+          )}
+
+          {/* Add New Admin Button */}
           <Button
             color="success"
             startContent={<IoAddOutline />}
@@ -414,8 +705,10 @@ JPTS Team`,
           >
             Add New Admin
           </Button>
+
+          {/* College Filter */}
           <Select
-            label="College Filter"
+            label="College"
             disallowEmptySelection={true}
             size="sm"
             className={`${currentView === "agency" && "hidden"} max-w-32`}
@@ -423,7 +716,7 @@ JPTS Team`,
             selectedKeys={new Set([collegeFilter])}
             onSelectionChange={(keys) => {
               if (keys !== "all" && keys instanceof Set) {
-                const selectedKey = Array.from(keys)[0]; // Assuming single selection
+                const selectedKey = Array.from(keys)[0];
                 if (typeof selectedKey === "string") {
                   setCollegeFilter(selectedKey);
                 }
@@ -439,15 +732,7 @@ JPTS Team`,
             <SelectItem key={"CTE"}>CTE</SelectItem>
           </Select>
 
-          {/* <Input
-            size="sm"
-            className={`${currentView !== "alumni" && "hidden"} max-w-32`}
-            label="Batch Year"
-            placeholder="YYYY"
-            value={batchYearFilter}
-            onChange={(e) => setBatchYearFilter(e.target.value)}
-          /> */}
-
+          {/* Batch Year Filter */}
           <Select
             items={batchYearFormatted}
             label="Year"
@@ -463,25 +748,18 @@ JPTS Team`,
             ))}
           </Select>
 
+          {/* Search Input */}
           <Input
             size="sm"
-            className="max-w-32"
+            className="max-w-60"
             label="Search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
-
-          <Pagination
-            isCompact
-            showControls
-            showShadow
-            color="default"
-            page={page}
-            total={totalPages}
-            onChange={(newPage) => setPage(newPage)}
-          />
         </div>
       </div>
+
+      {/* Table Section */}
       <div className="flex h-full w-full overflow-y-auto relative">
         <Table
           fullWidth

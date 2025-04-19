@@ -63,7 +63,7 @@ const DashboardComponent = () => {
       <div
         className={`${
           selectedCollege && !selectedProgram && "invisible"
-        } -mt-20 mb-2 hidden lg:block`}
+        } -mt-10 mb-2 hidden lg:block`}
       >
         <div className="flex justify-end items-center space-x-4 p-4">
           <div className="flex items-center">
