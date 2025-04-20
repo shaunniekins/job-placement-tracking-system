@@ -30,18 +30,21 @@ const useUsers = (
         query = query.eq("meta_data->>user_type", "alumni");
         // Always filter by admin's college if provided for alumni view
         if (collegeFilter && collegeFilter !== "all") {
-          query = query.eq("meta_data->>college", collegeFilter.toLowerCase());
+          // Use ilike for case-insensitive matching
+          query = query.ilike("meta_data->>college", collegeFilter);
         }
         // Add program filter if provided
         if (programFilter && programFilter !== "all") {
-          query = query.eq("meta_data->>program", programFilter.toLowerCase());
+          // Use ilike for case-insensitive matching if program names might vary in case
+          query = query.ilike("meta_data->>program", programFilter);
         }
       } else if (userType === "admin") {
         // Combine admin and program-chair
         query = query.in("meta_data->>user_type", ["admin", "program-chair"]);
         // Filter by college if provided (e.g., for specific admin views if needed later)
         if (collegeFilter && collegeFilter !== "all") {
-          query = query.eq("meta_data->>college", collegeFilter.toLowerCase());
+          // Use ilike for case-insensitive matching
+          query = query.ilike("meta_data->>college", collegeFilter);
         }
       }
 

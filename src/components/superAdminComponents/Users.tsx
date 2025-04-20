@@ -197,11 +197,14 @@ const UserComponent = () => {
           "ID NUMBER",
           "LASTNAME",
           "FIRSTNAME",
+          "MIDDLENAME",
           "GENDER",
+          "COURSE", // Changed from PROGRAM
+          "COLLEGE",
           "CONTACT NUMBER",
           "INSTITUTIONAL EMAIL",
           "PASSWORD",
-          "BATCH",
+          "YEAR", // Changed from BATCH
         ];
         const actualHeaders = Object.keys(usersToCreate[0]);
         // console.log("Actual CSV Headers:", actualHeaders);
@@ -234,10 +237,10 @@ const UserComponent = () => {
           const middleName = userRow["MIDDLENAME"]?.trim() || "";
           const gender = userRow["GENDER"]?.trim();
           const contactNumber = userRow["CONTACT NUMBER"]?.trim();
-          const batchYear = userRow["BATCH"]?.trim();
-          const college = userRow["COLLEGE"]?.trim() || "";
-          const program = userRow["PROGRAM"]?.trim() || "";
-          const scholarship = userRow["SCHOLARSHIP"]?.trim() || "n/a";
+          const batchYear = userRow["YEAR"]?.trim(); // Changed from BATCH
+          const college = userRow["COLLEGE"]?.trim().toLowerCase() || ""; // Convert to lowercase
+          const program = userRow["COURSE"]?.trim().toLowerCase() || ""; // Changed from PROGRAM, convert to lowercase
+          const scholarship = userRow["SCHOLARSHIP"]?.trim() || "n/a"; // Assuming SCHOLARSHIP might still exist or be optional
 
           if (
             !email ||
@@ -245,9 +248,11 @@ const UserComponent = () => {
             !idNumber ||
             !lastName ||
             !firstName ||
-            !batchYear
+            !batchYear || // Keep batchYear check (now YEAR)
+            !college || // Add check for COLLEGE
+            !program // Add check for COURSE (program)
           ) {
-            const errorMessage = `Missing required fields (Email, Password, ID Number, Last Name, First Name, Batch Year).`;
+            const errorMessage = `Missing required fields (Email, Password, ID Number, Last Name, First Name, Year, College, Course).`;
             console.warn(`Row ${rowNumber}: ${errorMessage}`, userRow);
             collectedErrors.push({
               row: rowNumber,
@@ -277,8 +282,8 @@ const UserComponent = () => {
                 address: "",
                 batch_year: batchYear,
                 id_number: idNumber,
-                college: college,
-                program: program,
+                college: college, // Already lowercased
+                program: program, // Already lowercased
                 scholarship: scholarship,
                 profile_of_employment: "",
               },
