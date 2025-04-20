@@ -192,7 +192,7 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
   };
 
   return (
-    <div className="h-48 lg:h-96">
+    <div className="h-48 lg:h-96 print:h-96">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -752,7 +752,7 @@ const SelectedProgramView = ({
       </div>
 
       <div
-        className="h-full w-full flex flex-col overflow-y-auto print-center"
+        className="h-full w-full flex flex-col overflow-y-auto print:overflow-visible"
         ref={printRef}
       >
         <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7 uppercase">
