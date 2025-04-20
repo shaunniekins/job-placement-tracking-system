@@ -739,9 +739,16 @@ JPTS Team`,
             disallowEmptySelection={true}
             size="sm"
             className={`${currentView !== "alumni" && "hidden"} max-w-32`}
-            defaultSelectedKeys={["all"]}
-            value={batchYearFilter}
-            onChange={(e) => setBatchYearFilter(e.target.value)}
+            selectedKeys={new Set([batchYearFilter])} // Use selectedKeys with a Set
+            onSelectionChange={(keys) => {
+              // Use onSelectionChange
+              if (keys instanceof Set) {
+                const selectedKey = Array.from(keys)[0];
+                if (typeof selectedKey === "string") {
+                  setBatchYearFilter(selectedKey);
+                }
+              }
+            }}
           >
             {batchYearFormatted.map((item) => (
               <SelectItem key={item.key}>{item.label}</SelectItem>
