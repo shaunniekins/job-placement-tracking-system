@@ -201,17 +201,14 @@ const useJobPostingsForAgency = (
                 }
                 break;
               case "DELETE":
-                const oldId = oldRecord?.job_posting_id;
-                if (oldId) {
-                  const wasPresent = jobPostings.some(
-                    (item) => item.job_posting_id === oldId
+                const oldIdDel = oldRecord?.job_posting_id;
+                if (oldIdDel) {
+                  setJobPostings((prev) =>
+                    prev.filter((item) => item.job_posting_id !== oldIdDel)
                   );
-                  if (wasPresent) {
-                    setJobPostings((prev) =>
-                      prev.filter((item) => item.job_posting_id !== oldId)
-                    );
-                    setTotalJobPostings((prev) => prev - 1);
-                  }
+                  // Decrement total count only if the item was likely part of the current view
+                  // A more robust way might involve re-fetching count, but this is simpler for real-time
+                  setTotalJobPostings((prev) => Math.max(0, prev - 1));
                 }
                 break;
               default:

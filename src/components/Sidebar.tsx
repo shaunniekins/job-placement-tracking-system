@@ -22,10 +22,7 @@ import classNames from "classnames";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
-import {
-  useJobPostingsBadgeData,
-  useUsersBadgeData,
-} from "@/hooks/useBadgeData";
+import { useValidationBadge } from "@/contexts/ValidationBadgeContext";
 
 interface SidebarComponentProps {
   isSidebarOpen: boolean;
@@ -49,26 +46,22 @@ const SidebarComponent = ({
   const [displayImage, setDisplayImage] = useState({
     profile_picture: "",
   });
-  const [isBadgeInvisible, setIsBadgeInvisible] = useState(false);
+  const [isBadgeInvisible, setIsBadgeInvisible] = useState(true);
 
-  const { totalJobPostingsBadge } = useJobPostingsBadgeData();
-  const { totalAlumniUsers, totalAgencyUsers } = useUsersBadgeData();
+  const { agencyCount, alumniCount, jpCount, isLoadingCounts } =
+    useValidationBadge();
 
   useEffect(() => {
-    // console.log("totalJobPostingsBadge", totalJobPostingsBadge);
-    // console.log("totalAlumniUsers", totalAlumniUsers);
-    // console.log("totalAgencyUsers", totalAgencyUsers);
-
-    if (
-      totalJobPostingsBadge > 0 ||
-      totalAlumniUsers > 0 ||
-      totalAgencyUsers > 0
-    ) {
-      setIsBadgeInvisible(false);
+    if (!isLoadingCounts) {
+      if (agencyCount > 0 || alumniCount > 0 || jpCount > 0) {
+        setIsBadgeInvisible(false);
+      } else {
+        setIsBadgeInvisible(true);
+      }
     } else {
       setIsBadgeInvisible(true);
     }
-  }, [totalJobPostingsBadge, totalAlumniUsers, totalAgencyUsers]);
+  }, [agencyCount, alumniCount, jpCount, isLoadingCounts]);
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
@@ -103,7 +96,6 @@ const SidebarComponent = ({
     },
     { path: "/superadmin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     { path: "/superadmin/profile", label: "Profile", icon: <FaUser /> },
-    // { path: "/superadmin/settings", label: "Settings", icon: <FaTools /> },
   ];
 
   const agencyItems: MenuItem[] = [
@@ -124,7 +116,6 @@ const SidebarComponent = ({
     },
     { path: "/agency/notifications", label: "Notifications", icon: <FaBell /> },
     { path: "/agency/profile", label: "Profile", icon: <FaUser /> },
-    // { path: "/agency/settings", label: "Settings", icon: <FaCog /> },
   ];
 
   const alumniItems: MenuItem[] = [
@@ -137,7 +128,6 @@ const SidebarComponent = ({
     { path: "/alumni/notifications", label: "Notifications", icon: <FaBell /> },
     { path: "/alumni/profile", label: "Profile", icon: <FaUser /> },
     { path: "/alumni/orgchart", label: "Org Chart", icon: <FaSitemap /> },
-    // { path: "/alumni/settings", label: "Settings", icon: <FaCog /> },
   ];
 
   useEffect(() => {
@@ -169,8 +159,6 @@ const SidebarComponent = ({
         profile_picture: profile_picture || "",
       });
 
-      // console.log("user_type", user_type ? user_type : "superadmin");
-
       switch (user_type) {
         case "admin":
           setItems(adminItems);
@@ -197,13 +185,10 @@ const SidebarComponent = ({
       }
     };
 
-    // Initial check
     handleResize();
 
-    // Add event listener
     window.addEventListener("resize", handleResize);
 
-    // Cleanup event listener on component unmount
     return () => {
       window.removeEventListener("resize", handleResize);
     };
@@ -250,7 +235,8 @@ const SidebarComponent = ({
             <Badge
               key={item.path}
               isOneChar
-              isInvisible={isBadgeInvisible}
+              content=""
+              isInvisible={isBadgeInvisible || isLoadingCounts}
               size="sm"
               color="danger"
               shape="circle"

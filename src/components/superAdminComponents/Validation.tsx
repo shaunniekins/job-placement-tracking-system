@@ -34,10 +34,7 @@ import {
   sendEmailNotification,
 } from "@/utils/compUtils";
 import { insertNotification } from "@/app/api/notificationsIUD";
-import {
-  useJobPostingsBadgeData,
-  useUsersBadgeData,
-} from "@/hooks/useBadgeData";
+import { useValidationBadge } from "@/contexts/ValidationBadgeContext";
 
 const ValidationComponent = () => {
   const [page, setPage] = useState(1);
@@ -50,23 +47,15 @@ const ValidationComponent = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentJobPostingId, setCurrentJobPostingId] = useState("");
 
-  // const [totalAgency, setTotalAgency] = useState(0);
-  // const [totalAlumni, setTotalAlumni] = useState(0);
-  // const [totalJPBadge, setTotalJPBadge] = useState(0);
-
-  const { totalJobPostingsBadge } = useJobPostingsBadgeData();
-  const { totalAlumniUsers, totalAgencyUsers } = useUsersBadgeData();
-
-  // useEffect(() => {
-  //   setTotalAgency(totalAgencyUsers);
-  //   setTotalAlumni(totalAlumniUsers);
-  //   setTotalJPBadge(totalJobPostingsBadge);
-  // }, [totalAgencyUsers, totalAlumniUsers, totalJobPostingsBadge]);
+  const { agencyCount, alumniCount, jpCount, refetchCounts } =
+    useValidationBadge();
 
   const handleTabSelectionChange = (key: Key) => {
     const keyString = key.toString();
     if (keyString !== currentView) {
       setCurrentView(keyString);
+      setPage(1);
+      setStatusFilter("pending");
     }
   };
 
@@ -141,74 +130,81 @@ const ValidationComponent = () => {
   }
 
   const handleAction = async (
-    userId: string,
-    userEmail: string,
+    itemId: string,
+    itemEmail: string,
     action: string,
-    userData: any
+    itemData: any
   ) => {
+    let success = false;
     if (currentView === "agency" || currentView === "alumni") {
       try {
         const { data: user, error } =
-          await supabaseAdmin.auth.admin.updateUserById(userId, {
+          await supabaseAdmin.auth.admin.updateUserById(itemId, {
             user_metadata: { account_status: action },
           });
         if (error) throw error;
+        success = true;
 
-        // Send notification to the agency or alumni
         if (action === "approved" && user) {
           const sendEmailData = {
-            email: userEmail,
-            recipient_name: `${userData.first_name} ${userData.last_name}`,
+            email: itemEmail,
+            recipient_name: `${itemData.first_name} ${itemData.last_name}`,
             subject: "Account Approved",
             message: `
 Greetings!
 
-We are pleased to inform you that your account associated with the email ${userData.email} has been approved. You can now sign in and access your account. Thank you!
+We are pleased to inform you that your account associated with the email ${itemData.email} has been approved. You can now sign in and access your account. Thank you!
 
 Best regards,
 JPTS Team`,
           };
           await sendEmailNotification(sendEmailData);
           await insertNotification({
-            receiver_id: userId,
+            receiver_id: itemId,
             message: `Your account has been approved.`,
           });
         }
         fetchAndSubscribeUsers();
       } catch (error) {
-        console.error("Error updating:", error);
+        console.error("Error updating user:", error);
+        success = false;
       }
     } else if (currentView === "job_postings") {
       try {
-        const jobId = parseInt(userId, 10);
+        const jobId = parseInt(itemId, 10);
         const job = await updateJobPosting(jobId, {
           job_status: action,
         });
         if (!job) throw new Error("Failed to update job posting");
+        success = true;
 
-        // Send notification to the agency
         const sendEmailData = {
-          email: userEmail,
-          recipient_name: userData.agency_name,
+          email: itemEmail,
+          recipient_name: itemData.agency_name,
           subject: "Job Posting Status Update",
           message: `
-          Greetings!
+Greetings!
 
-          We would like to inform you that the job posting status has been updated to ${action}.
-          Thank you!
+We would like to inform you that the job posting status for "${itemData.job_title}" has been updated to ${action}.
+Thank you!
 
-          Best regards,
-          JPTS Team`,
+Best regards,
+JPTS Team`,
         };
         await sendEmailNotification(sendEmailData);
         await insertNotification({
-          receiver_id: userId,
-          message: `Your job posting status has been updated to ${action}.`,
+          receiver_id: itemData.agency_id,
+          message: `Your job posting "${itemData.job_title}" status has been updated to ${action}.`,
         });
         fetchJobPostings();
       } catch (error) {
         console.error("Error updating job posting:", error);
+        success = false;
       }
+    }
+
+    if (success) {
+      refetchCounts();
     }
   };
 
@@ -276,7 +272,7 @@ JPTS Team`,
                 <div className="flex items-center space-x-2">
                   <Badge
                     isOneChar
-                    isInvisible={totalAgencyUsers === 0}
+                    isInvisible={agencyCount === 0}
                     size="sm"
                     color="danger"
                     shape="circle"
@@ -293,7 +289,7 @@ JPTS Team`,
                 <div className="flex items-center space-x-2">
                   <Badge
                     isOneChar
-                    isInvisible={totalAlumniUsers === 0}
+                    isInvisible={alumniCount === 0}
                     size="sm"
                     color="danger"
                     shape="circle"
@@ -310,7 +306,7 @@ JPTS Team`,
                 <div className="flex items-center space-x-2">
                   <Badge
                     isOneChar
-                    isInvisible={totalJobPostingsBadge === 0}
+                    isInvisible={jpCount === 0}
                     size="sm"
                     color="danger"
                     shape="circle"
@@ -333,7 +329,7 @@ JPTS Team`,
             selectedKeys={new Set([statusFilter])}
             onSelectionChange={(keys) => {
               if (keys !== "all" && keys instanceof Set) {
-                const selectedKey = Array.from(keys)[0]; // Assuming single selection
+                const selectedKey = Array.from(keys)[0];
                 if (typeof selectedKey === "string") {
                   setStatusFilter(selectedKey);
                 }
@@ -479,44 +475,58 @@ JPTS Team`,
                   }
 
                   if (columnKey === "action") {
+                    const itemId =
+                      currentView === "job_postings"
+                        ? item.job_posting_id
+                        : item.id;
+                    const itemEmail =
+                      currentView === "job_postings"
+                        ? item.agency_email
+                        : item.email;
+                    const itemData =
+                      currentView === "job_postings" ? item : item.meta_data;
+                    const itemStatus =
+                      currentView === "job_postings"
+                        ? item.job_status
+                        : item.meta_data.account_status;
+
                     return (
                       <TableCell className="flex items-center justify-center gap-4">
-                        {currentView === "agency" ||
-                        currentView === "alumni" ? (
-                          item.meta_data.account_status === "pending" ? (
-                            <>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                color="success"
-                                onClick={() =>
-                                  handleAction(
-                                    item.id,
-                                    item.email,
-                                    "approved",
-                                    item.meta_data
-                                  )
-                                }
-                              >
-                                <IoMdCheckmark />
-                              </Button>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                color="warning"
-                                onClick={() =>
-                                  handleAction(
-                                    item.id,
-                                    item.email,
-                                    "declined",
-                                    item.meta_data
-                                  )
-                                }
-                              >
-                                <IoMdClose />
-                              </Button>
-                            </>
-                          ) : item.meta_data.account_status === "approved" ? (
+                        {itemStatus === "pending" ? (
+                          <>
+                            <Button
+                              size="sm"
+                              isIconOnly
+                              color="success"
+                              onClick={() =>
+                                handleAction(
+                                  itemId,
+                                  itemEmail,
+                                  "approved",
+                                  itemData
+                                )
+                              }
+                            >
+                              <IoMdCheckmark />
+                            </Button>
+                            <Button
+                              size="sm"
+                              isIconOnly
+                              color="warning"
+                              onClick={() =>
+                                handleAction(
+                                  itemId,
+                                  itemEmail,
+                                  "declined",
+                                  itemData
+                                )
+                              }
+                            >
+                              <IoMdClose />
+                            </Button>
+                          </>
+                        ) : itemStatus === "approved" ? (
+                          <>
                             <Button
                               size="sm"
                               isIconOnly
@@ -525,70 +535,12 @@ JPTS Team`,
                             >
                               <IoMdCheckmark />
                             </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              color="success"
-                              onClick={() =>
-                                handleAction(
-                                  item.id,
-                                  item.email,
-                                  "approved",
-                                  item.meta_data
-                                )
-                              }
-                            >
-                              Approve anyway
-                            </Button>
-                          )
-                        ) : currentView === "job_postings" ? (
-                          item.job_status === "pending" ? (
-                            <>
+                            {currentView === "job_postings" && (
                               <Button
                                 size="sm"
                                 isIconOnly
-                                color="success"
-                                onClick={() =>
-                                  handleAction(
-                                    item.job_posting_id,
-                                    item.agency_email,
-                                    "approved",
-                                    item
-                                  )
-                                }
-                              >
-                                <IoMdCheckmark />
-                              </Button>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                color="warning"
-                                onClick={() =>
-                                  handleAction(
-                                    item.job_posting_id,
-                                    item.agency_email,
-                                    "declined",
-                                    item
-                                  )
-                                }
-                              >
-                                <IoMdClose />
-                              </Button>
-                            </>
-                          ) : item.job_status === "approved" ? (
-                            <>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                color="success"
-                                isDisabled={true}
-                              >
-                                <IoMdCheckmark />
-                              </Button>
-                              <Button
-                                size="sm"
-                                isIconOnly
-                                color="warning"
+                                color="danger"
+                                variant="light"
                                 onClick={() => {
                                   setCurrentJobPostingId(item.job_posting_id);
                                   setDeleteModalOpen(true);
@@ -596,24 +548,25 @@ JPTS Team`,
                               >
                                 <MdDelete />
                               </Button>
-                            </>
-                          ) : (
-                            <Button
-                              size="sm"
-                              color="success"
-                              onClick={() =>
-                                handleAction(
-                                  item.job_posting_id,
-                                  item.agency_email,
-                                  "approved",
-                                  item
-                                )
-                              }
-                            >
-                              Approve anyway
-                            </Button>
-                          )
-                        ) : null}
+                            )}
+                          </>
+                        ) : (
+                          <Button
+                            size="sm"
+                            color="success"
+                            variant="flat"
+                            onClick={() =>
+                              handleAction(
+                                itemId,
+                                itemEmail,
+                                "approved",
+                                itemData
+                              )
+                            }
+                          >
+                            Approve anyway
+                          </Button>
+                        )}
                       </TableCell>
                     );
                   }

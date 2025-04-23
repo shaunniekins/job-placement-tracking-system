@@ -49,12 +49,32 @@ export const useJobPostingsBadgeData = () => {
         async (payload: any) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
-          if (newRecord?.job_status === "pending") {
-            if (eventType === "INSERT") {
-              setTotalJobPostings((prev) => prev + 1);
-            } else if (eventType === "DELETE") {
-              setTotalJobPostings((prev) => prev - 1);
-            }
+          switch (eventType) {
+            case "INSERT":
+              if (newRecord?.job_status === "pending") {
+                setTotalJobPostings((prev) => prev + 1);
+              }
+              break;
+            case "UPDATE":
+              if (
+                oldRecord?.job_status === "pending" &&
+                newRecord?.job_status !== "pending"
+              ) {
+                setTotalJobPostings((prev) => Math.max(0, prev - 1));
+              } else if (
+                oldRecord?.job_status !== "pending" &&
+                newRecord?.job_status === "pending"
+              ) {
+                setTotalJobPostings((prev) => prev + 1);
+              }
+              break;
+            case "DELETE":
+              if (oldRecord?.job_status === "pending") {
+                setTotalJobPostings((prev) => Math.max(0, prev - 1));
+              }
+              break;
+            default:
+              break;
           }
         }
       )

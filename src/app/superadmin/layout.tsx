@@ -5,6 +5,7 @@ import SidebarComponent from "@/components/Sidebar";
 import { Spinner } from "@nextui-org/react";
 import React from "react";
 import { Suspense, useState } from "react";
+import { ValidationBadgeProvider } from "@/contexts/ValidationBadgeContext"; // Import the provider
 
 export default function SuperAdminSlugLayout({
   children,
@@ -23,54 +24,59 @@ export default function SuperAdminSlugLayout({
 
   return (
     <>
-      {isLoading && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <Spinner color="success" />
-        </div>
-      )}
-      {!isLoading && (
-        <div
-          className={`h-[100svh] w-screen grid ${
-            isSidebarOpen
-              ? "lg:grid-cols-[1fr_3fr] xl:grid-cols-[1fr_4fr]"
-              : "lg:grid-cols-1 xl:grid-cols-1"
-          }`}
-        >
-          <div
-            className={`${
-              isSidebarOpen ? "z-50 flex lg:block" : "hidden lg:hidden"
-            } fixed inset-y-0 left-0 w-4/5 bg-white lg:relative lg:w-auto lg:bg-transparent`}
-          >
-            <SidebarComponent
-              isSidebarOpen={isSidebarOpen}
-              setIsSidebarOpen={setIsSidebarOpen}
-            />
+      <ValidationBadgeProvider>
+        {" "}
+        {/* Wrap with Provider */}
+        {isLoading && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Spinner color="success" />
           </div>
-          <div className="h-full flex flex-col w-full relative overflow-hidden">
-            <div className="flex">
-              <HeaderComponent
+        )}
+        {!isLoading && (
+          <div
+            className={`h-[100svh] w-screen grid ${
+              isSidebarOpen
+                ? "lg:grid-cols-[1fr_3fr] xl:grid-cols-[1fr_4fr]"
+                : "lg:grid-cols-1 xl:grid-cols-1"
+            }`}
+          >
+            <div
+              className={`${
+                isSidebarOpen ? "z-50 flex lg:block" : "hidden lg:hidden"
+              } fixed inset-y-0 left-0 w-4/5 bg-white lg:relative lg:w-auto lg:bg-transparent`}
+            >
+              <SidebarComponent
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
-                setIsLoading={setIsLoading}
               />
             </div>
-            <Suspense
-              fallback={
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <Spinner color="success" />
-                </div>
-              }
-            >
-              <div
-                className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 pt-0 lg:p-10 lg:pt-0"
-                onClick={handleContentClick}
-              >
-                {children}
+            <div className="h-full flex flex-col w-full relative overflow-hidden">
+              <div className="flex">
+                <HeaderComponent
+                  isSidebarOpen={isSidebarOpen}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  setIsLoading={setIsLoading}
+                />
               </div>
-            </Suspense>
+              <Suspense
+                fallback={
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <Spinner color="success" />
+                  </div>
+                }
+              >
+                <div
+                  className="h-full flex bg-[#F4FFFC] justify-center items-center p-5 pt-0 lg:p-10 lg:pt-0"
+                  onClick={handleContentClick}
+                >
+                  {children}
+                </div>
+              </Suspense>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </ValidationBadgeProvider>{" "}
+      {/* Close Provider */}
     </>
   );
 }

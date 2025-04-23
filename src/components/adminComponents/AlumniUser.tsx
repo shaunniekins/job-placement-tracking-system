@@ -324,35 +324,37 @@ const AlumniUserComponent = () => {
   return (
     <div className="h-full w-full flex flex-col gap-2">
       <div className="w-full flex flex-col md:flex-row justify-between items-center gap-3">
-        <div className="w-full grid grid-cols-3 place-items-center lg:flex lg:justify-start gap-3">
-          <Select
-            items={batchYearFormatted}
-            label="Year"
-            disallowEmptySelection={true}
-            size="sm"
-            className={`max-w-32`}
-            defaultSelectedKeys={["all"]}
-            value={batchYearFilter}
-            onChange={(e) => setBatchYearFilter(e.target.value)}
-          >
-            {batchYearFormatted.map((item) => (
-              <SelectItem key={item.key}>{item.label}</SelectItem>
-            ))}
-          </Select>
+        <div className="w-full grid grid-cols-1 place-items-center lg:flex lg:justify-between gap-3">
+          <div className="w-full flex gap-3 items-center">
+            <Select
+              items={batchYearFormatted}
+              label="Year"
+              disallowEmptySelection={true}
+              size="sm"
+              className={`max-w-32`}
+              defaultSelectedKeys={["all"]}
+              value={batchYearFilter}
+              onChange={(e) => setBatchYearFilter(e.target.value)}
+            >
+              {batchYearFormatted.map((item) => (
+                <SelectItem key={item.key}>{item.label}</SelectItem>
+              ))}
+            </Select>
 
-          <Button
-            color="success"
-            size="sm"
-            className="text-white"
-            onClick={handleGenerateReport}
-            isLoading={isGeneratingReport}
-          >
-            {isGeneratingReport ? "Generating..." : "REPORT FOR ARO"}
-          </Button>
+            <Button
+              color="success"
+              size="sm"
+              className="text-white"
+              onClick={handleGenerateReport}
+              isLoading={isGeneratingReport}
+            >
+              {isGeneratingReport ? "Generating..." : "REPORT FOR ARO"}
+            </Button>
+          </div>
 
-          <div className="flex-grow"></div>
+          {/* <div className="flex-grow"></div> */}
 
-          <div className="flex gap-3">
+          <div className="w-full flex justify-end gap-3">
             <Select
               items={collegePrograms}
               label="Program Filter"
@@ -382,23 +384,19 @@ const AlumniUserComponent = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
-
-            <Pagination
-              isCompact
-              showControls
-              showShadow
-              color="default"
-              page={page}
-              total={totalPages}
-              className={`${
-                (usersData.length === 0 || rowsPerPage > usersData.length) &&
-                "hidden"
-              } flex justify-center items-center`}
-              onChange={(newPage) => setPage(newPage)}
-            />
           </div>
         </div>
       </div>
+      <Pagination
+        isCompact
+        showControls
+        showShadow
+        color="default"
+        page={page}
+        total={totalPages}
+        className={`self-end ${usersData.length === 0 && "hidden"}`}
+        onChange={(newPage) => setPage(newPage)}
+      />
 
       <div className="flex h-full w-full overflow-y-auto relative">
         <Table

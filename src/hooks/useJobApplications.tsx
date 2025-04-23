@@ -118,47 +118,122 @@ const useJobApplications = (
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
 
-          setJobApplications((prev) => {
-            switch (eventType) {
-              case "INSERT":
-                if (
-                  (agencyId && newRecord.agency_id === agencyId) ||
-                  (applicantId && newRecord.applicant_id === applicantId)
-                ) {
-                  fetchFullJobPosting(newRecord.job_posting_id).then(
-                    (fullJobPosting) => {
-                      if (fullJobPosting) {
-                        setJobApplications([...prev, fullJobPosting]);
-                      }
-                    }
-                  );
+          // Fetch full details for INSERT/UPDATE using job_application_id
+          const fetchFullJobApplication = async (jobApplicationId: number) => {
+            if (!jobApplicationId) return null;
+            try {
+              const { data, error } = await supabase
+                .from("ViewJobApplicationsWithDetails")
+                .select("*")
+                .eq("job_application_id", jobApplicationId)
+                .single();
+              if (error) throw error;
+              return data;
+            } catch (err) {
+              console.error("Error fetching full job application:", err);
+              return null;
+            }
+          };
+
+          const shouldIncludeApplication = (record: any) => {
+            if (!record) return false;
+            const matchesAgency = agencyId && record.agency_id === agencyId;
+            const matchesApplicant =
+              applicantId && record.applicant_id === applicantId;
+            const matchesSearch =
+              !searchQuery ||
+              record.applicant_first_name
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              record.applicant_last_name
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              record.job_title
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase());
+            const matchesProgram =
+              !programFilter ||
+              programFilter === "all" ||
+              record.applicant_program === programFilter;
+
+            return (
+              (matchesAgency || matchesApplicant) &&
+              matchesSearch &&
+              matchesProgram
+            );
+          };
+
+          switch (eventType) {
+            case "INSERT":
+              fetchFullJobApplication(newRecord.job_application_id).then(
+                (fullApplication) => {
+                  if (
+                    fullApplication &&
+                    shouldIncludeApplication(fullApplication)
+                  ) {
+                    setJobApplications((prev) => [fullApplication, ...prev]); // Add to start for visibility
+                    setTotalJobApplications((prev) => prev + 1);
+                  }
                 }
-                break;
-              case "UPDATE":
-                fetchFullJobPosting(newRecord.job_posting_id).then(
-                  (fullJobPosting) => {
-                    if (fullJobPosting) {
-                      setJobApplications(
-                        prev.map((item) =>
-                          item.job_posting_id === newRecord.job_posting_id
-                            ? fullJobPosting
-                            : item
-                        )
+              );
+              break;
+            case "UPDATE":
+              fetchFullJobApplication(newRecord.job_application_id).then(
+                (fullApplication) => {
+                  if (fullApplication) {
+                    const included = shouldIncludeApplication(fullApplication);
+                    setJobApplications((prev) => {
+                      const exists = prev.some(
+                        (item) =>
+                          item.job_application_id ===
+                          newRecord.job_application_id
                       );
+                      if (included) {
+                        // Update if exists, add if new (due to filter change)
+                        return exists
+                          ? prev.map((item) =>
+                              item.job_application_id ===
+                              newRecord.job_application_id
+                                ? fullApplication
+                                : item
+                            )
+                          : [fullApplication, ...prev];
+                      } else {
+                        // Remove if it no longer matches filters
+                        return prev.filter(
+                          (item) =>
+                            item.job_application_id !==
+                            newRecord.job_application_id
+                        );
+                      }
+                    });
+                    // Adjust total count based on inclusion/exclusion
+                    const wasIncluded = jobApplications.some(
+                      (app) =>
+                        app.job_application_id === newRecord.job_application_id
+                    );
+                    if (included && !wasIncluded) {
+                      setTotalJobApplications((prev) => prev + 1);
+                    } else if (!included && wasIncluded) {
+                      setTotalJobApplications((prev) => prev - 1);
                     }
                   }
+                }
+              );
+              break;
+            case "DELETE":
+              const oldAppId = oldRecord?.job_application_id;
+              if (oldAppId) {
+                setJobApplications((prev) =>
+                  prev.filter((item) => item.job_application_id !== oldAppId)
                 );
-                break;
-              case "DELETE":
-                return prev.filter(
-                  (message) =>
-                    message.job_posting_id !== oldRecord.job_posting_id
-                );
-              default:
-                return prev;
-            }
-            return prev;
-          });
+                // Decrement total count cautiously
+                setTotalJobApplications((prev) => Math.max(0, prev - 1));
+              }
+              break;
+            default:
+              break; // No change for other event types
+          }
         }
       )
       .subscribe((status) => {

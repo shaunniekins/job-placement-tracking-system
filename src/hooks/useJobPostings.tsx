@@ -165,11 +165,14 @@ const useJobPostings = (
               }
               break;
             case "DELETE":
-              setJobPostings((prev) =>
-                prev.filter(
-                  (item) => item.job_posting_id !== oldRecord.job_posting_id
-                )
-              );
+              const oldJPId = oldRecord?.job_posting_id;
+              if (oldJPId) {
+                setJobPostings((prev) =>
+                  prev.filter((item) => item.job_posting_id !== oldJPId)
+                );
+                // Decrement total count cautiously
+                setTotalJobPostings((prev) => Math.max(0, prev - 1));
+              }
               break;
             default:
               break;

@@ -61,6 +61,9 @@ const ManageJobPostingsComponent = () => {
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState<"insert" | "update">("insert");
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false); // State for delete confirmation modal
+  const [currentJobPostingIdToDelete, setCurrentJobPostingIdToDelete] =
+    useState<number | null>(null); // State to hold the ID of the job posting to delete
 
   // limited to 1000 alumni users only
   const { usersData } = useUsers(1000, 1, "alumni", "approved");
@@ -278,6 +281,20 @@ const ManageJobPostingsComponent = () => {
     setOpenModal(false);
   };
 
+  const handleDeleteConfirm = async () => {
+    if (currentJobPostingIdToDelete !== null) {
+      await deleteJobPosting(currentJobPostingIdToDelete);
+      // The real-time hook should update the UI, no need to manually fetch/filter here
+      setDeleteModalOpen(false);
+      setCurrentJobPostingIdToDelete(null);
+    }
+  };
+
+  const openDeleteConfirmation = (jobPostingId: number) => {
+    setCurrentJobPostingIdToDelete(jobPostingId);
+    setDeleteModalOpen(true);
+  };
+
   const columns = [
     { key: "job_title", label: "Job Title" },
     { key: "industry", label: "Industry" },
@@ -296,6 +313,7 @@ const ManageJobPostingsComponent = () => {
 
   return (
     <>
+      {/* Insert/Update Modal */}
       <Modal
         backdrop="blur"
         isOpen={openModal}
@@ -483,6 +501,37 @@ const ManageJobPostingsComponent = () => {
           )}
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        size="md"
+        isOpen={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        onClose={() => setCurrentJobPostingIdToDelete(null)}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Delete Confirmation</ModalHeader>
+              <ModalBody>
+                <p>Are you sure you want to delete this job posting?</p>
+                <p className="text-sm text-danger">
+                  This action cannot be undone.
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>
+                  Cancel
+                </Button>
+                <Button color="danger" onPress={handleDeleteConfirm}>
+                  Delete
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       <div className="h-full w-full flex flex-col gap-2">
         <div
           className={`${
@@ -570,9 +619,10 @@ const ManageJobPostingsComponent = () => {
                                 size="sm"
                                 color="danger"
                                 startContent={<IoMdTrash />}
-                                onPress={() => {
-                                  deleteJobPosting(item.job_posting_id);
-                                }}
+                                onPress={
+                                  () =>
+                                    openDeleteConfirmation(item.job_posting_id) // Open confirmation modal
+                                }
                               >
                                 Delete
                               </Button>
