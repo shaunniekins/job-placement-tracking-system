@@ -13,13 +13,25 @@ export const capitalizeFirstLetter = (string: string) => {
 
 // Function to format date
 export const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return format(date, "dd MMM yyyy");
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return format(date, "dd MMM yyyy");
+  } catch (error) {
+    return "Invalid Date";
+  }
 };
 
 export const formatDateYearFirst = (dateString: string) => {
-  const date = new Date(dateString);
-  return format(date, "yyyy MMM dd");
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return format(date, "yyyy MMM dd");
+  } catch (error) {
+    return "Invalid Date";
+  }
 };
 
 export const formatDateSuffix = (timestamp: string) => {

@@ -565,18 +565,51 @@ const JobPostingDetails = ({
                         .join(", ")
                     : "All Programs"}
                 </p>
-                {job?.requirements &&
-                  Array.isArray(job.requirements) &&
-                  job.requirements.length > 0 && (
-                    <div>
-                      <strong>Requirements:</strong>
-                      <ul className="list-disc list-inside ml-4 text-sm">
-                        {job.requirements.map((req: string, index: number) => (
-                          <li key={index}>{req}</li>
-                        ))}
-                      </ul>
-                    </div>
+
+                <div className="mt-2">
+                  <strong>Requirements:</strong>
+                  {job?.requirements ? (
+                    (() => {
+                      let reqList = [];
+
+                      // Try to parse as JSON if it's a string that looks like an array
+                      if (
+                        typeof job.requirements === "string" &&
+                        (job.requirements.startsWith("[") ||
+                          job.requirements.includes(","))
+                      ) {
+                        try {
+                          reqList = JSON.parse(job.requirements);
+                        } catch (e) {
+                          // If JSON parsing fails, split by commas
+                          reqList = job.requirements
+                            .split(",")
+                            .map((item: any) => item.trim());
+                        }
+                      } else if (Array.isArray(job.requirements)) {
+                        reqList = job.requirements;
+                      } else {
+                        reqList = [job.requirements];
+                      }
+
+                      return (
+                        <div className="ml-4 mt-2 space-y-1 text-sm">
+                          {reqList.map((req: any, index: any) => (
+                            <div key={index} className="flex items-start">
+                              <span className="mr-2">-</span>
+                              <span>{req}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <p className="ml-4 text-sm">
+                      No specific requirements listed
+                    </p>
                   )}
+                </div>
+
                 <div className="flex flex-col gap-2 mt-4">
                   <h2 className="font-bold text-lg">About the Job</h2>
                   <div className="w-full text-justify">
