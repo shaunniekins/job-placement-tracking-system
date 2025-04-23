@@ -21,7 +21,6 @@ const AlumniUserPCComponent = () => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 13;
   const [searchInput, setSearchInput] = useState("");
-  // const [totalPages, setTotalPages] = useState(0);
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [batchYearFilter, setBatchYearFilter] = useState("all");
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
@@ -41,13 +40,11 @@ const AlumniUserPCComponent = () => {
   const { batchYears, isBatchYearsLoading } = useBatchYears();
 
   useEffect(() => {
-    // Transform the batchYears data
     const formattedData = batchYears.map((item: any) => ({
       key: item.batch_year.toString(),
       label: item.batch_year.toString(),
     }));
 
-    // Append the "all" option
     formattedData.unshift({ key: "all", label: "All" });
 
     setBatchYearFormatted(formattedData);
@@ -97,7 +94,7 @@ const AlumniUserPCComponent = () => {
               selectedKeys={new Set([collegeFilter])}
               onSelectionChange={(keys) => {
                 if (keys !== "all" && keys instanceof Set) {
-                  const selectedKey = Array.from(keys)[0]; // Assuming single selection
+                  const selectedKey = Array.from(keys)[0];
                   if (typeof selectedKey === "string") {
                     setCollegeFilter(selectedKey);
                   }
@@ -156,7 +153,11 @@ const AlumniUserPCComponent = () => {
             )}
           </TableHeader>
           <TableBody
-            items={usersData}
+            items={usersData.slice().sort((a, b) => {
+              const lastNameA = a.meta_data?.last_name?.toLowerCase() || "";
+              const lastNameB = b.meta_data?.last_name?.toLowerCase() || "";
+              return lastNameA.localeCompare(lastNameB);
+            })}
             emptyContent={"No data to display."}
             loadingContent={<Spinner color="success" />}
           >

@@ -42,6 +42,7 @@ interface AlumniReportDataRPC {
   gender?: string;
   present_employment_status?: string;
   agency?: string;
+  program?: string; // Add program field to the interface
 }
 
 const AlumniUserComponent = () => {
@@ -99,6 +100,16 @@ const AlumniUserComponent = () => {
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
 
+  useEffect(() => {
+    if (usersData && usersData.length > 0) {
+      const sortedData = [...usersData].sort((a, b) => {
+        const lastNameA = a.meta_data?.last_name?.toLowerCase() || "";
+        const lastNameB = b.meta_data?.last_name?.toLowerCase() || "";
+        return lastNameA.localeCompare(lastNameB);
+      });
+    }
+  }, [usersData]);
+
   const fetchFilteredAlumniForReport = async (): Promise<
     AlumniReportDataRPC[]
   > => {
@@ -131,66 +142,164 @@ const AlumniUserComponent = () => {
 
       if (alumniData.length === 0) {
         alert("No data found for the selected filters.");
+        setIsGeneratingReport(false);
         return;
       }
 
-      // Define headers explicitly to know the column count and for uppercasing
-      const headers = ["Full name", "Employment status", "Agency", "Gender"];
+      // Group alumni by gender
+      const maleAlumni = alumniData.filter(
+        (user) => user.gender?.toLowerCase() === "male"
+      );
+      const femaleAlumni = alumniData.filter(
+        (user) => user.gender?.toLowerCase() === "female"
+      );
+
+      // Sort both groups alphabetically by last name
+      const sortAlumni = (a: AlumniReportDataRPC, b: AlumniReportDataRPC) => {
+        const lastNameA = a.last_name || "";
+        const lastNameB = b.last_name || "";
+        return lastNameA.localeCompare(lastNameB);
+      };
+
+      maleAlumni.sort(sortAlumni);
+      femaleAlumni.sort(sortAlumni);
+
+      // Define headers as requested
+      const headers = [
+        "No.",
+        "Name",
+        "STATUS\n(Employed / Unemployed / Not Responded)",
+        "PROGRAM",
+        "AGENCY EMPLOYED",
+      ];
       const numColumns = headers.length;
 
-      // Convert headers to uppercase
+      // Convert column headers to uppercase
       const uppercaseHeaders = headers.map((header) => header.toUpperCase());
 
-      const reportData = alumniData.map((user) => {
-        // Map data according to the original headers order (keys are case-sensitive)
+      // Helper function to properly capitalize names
+      const properCapitalize = (name: string) => {
+        if (!name) return "";
+        return name
+          .split(" ")
+          .map(
+            (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ");
+      };
+
+      // Process male alumni data with properly capitalized names
+      const maleData = maleAlumni.map((user, index) => {
+        const firstName = properCapitalize(user.first_name || "");
+        const lastName = properCapitalize(user.last_name || "");
+        const middleInitial = user.middle_name
+          ? properCapitalize(user.middle_name.charAt(0)) + "."
+          : "";
+
         return {
-          "Full name": `${user.last_name || ""}, ${user.first_name || ""}${
-            user.middle_name ? " " + user.middle_name.charAt(0) + "." : ""
+          "No.": index + 1, // Just use the number without quotes
+          Name: `${lastName}, ${firstName}${
+            middleInitial ? " " + middleInitial : ""
           }`,
-          "Employment status": user.present_employment_status || "N/A",
-          Agency: user.agency || "N/A",
-          Gender: user.gender || "N/A",
+          "STATUS\n(Employed / Unemployed / Not Responded":
+            user.present_employment_status || "Not Responded",
+          PROGRAM: user.program?.toUpperCase() || "N/A",
+          "AGENCY EMPLOYED": user.agency || "N/A",
         };
       });
 
-      // Generate CSV data part using PapaParse
-      // Use the original headers for mapping keys, but tell PapaParse to use the uppercase ones for the output header row
-      const csvData = Papa.unparse(reportData, {
-        columns: headers, // Use original headers for data mapping
-        header: false, // We will manually add the uppercase header row
+      // Process female alumni data with properly capitalized names
+      const femaleData = femaleAlumni.map((user, index) => {
+        const firstName = properCapitalize(user.first_name || "");
+        const lastName = properCapitalize(user.last_name || "");
+        const middleInitial = user.middle_name
+          ? properCapitalize(user.middle_name.charAt(0)) + "."
+          : "";
+
+        return {
+          "No.": index + 1, // Just use the number without quotes
+          Name: `${lastName}, ${firstName}${
+            middleInitial ? " " + middleInitial : ""
+          }`,
+          "STATUS\n(Employed / Unemployed / Not Responded":
+            user.present_employment_status || "Not Responded",
+          PROGRAM: user.program?.toUpperCase() || "N/A",
+          "AGENCY EMPLOYED": user.agency || "N/A",
+        };
       });
 
-      // Create the title row
-      const titleRow = `"ARO Report"${",".repeat(numColumns - 1)}\n`;
+      // Get college name for title
+      let collegeTitle = "ARO Report";
+      if (userCollege) {
+        const collegeObj = colleges.find((c) => c.key === userCollege);
+        if (collegeObj) {
+          collegeTitle = collegeObj.label;
+        }
+      }
 
-      // Create the uppercase header row
-      // Ensure headers with commas or quotes are handled correctly by Papa.unparse logic (or manually quote them)
-      const headerRow = uppercaseHeaders.map((h) => `"${h}"`).join(",") + "\n";
+      // Generate CSV content directly with better formatting
+      let csvContent = "";
 
-      // Prepend the title row and header row to the CSV data
-      const csvContentWithTitleAndHeader = titleRow + headerRow + csvData;
+      // Create title row that spans all columns using comma separators for empty cells
+      // This format helps Excel interpret it as merged cells.
+      csvContent += `"${collegeTitle}",,,,\n`; // Title spans 5 columns
 
-      // Create Blob with the modified content
-      const blob = new Blob([csvContentWithTitleAndHeader], {
+      // Create the header row. Ensure multi-line headers are quoted.
+      csvContent += `"NO.","NAME","STATUS\n(EMPLOYED / UNEMPLOYED / NOT RESPONDED)","PROGRAM","AGENCY EMPLOYED"\n`;
+
+      // Add male section if there are male alumni
+      if (maleAlumni.length > 0) {
+        csvContent += `"MALE",,,,\n`; // Male heading spans 5 columns
+        for (let i = 0; i < maleData.length; i++) {
+          const user = maleData[i];
+          // Output the number directly without quotes for the first column
+          csvContent += `${i + 1},"${user.Name}","${
+            user["STATUS\n(Employed / Unemployed / Not Responded"]
+          }","${user.PROGRAM}","${user["AGENCY EMPLOYED"]}"\n`;
+        }
+        csvContent += "\n"; // Extra line between sections
+      }
+
+      // Add female section if there are female alumni
+      if (femaleAlumni.length > 0) {
+        csvContent += `"FEMALE",,,,\n`; // Female heading spans 5 columns
+        for (let i = 0; i < femaleData.length; i++) {
+          const user = femaleData[i];
+          // Output the number directly without quotes for the first column
+          csvContent += `${i + 1},"${user.Name}","${
+            user["STATUS\n(Employed / Unemployed / Not Responded"]
+          }","${user.PROGRAM}","${user["AGENCY EMPLOYED"]}"\n`;
+        }
+      }
+
+      // Create and download the file
+      const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;",
       });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      // Keep the original filename logic
+
+      // Update filename to include college name
+      const collegeAbbrev = userCollege ? userCollege.toUpperCase() : "ALL";
       link.setAttribute(
         "download",
-        `ARO_Report_${programFilter || "all"}_${batchYearFilter || "all"}_${
-          new Date().toISOString().split("T")[0]
-        }.csv`
+        `${collegeAbbrev}_Report_${programFilter || "all"}_${
+          batchYearFilter || "all"
+        }_${new Date().toISOString().split("T")[0]}.csv`
       );
+
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error generating report:", error);
-      alert("Failed to generate report.");
+      alert(
+        `Failed to generate report: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsGeneratingReport(false);
     }
@@ -313,7 +422,11 @@ const AlumniUserComponent = () => {
             )}
           </TableHeader>
           <TableBody
-            items={usersData}
+            items={usersData.slice().sort((a, b) => {
+              const lastNameA = a.meta_data?.last_name?.toLowerCase() || "";
+              const lastNameB = b.meta_data?.last_name?.toLowerCase() || "";
+              return lastNameA.localeCompare(lastNameB);
+            })}
             emptyContent={"No data to display."}
             loadingContent={<Spinner color="success" />}
           >

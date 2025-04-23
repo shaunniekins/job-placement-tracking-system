@@ -143,7 +143,19 @@ const UserComponent = () => {
     } else {
       setCurrentColumns(otherColumns);
     }
-    setCurrentViewContent(usersData);
+
+    // Sort users by last name if they are alumni or admin
+    if (currentView === "alumni" || currentView === "admin") {
+      const sortedUsers = [...usersData].sort((a, b) => {
+        const lastNameA = a.meta_data?.last_name?.toLowerCase() || "";
+        const lastNameB = b.meta_data?.last_name?.toLowerCase() || "";
+        return lastNameA.localeCompare(lastNameB);
+      });
+      setCurrentViewContent(sortedUsers);
+    } else {
+      setCurrentViewContent(usersData);
+    }
+
     setTotalPages(Math.ceil(totalUserEntries / rowsPerPage));
   }, [currentView, usersData, totalUserEntries, collegeFilter, searchInput]);
 
