@@ -833,20 +833,20 @@ const ProfileComponent = () => {
                 readOnly={!isUserEditing}
               />
               <Input
-                label="Last Name"
-                name="last_name"
-                color="success"
-                variant="bordered"
-                value={tempUserInfo.last_name}
-                onChange={handleUserInputChange}
-                readOnly={!isUserEditing}
-              />
-              <Input
                 label="Middle Name"
                 name="middle_name"
                 color="success"
                 variant="bordered"
                 value={tempUserInfo.middle_name}
+                onChange={handleUserInputChange}
+                readOnly={!isUserEditing}
+              />
+              <Input
+                label="Last Name"
+                name="last_name"
+                color="success"
+                variant="bordered"
+                value={tempUserInfo.last_name}
                 onChange={handleUserInputChange}
                 readOnly={!isUserEditing}
               />

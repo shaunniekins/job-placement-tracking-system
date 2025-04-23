@@ -63,6 +63,7 @@ const UserComponent = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [isUploadingCSV, setIsUploadingCSV] = useState(false);
@@ -155,6 +156,8 @@ const UserComponent = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [college, setCollege] = useState("");
+  const [isCheckingDean, setIsCheckingDean] = useState(false);
+  const [deanError, setDeanError] = useState("");
 
   const handleFileSelectClick = () => {
     fileInputRef.current?.click();
@@ -345,6 +348,67 @@ const UserComponent = () => {
     });
   };
 
+  // Function to check if a dean already exists for the selected college
+  const checkIfDeanExists = async (collegeKey: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from("ViewUsers")
+        .select("*")
+        .eq("meta_data->>college", collegeKey)
+        .eq("meta_data->>faculty_type", "Dean")
+        .eq("meta_data->>user_type", "admin");
+
+      if (error) {
+        console.error("Error checking for existing dean:", error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error("Exception checking for existing dean:", error);
+      return false;
+    }
+  };
+
+  // Function to handle faculty type change with validation
+  const handleFacultyTypeChange = (value: string) => {
+    setFacultyType(value);
+    setDeanError(""); // Clear any previous errors
+
+    // If changing to Dean and college is already selected, check for existing dean
+    if (value === "Dean" && college) {
+      validateDeanSelection(college);
+    }
+  };
+
+  // Function to handle college change with dean validation
+  const handleCollegeChange = (value: string) => {
+    setCollege(value);
+    setDeanError(""); // Clear any previous errors
+
+    // If faculty type is already set to Dean, validate the college selection
+    if (facultyType === "Dean") {
+      validateDeanSelection(value);
+    }
+  };
+
+  // Function to validate dean selection
+  const validateDeanSelection = async (selectedCollege: string) => {
+    if (facultyType === "Dean") {
+      setIsCheckingDean(true);
+      const deanExists = await checkIfDeanExists(selectedCollege);
+      setIsCheckingDean(false);
+
+      if (deanExists) {
+        setDeanError(
+          `A Dean for ${selectedCollege.toUpperCase()} already exists. Please select a different college or faculty type.`
+        );
+      } else {
+        setDeanError("");
+      }
+    }
+  };
+
   if (isLoadingUsers || isUploadingCSV) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -398,12 +462,11 @@ const UserComponent = () => {
                   items={colleges}
                   label="College"
                   variant="bordered"
-                  color="success"
+                  color={deanError ? "danger" : "success"}
                   isRequired
-                  defaultSelectedKeys={[college]}
                   value={college}
                   className="col-span-3"
-                  onChange={(e) => setCollege(e.target.value)}
+                  onChange={(e) => handleCollegeChange(e.target.value)}
                 >
                   {colleges.map((item) => (
                     <SelectItem key={item.key}>{item.label}</SelectItem>
@@ -446,23 +509,45 @@ const UserComponent = () => {
                 />
                 <Select
                   label="Faculty Type"
-                  color="success"
+                  color={deanError ? "danger" : "success"}
                   variant="bordered"
                   required
-                  defaultSelectedKeys={[facultyType]}
                   value={facultyType}
-                  onChange={(e) => setFacultyType(e.target.value)}
+                  onChange={(e) => handleFacultyTypeChange(e.target.value)}
                 >
                   <SelectItem key={"Dean"}>Dean</SelectItem>
                   <SelectItem key={"ARO"}>ARO</SelectItem>
                   <SelectItem key={"Program Chair"}>Program Chair</SelectItem>
                 </Select>
+                {deanError && (
+                  <div className="text-danger text-sm">{deanError}</div>
+                )}
+                {isCheckingDean && (
+                  <div className="text-warning text-sm flex items-center gap-2">
+                    <Spinner size="sm" color="warning" />
+                    Checking dean availability...
+                  </div>
+                )}
               </ModalBody>
               <ModalFooter>
                 <Button
                   color="success"
                   className="text-white"
                   onClick={async () => {
+                    // Re-validate before creating
+                    if (facultyType === "Dean") {
+                      setIsCheckingDean(true);
+                      const deanExists = await checkIfDeanExists(college);
+                      setIsCheckingDean(false);
+
+                      if (deanExists) {
+                        setDeanError(
+                          `A Dean for ${college.toUpperCase()} already exists. Please select a different college or faculty type.`
+                        );
+                        return;
+                      }
+                    }
+
                     const { error } = await supabaseAdmin.auth.admin.createUser(
                       {
                         email,
@@ -478,9 +563,9 @@ const UserComponent = () => {
                           college: college,
                           faculty_type: facultyType,
                           user_type:
-                            facultyType !== "program-chair"
-                              ? "admin"
-                              : "program-chair",
+                            facultyType === "Program Chair"
+                              ? "program-chair"
+                              : "admin",
                         },
                       }
                     );
@@ -488,10 +573,27 @@ const UserComponent = () => {
                       alert(error.message);
                       return;
                     }
+                    // Reset form fields after successful creation
+                    setEmail("");
+                    setPassword("");
+                    setFirstName("");
+                    setLastName("");
+                    setCollege("");
+                    setFacultyType("");
                     setIsAddNewAdminModalOpen(false);
                     fetchAndSubscribeUsers();
+                    toast.success(
+                      `Successfully created ${facultyType} admin for ${college.toUpperCase()}.`
+                    );
                   }}
-                  isDisabled={!email || !password || !facultyType}
+                  isDisabled={
+                    !email ||
+                    !password ||
+                    !facultyType ||
+                    !college ||
+                    deanError !== "" ||
+                    isCheckingDean
+                  }
                 >
                   Add
                 </Button>
@@ -510,6 +612,7 @@ const UserComponent = () => {
         onOpenChange={setIsUserModalOpen}
         onClose={() => {
           setSelectedUserId("");
+          setSelectedUserEmail("");
           setIsUserModalOpen(false);
         }}
       >
@@ -524,26 +627,33 @@ const UserComponent = () => {
                 <Button
                   variant="flat"
                   onClick={() => {
+                    setSelectedUserId("");
+                    setSelectedUserEmail("");
                     setIsUserModalOpen(false);
                   }}
+                  isDisabled={isDeleting}
                 >
                   Cancel
                 </Button>
                 <Button
                   color="danger"
                   variant="flat"
+                  isLoading={isDeleting}
                   onClick={async () => {
                     if (!selectedUserId) return;
 
-                    const response = await supabaseAdmin.auth.admin.deleteUser(
-                      selectedUserId
-                    );
-                    if (response) {
-                      const sendEmailData = {
-                        email: selectedUserEmail,
-                        recipient_name: "",
-                        subject: "Account Status Update",
-                        message: `
+                    try {
+                      setIsDeleting(true);
+                      const response =
+                        await supabaseAdmin.auth.admin.deleteUser(
+                          selectedUserId
+                        );
+                      if (response) {
+                        const sendEmailData = {
+                          email: selectedUserEmail,
+                          recipient_name: "",
+                          subject: "Account Status Update",
+                          message: `
 Greetings!
 
 We regret to inform you that your account has been deleted. You can no longer access your account.
@@ -552,10 +662,20 @@ Thank you!
 
 Best regards,
 JPTS Team`,
-                      };
+                        };
 
-                      await sendEmailNotification(sendEmailData);
-                      fetchAndSubscribeUsers();
+                        await sendEmailNotification(sendEmailData);
+                        fetchAndSubscribeUsers();
+                        toast.success("User deleted successfully");
+                      }
+                    } catch (error) {
+                      console.error("Error deleting user:", error);
+                      toast.error("Failed to delete user");
+                    } finally {
+                      setIsDeleting(false);
+                      setSelectedUserId("");
+                      setSelectedUserEmail("");
+                      setIsUserModalOpen(false);
                     }
                   }}
                 >

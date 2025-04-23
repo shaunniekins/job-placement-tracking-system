@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
+import { getOrgChartImage } from "@/app/api/orgChartImageIUD";
 
 interface Node {
   id: string;
@@ -11,6 +12,7 @@ interface Node {
 
 const useOrganization = () => {
   const [orgData, setOrgData] = useState<Node[]>([]);
+  const [orgChartImageUrl, setOrgChartImageUrl] = useState<string | null>(null);
   const [loadingOrgData, setLoadingOrgData] = useState(true);
 
   const fetchOrganization = useCallback(async () => {
@@ -35,8 +37,23 @@ const useOrganization = () => {
     }
   }, []);
 
+  const fetchOrgChartImage = useCallback(async () => {
+    try {
+      const imageUrl = await getOrgChartImage();
+      setOrgChartImageUrl(imageUrl);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Error fetching organization chart image:", err.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
+    } finally {
+      setLoadingOrgData(false);
+    }
+  }, []);
+
   const subscribeToChanges = useCallback(() => {
-    const channel = supabase
+    const orgChannel = supabase
       .channel("organization_sessions")
       .on(
         "postgres_changes",
@@ -51,22 +68,39 @@ const useOrganization = () => {
       )
       .subscribe();
 
+    const chartChannel = supabase
+      .channel("orgchart_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "OrgChartImage",
+        },
+        (payload) => {
+          fetchOrgChartImage();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(orgChannel);
+      supabase.removeChannel(chartChannel);
     };
-  }, [fetchOrganization]);
+  }, [fetchOrganization, fetchOrgChartImage]);
 
   useEffect(() => {
     fetchOrganization();
+    fetchOrgChartImage();
 
     const unsubscribe = subscribeToChanges();
 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [fetchOrganization, subscribeToChanges]);
+  }, [fetchOrganization, fetchOrgChartImage, subscribeToChanges]);
 
-  return { orgData, loadingOrgData };
+  return { orgData, orgChartImageUrl, loadingOrgData };
 };
 
 export default useOrganization;

@@ -361,7 +361,7 @@ const AlumniUserComponent = () => {
 
                   if (columnKey === "scholarship") {
                     return (
-                      <TableCell className="text-center">
+                      <TableCell className="text-center uppercase">
                         {item.meta_data.scholarship === "n/a"
                           ? "N/A"
                           : item.meta_data.scholarship}

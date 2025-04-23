@@ -3,40 +3,28 @@ import { useSelector } from "react-redux";
 import {
   Button,
   Modal,
-  Input,
   ModalHeader,
   ModalBody,
   ModalFooter,
   ModalContent,
+  Card,
+  CardBody,
 } from "@nextui-org/react";
 import useOrganization from "@/hooks/useOrganization";
 import { RootState } from "@/app/reduxUtils/store";
 import {
-  insertOrgData,
-  updateOrgData,
-  deleteOrgData,
-} from "@/app/api/orgDataIUD";
-
-interface Node {
-  id: string;
-  label: string;
-  name?: string;
-  email?: string;
-  parent_id?: string;
-  children?: Node[];
-}
+  uploadOrgChartImage,
+  deleteOrgChartImage,
+} from "@/app/api/orgChartImageIUD";
 
 const OrgChartComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const [userType, setUserType] = useState("");
-  const { orgData, loadingOrgData } = useOrganization();
-  const [data, setData] = useState<Node[]>([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const { orgChartImageUrl, loadingOrgData } = useOrganization();
   const [modalOpen, setModalOpen] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [isEditMode, setIsEditMode] = useState(false); // New state to track mode
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -52,230 +40,141 @@ const OrgChartComponent = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (orgData) {
-      const transformedData = transformOrgData(orgData);
-      setData(transformedData);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileToUpload(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
     }
-  }, [orgData]);
+  };
 
-  const transformOrgData = (data: any[]): Node[] => {
-    const nodeMap = new Map<string, Node>();
-    data.forEach((item) => {
-      nodeMap.set(item.id, {
-        id: item.id,
-        label: item.position,
-        name: item.name,
-        email: item.email,
-        parent_id: item.parent_id,
-        children: [],
-      });
-    });
+  const handleUpload = async () => {
+    if (!fileToUpload) return;
 
-    const rootNodes: Node[] = [];
-    nodeMap.forEach((node) => {
-      if (node.parent_id) {
-        const parent = nodeMap.get(node.parent_id);
-        if (parent) {
-          parent.children = parent.children || [];
-          parent.children.push(node);
-        }
-      } else {
-        rootNodes.push(node);
+    try {
+      setIsUploading(true);
+      // If there's an existing image, delete it first
+      if (orgChartImageUrl) {
+        await deleteOrgChartImage(orgChartImageUrl);
       }
-    });
 
-    return rootNodes;
-  };
-
-  const addNode = async (parent: Node | null) => {
-    const newNode = {
-      position: newLabel,
-      name: newName,
-      email: newEmail,
-      parent_id: parent ? parent.id : null,
-    };
-    const result = await insertOrgData(newNode);
-    if (result) {
+      await uploadOrgChartImage(fileToUpload);
       setModalOpen(false);
-      setNewLabel("");
-      setNewName("");
-      setNewEmail("");
+      setFileToUpload(null);
+      setPreviewUrl(null);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const editNode = async (node: Node) => {
-    const updatedNode = {
-      position: newLabel,
-      name: newName,
-      email: newEmail,
-    };
-    const result = await updateOrgData(parseInt(node.id), updatedNode);
-    if (result) {
-      setModalOpen(false);
-      setNewLabel("");
-      setNewName("");
-      setNewEmail("");
-    }
+  const handleReplaceImage = () => {
+    setFileToUpload(null);
+    setPreviewUrl(null);
+    setModalOpen(true);
   };
-
-  const deleteNode = async (nodeToDelete: Node) => {
-    await deleteOrgData(parseInt(nodeToDelete.id));
-  };
-
-  const renderNode = (node: Node) => (
-    <div key={node.id} className="text-center">
-      <div className="flex flex-col items-center">
-        <div className="border border-green-500 p-2 rounded-xl bg-green-100">
-          <span>{node.label}</span>
-          {node.name && (
-            <div className="text-sm text-gray-500">({node.name})</div>
-          )}
-
-          <div className="text-xs text-gray-500">
-            {node.email ? (
-              <a
-                href={`mailto:${node.email}`}
-                target="_blank"
-                className="text-blue-500 underline"
-              >
-                {node.email}
-              </a>
-            ) : (
-              "N/A"
-            )}
-          </div>
-
-          <div className="flex space-x-2 mt-2">
-            <Button
-              size="sm"
-              color="secondary"
-              variant="flat"
-              onClick={() => {
-                setSelectedNode(node);
-                setNewLabel(node.label);
-                setNewName(node.name || "");
-                setNewEmail(node.email || "");
-                setIsEditMode(true); // Set to edit mode
-                setModalOpen(true);
-              }}
-              className={userType !== "superadmin" ? "hidden" : ""}
-            >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              color="primary"
-              variant="flat"
-              onClick={() => {
-                setSelectedNode(node);
-                setNewLabel("");
-                setNewName("");
-                setIsEditMode(false);
-                setModalOpen(true);
-              }}
-              className={userType !== "superadmin" ? "hidden" : ""}
-            >
-              Add
-            </Button>
-            {node.parent_id && (
-              <Button
-                size="sm"
-                color="danger"
-                variant="flat"
-                onClick={() => deleteNode(node)}
-                className={userType !== "superadmin" ? "hidden" : ""}
-              >
-                Delete
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      {node.children && node.children.length > 0 && (
-        <div className="flex justify-center mt-4">
-          {node.children.map((child, index) => (
-            <div
-              key={child.id}
-              className={`${
-                index === 0 ? "mr-4" : "ml-4"
-              } flex flex-col items-center`}
-            >
-              <div className="w-px h-8 bg-gray-400" />
-              <div className="flex items-center justify-center">
-                {renderNode(child)}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   if (loadingOrgData) {
-    return <div>Loading organization data...</div>;
+    return <div className="p-4 text-center">Loading organization chart...</div>;
   }
 
   return (
-    <div className="h-full w-full flex flex-col gap-2">
-      <div className="flex h-full w-full overflow-y-auto relative mb-24">
-        {data.length === 0 && (
-          <div className="h-full w-full flex justify-center items-center -mt-16">
-            <p>No nodes yet.</p>
+    <div className="h-full w-full flex flex-col items-center justify-center gap-4 p-4 md:p-8">
+      <div className="w-full flex flex-col items-center justify-center">
+        {!orgChartImageUrl ? (
+          <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg w-full max-w-2xl">
+            <p className="text-gray-500 mb-4">
+              No organization chart image uploaded yet.
+            </p>
+            {userType === "superadmin" && (
+              <Button
+                color="primary"
+                variant="flat"
+                onClick={() => setModalOpen(true)}
+              >
+                Upload Organization Chart
+              </Button>
+            )}
           </div>
-        )}
-
-        {data.length > 0 && (
-          <div className="h-full w-full flex justify-center px-96">
-            {data.map((node) => renderNode(node))}
-          </div>
+        ) : (
+          <Card className="w-full max-w-4xl">
+            <CardBody className="flex flex-col items-center p-0">
+              <img
+                src={orgChartImageUrl}
+                alt="Organization Chart"
+                className="w-full h-auto object-contain"
+              />
+              {userType === "superadmin" && (
+                <div className="p-4 flex justify-end w-full">
+                  <Button
+                    color="primary"
+                    variant="flat"
+                    onClick={handleReplaceImage}
+                  >
+                    Replace Image
+                  </Button>
+                </div>
+              )}
+            </CardBody>
+          </Card>
         )}
       </div>
-      <Modal isOpen={modalOpen} onOpenChange={setModalOpen}>
+
+      <Modal
+        isOpen={modalOpen}
+        onOpenChange={setModalOpen}
+        size="lg"
+        backdrop="blur"
+      >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>{isEditMode ? "Edit Node" : "Add Node"}</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">
+                {orgChartImageUrl
+                  ? "Replace Organization Chart"
+                  : "Upload Organization Chart"}
+              </ModalHeader>
               <ModalBody>
-                <Input
-                  fullWidth
-                  label="Position"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                />
-                <Input
-                  fullWidth
-                  label="Name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="mt-2"
-                />
-                <Input
-                  fullWidth
-                  label="Email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="mt-2"
-                />
+                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                  {previewUrl ? (
+                    <div className="mb-4 max-w-full max-h-[400px] overflow-hidden">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="max-w-full max-h-[400px] object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 mb-4">
+                      Select an image file for the organization chart
+                    </p>
+                  )}
+
+                  <label className="cursor-pointer bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark transition-colors">
+                    {previewUrl ? "Choose Another Image" : "Choose Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </div>
               </ModalBody>
               <ModalFooter>
-                <Button
-                  color="warning"
-                  variant="flat"
-                  onClick={() => setModalOpen(false)}
-                >
+                <Button color="danger" variant="light" onPress={onClose}>
                   Cancel
                 </Button>
                 <Button
                   color="primary"
-                  variant="flat"
-                  onClick={() =>
-                    isEditMode && selectedNode
-                      ? editNode(selectedNode)
-                      : addNode(selectedNode)
-                  }
+                  isDisabled={!fileToUpload || isUploading}
+                  isLoading={isUploading}
+                  onPress={handleUpload}
                 >
-                  {isEditMode ? "Save" : "Add"}
+                  {isUploading ? "Uploading..." : "Upload"}
                 </Button>
               </ModalFooter>
             </>

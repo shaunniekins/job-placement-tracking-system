@@ -276,7 +276,7 @@ const SelectedProgramView = ({
                   if (columnKey === "position") {
                     return (
                       <TableCell className="text-center capitalize">
-                        {item.job_description}
+                        {item.job_title}
                       </TableCell>
                     );
                   }
