@@ -12,6 +12,7 @@ SELECT
     a.raw_user_meta_data->>'contact_number' AS applicant_mobile_number,
     a.raw_user_meta_data->>'college' AS applicant_college,
     a.raw_user_meta_data->>'program' AS applicant_program,
+    a.raw_user_meta_data->>'batch_year' AS applicant_batch_year,
 
     -- Job Posting details
     jp.job_posting_id,
@@ -27,21 +28,19 @@ SELECT
     jp.programs,
     jp.number_of_applicants,
     jp.accepted_applicants,
-    jp.requirements, -- Added requirements
+    jp.requirements,
 
     -- Agency details extracted from JSON
     ag.id AS agency_id,
     ag.email AS agency_email,
-    ag.raw_user_meta_data->>'address' AS agency_address,
-    ag.raw_user_meta_data->>'contact_number' AS agency_mobile_number,
     ag.raw_user_meta_data->>'company_name' AS agency_company_name,
-    ag.raw_user_meta_data->>'company_type' AS agency_company_type
-
-FROM
+    ag.raw_user_meta_data->>'company_type' AS agency_company_type,
+    ag.raw_user_meta_data->>'contact_number' AS agency_mobile_number
+FROM 
     "JobApplications" ja
-JOIN
-    "JobPostings" jp ON ja.job_posting_id = jp.job_posting_id
-JOIN
+JOIN 
     auth.users a ON ja.applicant_id = a.id
-JOIN
+JOIN 
+    "JobPostings" jp ON ja.job_posting_id = jp.job_posting_id
+JOIN 
     auth.users ag ON jp.agency_id = ag.id;
