@@ -2036,7 +2036,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
               )}
               <Button
                 color="success"
-                className="text-white"
+                className={`text-white ${isReadOnly && "hidden"}`}
                 isDisabled={isReadOnly || !isFormChanged()}
                 onClick={() => {
                   if (!isReadOnly) {

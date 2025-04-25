@@ -2,12 +2,15 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
 
-const useJobInteractionSelectedProgram = (college: string, program: string) => {
+const useJobInteractionSelectedProgram = (
+  college: string,
+  program: string,
+  searchQuery: string = ""
+) => {
   const [
     jobInteractionDataSelectedProgram,
     setJobInteractionDataSelectedProgram,
   ] = useState<any[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +31,13 @@ const useJobInteractionSelectedProgram = (college: string, program: string) => {
         query = query.eq("applicant_program", program);
       }
 
+      // Add search filter
+      if (searchQuery) {
+        query = query.or(
+          `applicant_first_name.ilike.%${searchQuery}%,applicant_last_name.ilike.%${searchQuery}%,job_title.ilike.%${searchQuery}%,agency_company_name.ilike.%${searchQuery}%`
+        );
+      }
+
       const response: PostgrestResponse<any> = await query.order(
         "application_date"
       );
@@ -46,7 +56,7 @@ const useJobInteractionSelectedProgram = (college: string, program: string) => {
     } finally {
       setLoading(false);
     }
-  }, [college, program]);
+  }, [college, program, searchQuery]);
 
   const subscribeToChanges = useCallback(() => {
     const channel = supabase

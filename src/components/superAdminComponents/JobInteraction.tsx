@@ -2,6 +2,7 @@
 
 import {
   Button,
+  Input,
   Select,
   SelectItem,
   Spinner,
@@ -12,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/react";
+import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
+import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 import { useRef, useState } from "react";
 import useBatchYears from "@/hooks/useBatchYears";
 import { colleges } from "@/app/api/collegeAndProgramData";
@@ -62,73 +65,101 @@ const JobInteractionComponent = () => {
     handlePrint();
   };
 
+  // Add new state variables for alumni profile modal
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [currentUserType, setCurrentUserType] = useState("");
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="w-full flex lg:justify-between gap-3">
-        <Button
-          color="success"
-          size="lg"
-          className={`${!selectedProgram && "invisible"} text-white`}
-          onPress={() => setSelectedProgram("")}
-        >
-          {selectedProgram.toUpperCase()}
-        </Button>
-        <div className="flex justify-end gap-3 w-full">
-          <Select
-            items={allColleges}
-            label="Colleges"
-            disallowEmptySelection={true}
-            size="sm"
-            color="success"
-            className={`${selectedProgram && "invisible"} max-w-[28rem]`}
-            defaultSelectedKeys={["all"]}
-            value={selectedCollege}
-            onChange={(e) => setSelectedCollege(e.target.value)}
-          >
-            {allColleges.map((item) => (
-              <SelectItem key={item.key}>{item.label}</SelectItem>
-            ))}
-          </Select>
-          <Select
-            items={batchYearFormatted}
-            label="Year"
-            disallowEmptySelection={true}
-            size="sm"
-            color="success"
-            className={`${selectedProgram && "invisible"} max-w-32`}
-            defaultSelectedKeys={["all"]}
-            value={batchYearFilter}
-            onChange={(e) => setBatchYearFilter(e.target.value)}
-          >
-            {batchYearFormatted.map((item) => (
-              <SelectItem key={item.key}>{item.label}</SelectItem>
-            ))}
-          </Select>
+    <>
+      <AlumniProfileModal
+        alumniId={currentUserId}
+        setAlumniId={setCurrentUserId}
+        openAlumniProfile={isUserProfileOpen}
+        setOpenAlumniProfile={setIsUserProfileOpen}
+        userType="alumni"
+        setUserType={setCurrentUserType}
+      />
+      <div className="h-full w-full flex flex-col">
+        <div className="w-full flex lg:justify-between gap-3">
           <Button
             color="success"
-            endContent={<FaPrint />}
-            className={`${!selectedProgram && "hidden"} text-white`}
-            onPress={handlePrintWrapper}
+            size="lg"
+            className={`${!selectedProgram && "invisible"} text-white`}
+            onPress={() => setSelectedProgram("")}
           >
-            Export
+            {selectedProgram.toUpperCase()}
           </Button>
+          <div className="flex justify-end items-center gap-3 w-full">
+            <Select
+              items={allColleges}
+              label="Colleges"
+              disallowEmptySelection={true}
+              size="sm"
+              color="success"
+              className={`${selectedProgram && "invisible"} max-w-[28rem]`}
+              defaultSelectedKeys={["all"]}
+              value={selectedCollege}
+              onChange={(e) => setSelectedCollege(e.target.value)}
+            >
+              {allColleges.map((item) => (
+                <SelectItem key={item.key}>{item.label}</SelectItem>
+              ))}
+            </Select>
+            <Select
+              items={batchYearFormatted}
+              label="Year"
+              disallowEmptySelection={true}
+              size="sm"
+              color="success"
+              className={`${selectedProgram && "invisible"} max-w-32`}
+              defaultSelectedKeys={["all"]}
+              value={batchYearFilter}
+              onChange={(e) => setBatchYearFilter(e.target.value)}
+            >
+              {batchYearFormatted.map((item) => (
+                <SelectItem key={item.key}>{item.label}</SelectItem>
+              ))}
+            </Select>
+            <Input
+              size="sm"
+              color="success"
+              className={`${!selectedProgram && "hidden"} max-w-60`}
+              label="Search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <Button
+              color="success"
+              endContent={<FaPrint />}
+              className={`${!selectedProgram && "hidden"} text-white`}
+              onPress={handlePrintWrapper}
+            >
+              Export
+            </Button>
+          </div>
+        </div>
+        <div className="h-full flex overflow-y-auto mt-5">
+          {!selectedProgram ? (
+            <DefaultView
+              collegeStats={collegeStats || []}
+              setSelectedProgram={setSelectedProgram}
+            />
+          ) : (
+            <SelectedProgramView
+              selectedCollege={selectedCollege}
+              selectedProgram={selectedProgram}
+              printRef={printRef}
+              setCurrentUserId={setCurrentUserId}
+              setCurrentUserType={setCurrentUserType}
+              setIsUserProfileOpen={setIsUserProfileOpen}
+              searchInput={searchInput}
+            />
+          )}
         </div>
       </div>
-      <div className="h-full flex overflow-y-auto mt-5">
-        {!selectedProgram ? (
-          <DefaultView
-            collegeStats={collegeStats || []}
-            setSelectedProgram={setSelectedProgram}
-          />
-        ) : (
-          <SelectedProgramView
-            selectedCollege={selectedCollege}
-            selectedProgram={selectedProgram}
-            printRef={printRef}
-          />
-        )}
-      </div>
-    </div>
+    </>
   );
 };
 
@@ -202,15 +233,24 @@ const SelectedProgramView = ({
   selectedCollege,
   selectedProgram,
   printRef,
+  setCurrentUserId,
+  setCurrentUserType,
+  setIsUserProfileOpen,
+  searchInput,
 }: {
   selectedCollege: string;
   selectedProgram: string;
   printRef: React.RefObject<HTMLDivElement>;
+  setCurrentUserId: (id: string) => void;
+  setCurrentUserType: (type: string) => void;
+  setIsUserProfileOpen: (isOpen: boolean) => void;
+  searchInput: string;
 }) => {
   const { jobInteractionDataSelectedProgram, loading, error } =
     useJobInteractionDefault(
       selectedCollege.toString().toLowerCase(),
-      selectedProgram.toString().toLowerCase()
+      selectedProgram.toString().toLowerCase(),
+      searchInput
     );
 
   const columns = [
@@ -219,6 +259,7 @@ const SelectedProgramView = ({
     { key: "agency_company_name", label: "Agency" },
     { key: "application_date", label: "Date" },
     { key: "application_status", label: "Status" },
+    { key: "action", label: "Action" }, // Add new action column
   ];
 
   return (
@@ -277,6 +318,25 @@ const SelectedProgramView = ({
                     return (
                       <TableCell className="text-center capitalize">
                         {item.job_title}
+                      </TableCell>
+                    );
+                  }
+
+                  if (columnKey === "action") {
+                    return (
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          color="success"
+                          startContent={<EyeFilledIcon />}
+                          onClick={() => {
+                            setCurrentUserId(item.applicant_id);
+                            setCurrentUserType("alumni");
+                            setIsUserProfileOpen(true);
+                          }}
+                        >
+                          View Profile
+                        </Button>
                       </TableCell>
                     );
                   }
