@@ -14,8 +14,10 @@ export const colleges = [
 ];
 
 export const programs = [
-  { key: "bsa", label: "BS in Agriculture", college: "ca" },
-  { key: "bat", label: "BS in Agri-Technology", college: "ca" },
+  { key: "bsa-a", label: "BS in Agriculture - Agronomy", college: "ca" },
+  { key: "bsa-as", label: "BS in Agriculture - Animal Science", college: "ca" },
+  { key: "bsa-h", label: "BS in Agriculture - Horticulture", college: "ca" },
+  { key: "bat", label: "Bachelor in Agricultural Technology", college: "ca" },
   { key: "bsab", label: "BS in Agribusiness", college: "ca" },
   { key: "bsaf", label: "BS in Agroforestry", college: "ca" },
 
@@ -26,20 +28,64 @@ export const programs = [
   { key: "bse", label: "BS in Entrepreneurship", college: "cba" },
 
   { key: "bsit", label: "BS in Information Technology", college: "ccis" },
-  { key: "bsis", label: "BS in Information Systems", college: "ccis" },
+  { key: "bsis", label: "BS in Information Sciences", college: "ccis" },
 
   { key: "bsae", label: "BS in Agricultural Engineering", college: "ceit" },
   { key: "bsabe", label: "BS in Agricultural and Biosystems", college: "ceit" },
   { key: "bsce", label: "BS in Civil Engineering", college: "ceit" },
   { key: "bsece", label: "BS in Electronics Engineering", college: "ceit" },
-  { key: "bit", label: "BS in Industrial Technology", college: "ceit" },
+  {
+    key: "bit-ct",
+    label: "Bachelor in Industrial Technology - Civil Technology",
+    college: "ceit",
+  },
+  {
+    key: "bit-et",
+    label: "Bachelor in Industrial Technology - Electronics Technology",
+    college: "ceit",
+  },
+  {
+    key: "bit-hvac",
+    label: "Bachelor in Industrial Technology - HVRAC Technology",
+    college: "ceit",
+  },
+  {
+    key: "bit-wft",
+    label:
+      "Bachelor in Industrial Technology - Welding and Fabrication Technology",
+    college: "ceit",
+  },
 
   { key: "bael", label: "BA in English Language", college: "cte" },
-  { key: "beed", label: "BE in Elementary Education", college: "cte" },
-  { key: "bsed", label: "BS in Secondary Education", college: "cte" },
+  { key: "beed", label: "Bachelor of Elementary Education", college: "cte" },
   {
-    key: "btle",
-    label: "BS in Technology and Livelihood Education",
+    key: "bse-en",
+    label: "BS in Secondary Education - English",
+    college: "cte",
+  },
+  {
+    key: "bse-m",
+    label: "BS in Secondary Education - Mathematics",
+    college: "cte",
+  },
+  {
+    key: "bse-s",
+    label: "BS in Secondary Education - Science",
+    college: "cte",
+  },
+  {
+    key: "btle-af",
+    label: "BS in Technology and Livelihood Education - Agri-fishery Arts",
+    college: "cte",
+  },
+  {
+    key: "btle-he",
+    label: "BS in Technology and Livelihood Education - Home Economics",
+    college: "cte",
+  },
+  {
+    key: "btle-it",
+    label: "BS in Technology and Livelihood Education - Industrial Technology",
     college: "cte",
   },
 ];

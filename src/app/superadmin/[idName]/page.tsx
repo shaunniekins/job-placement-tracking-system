@@ -11,6 +11,7 @@ import ValidationComponent from "@/components/superAdminComponents/Validation";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import JobInteractionComponent from "@/components/superAdminComponents/JobInteraction";
+import GTSComponent from "@/components/superAdminComponents/GTS";
 
 export default function SuperAdminSlugPage() {
   const pathname = usePathname();
@@ -33,6 +34,8 @@ export default function SuperAdminSlugPage() {
       setDisplay(<OrgChartComponent />);
     } else if (pathname.startsWith("/superadmin/calendar")) {
       setDisplay(<CalendarComponent />);
+    } else if (pathname.startsWith("/superadmin/gts")) {
+      setDisplay(<GTSComponent />);
     } else {
       setDisplay("No page found");
     }
