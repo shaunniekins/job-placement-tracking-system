@@ -10,9 +10,37 @@ import {
 } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 
+// Define user types for better management
+const userTypes = [
+  {
+    id: "superadmin",
+    name: "Super Admin",
+    description: "Full access.",
+    icon: "SA",
+  },
+  { id: "admin", name: "Admin", description: "Dean/ARO users.", icon: "AD" },
+  {
+    id: "program-chair",
+    name: "Chair",
+    description: "Program specific.",
+    icon: "PC",
+  },
+  {
+    id: "agency",
+    name: "Agency",
+    description: "Agency specific.",
+    icon: "AG",
+  },
+  {
+    id: "alumni",
+    name: "Alumni",
+    description: "Alumni access.",
+    icon: "AL",
+  },
+];
+
 export default function Home() {
   const router = useRouter();
-
   const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
 
   const handleSelect = (userType: string) => {
@@ -20,91 +48,80 @@ export default function Home() {
   };
 
   const handleChoose = () => {
-    router.push(`/ident/signin?usertype=${selectedUserType}`);
+    if (selectedUserType) {
+      router.push(`/ident/signin?usertype=${selectedUserType}`);
+    }
   };
 
   return (
     <>
-      <div className="bg-[#F4FFFC] h-[100svh] w-screen flex justify-center items-center">
-        <Card className="w-96 h-[29rem] mx-3">
-          <CardHeader className="bg-[#008B47] flex justify-center items-center">
-            <p className="text-center text-white text-lg font-semibold">
-              Select User Type
+      <div className="bg-gray-100 h-[100svh] w-screen flex flex-col justify-center items-center p-4 relative">
+        {/* Application Title (Absolute Positioned) */}
+        <div className="absolute top-20 left-0 right-0 text-center hidden md:block">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Job Placement Tracking System
+          </h1>
+          <p className="text-xl text-[#008B47] font-semibold">(JPTS)</p>
+        </div>
+
+        {/* Role Selection Card */}
+        <Card className="w-full max-w-2xl h-auto shadow-xl rounded-xl">
+          <CardHeader className="bg-[#008B47] flex justify-center items-center py-4 rounded-t-xl">
+            <p className="text-center text-white text-xl font-medium">
+              Select Your Role
             </p>
           </CardHeader>
-          <CardBody className="h-full flex flex-col justify-center">
-            <div className="flex flex-col justify-around gap-2 px-2">
-              <div
-                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "superadmin" ? "border-[#008B47]" : ""
-                }`}
-                onClick={() => handleSelect("superadmin")}
-              >
-                <p className="font-semibold">Super Admin</p>
-                <p className="text-xs">
-                  Has full access to all settings and data.
-                </p>
-              </div>
-
-              <div
-                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "admin" ? "border-[#008B47]" : ""
-                }`}
-                onClick={() => handleSelect("admin")}
-              >
-                <p className="font-semibold">Administrator</p>
-                <p className="text-xs">Dean and ARO</p>
-              </div>
-
-              <div
-                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "program-chair" ? "border-[#008B47]" : ""
-                }`}
-                onClick={() => handleSelect("program-chair")}
-              >
-                <p className="font-semibold">Program Chair</p>
-                <p className="text-xs">
-                  Handles program-specific operations and data.
-                </p>
-              </div>
-
-              <div
-                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "agency" ? "border-[#008B47]" : ""
-                }`}
-                onClick={() => handleSelect("agency")}
-              >
-                <p className="font-semibold">Agency</p>
-                <p className="text-xs">
-                  Handles agency-specific operations and data.
-                </p>
-              </div>
-
-              <div
-                className={`text-start border p-2 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedUserType === "alumni" ? "border-[#008B47]" : ""
-                }`}
-                onClick={() => handleSelect("alumni")}
-              >
-                <p className="font-semibold">Alumni</p>
-                <p className="text-xs">
-                  Accesses alumni resources and information.
-                </p>
-              </div>
+          <CardBody className="p-6">
+            {/* Grid layout for user types */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {userTypes.map((user) => (
+                <div
+                  key={user.id}
+                  className={`flex flex-col items-center justify-center text-center p-4 rounded-lg cursor-pointer transition-all duration-200 ease-in-out aspect-square ${
+                    selectedUserType === user.id
+                      ? "bg-[#E6F4EF] ring-2 ring-[#008B47] shadow-md" // Selected style
+                      : "bg-gray-50 hover:bg-gray-200 hover:shadow-sm" // Default style
+                  }`}
+                  onClick={() => handleSelect(user.id)}
+                >
+                  {/* Icon Placeholder */}
+                  <div className="mb-2 text-2xl font-bold text-[#008B47]">
+                    {user.icon}
+                  </div>
+                  {/* Text content */}
+                  <p className="font-semibold text-sm text-gray-800">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {user.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </CardBody>
-          <CardFooter className="flex justify-center items-center">
+          <CardFooter className="flex justify-center items-center p-4 border-t border-gray-200">
             <Button
               fullWidth
-              radius="full"
+              size="lg"
+              radius="lg"
               isDisabled={!selectedUserType}
-              className="text-white self-center bg-[#008B47]"
+              className={`text-white font-semibold transition-all duration-200 ease-in-out w-full max-w-xs ${
+                selectedUserType
+                  ? "bg-[#008B47] hover:bg-[#00753C] shadow-md hover:shadow-lg"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
               onClick={handleChoose}
             >
               Choose
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Footer (Absolute Positioned) */}
+        <footer className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500 hidden md:block">
+          © {new Date().getFullYear()} Job Placement Tracking System. All rights
+          reserved.
+        </footer>
       </div>
     </>
   );

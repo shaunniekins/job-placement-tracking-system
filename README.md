@@ -16,6 +16,7 @@
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
      - `NEXT_PUBLIC_SUPABASE_URL`
    - Add these keys to your `.env.local` file:
+
      ```env
      NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
      NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
@@ -34,6 +35,7 @@
      - `MJ_APIKEY_PRIVATE`
      - `MJ_EMAIL_REGISTERED`
    - Add these keys to your `.env.local` file:
+
      ```env
      MJ_APIKEY_PUBLIC=<your-mailjet-public-key>
      MJ_APIKEY_PRIVATE=<your-mailjet-private-key>
@@ -48,6 +50,7 @@
      - `TWILIO_AUTH_TOKEN`
      - `TWILIO_PHONE_NUMBER`
    - Add these keys to your `.env.local` file:
+
      ```env
      TWILIO_ACCOUNT_SID=<your-twiio-account-sid-key>
      TWILIO_AUTH_TOKEN=<your-twilio-auth-token-key>
@@ -67,6 +70,7 @@
    ```
 
 7. Start the production server:
+
    ```sh
    npm start
    ```
