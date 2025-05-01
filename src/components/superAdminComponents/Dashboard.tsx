@@ -29,6 +29,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaPrint } from "react-icons/fa";
 import { useReactToPrint } from "react-to-print";
+import html2canvas from "html2canvas";
 import { programs } from "@/app/api/collegeAndProgramData";
 import useCollegeStats from "@/hooks/useCollegeStats";
 import useBatchYears from "@/hooks/useBatchYears";
@@ -197,6 +198,7 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
         <BarChart
           data={data}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          className="svg-print-container"
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
@@ -208,6 +210,8 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
                 key={`cell-${index}`}
                 fill={colors[entry.name]}
                 className="print:!opacity-100"
+                stroke="none"
+                strokeWidth={0}
               />
             ))}
           </Bar>
@@ -226,19 +230,70 @@ const DefaultView = () => {
 
   const printRef = useRef<HTMLDivElement>(null);
 
+  const prepareChartsForPrinting = async (): Promise<void> => {
+    setIsPrinting(true);
+
+    if (printRef.current) {
+      const createdCanvases: HTMLCanvasElement[] = [];
+      const svgElements = printRef.current.querySelectorAll("svg");
+
+      for (let i = 0; i < svgElements.length; i++) {
+        const svg = svgElements[i];
+        const parent = svg.parentNode;
+
+        if (parent) {
+          try {
+            const canvas = await html2canvas(svg as unknown as HTMLElement, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              allowTaint: true,
+              useCORS: true,
+            });
+
+            canvas.style.width = `${svg.getBoundingClientRect().width}px`;
+            canvas.style.height = `${svg.getBoundingClientRect().height}px`;
+            canvas.classList.add("temp-print-canvas");
+
+            createdCanvases.push(canvas);
+
+            parent.insertBefore(canvas, svg);
+            svg.style.display = "none";
+          } catch (error) {
+            console.error("Error converting SVG:", error);
+          }
+        }
+      }
+
+      (window as any).__printCanvases = createdCanvases;
+    }
+
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  };
+
+  const cleanupAfterPrinting = (): void => {
+    if (printRef.current) {
+      const svgElements = printRef.current.querySelectorAll("svg");
+      svgElements.forEach((svg) => {
+        svg.style.display = "";
+      });
+    }
+
+    const canvases = document.querySelectorAll(".temp-print-canvas");
+    canvases.forEach((canvas) => canvas.remove());
+
+    setIsPrinting(false);
+  };
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Data Graphs",
-    onBeforePrint: () => {
-      setIsPrinting(true);
-      return new Promise((resolve) => {
-        setTimeout(resolve, 1000);
-      });
-    },
-    onAfterPrint: () => {
-      setIsPrinting(false);
-      console.log("Printing completed");
-    },
+    onBeforePrint: prepareChartsForPrinting,
+    onAfterPrint: cleanupAfterPrinting,
   });
 
   const handlePrintWrapper = (e: any) => {
@@ -442,7 +497,10 @@ const DefaultView = () => {
           endContent={
             isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
           }
-          onPress={handlePrintWrapper}
+          onPress={(e) => {
+            setIsPrinting(true);
+            handlePrintWrapper(e);
+          }}
           isDisabled={isPrinting}
         >
           {isPrinting ? "Exporting..." : "Export"}
@@ -668,25 +726,76 @@ const SelectedProgramView = ({
 
   const printRef = useRef<HTMLDivElement>(null);
 
+  const prepareChartsForPrinting = async (): Promise<void> => {
+    setIsPrinting(true);
+
+    if (printRef.current) {
+      const createdCanvases: HTMLCanvasElement[] = [];
+      const svgElements = printRef.current.querySelectorAll("svg");
+
+      for (let i = 0; i < svgElements.length; i++) {
+        const svg = svgElements[i];
+        const parent = svg.parentNode;
+
+        if (parent) {
+          try {
+            const canvas = await html2canvas(svg as unknown as HTMLElement, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              allowTaint: true,
+              useCORS: true,
+            });
+
+            canvas.style.width = `${svg.getBoundingClientRect().width}px`;
+            canvas.style.height = `${svg.getBoundingClientRect().height}px`;
+            canvas.classList.add("temp-print-canvas");
+
+            createdCanvases.push(canvas);
+
+            parent.insertBefore(canvas, svg);
+            svg.style.display = "none";
+          } catch (error) {
+            console.error("Error converting SVG:", error);
+          }
+        }
+      }
+
+      (window as any).__printCanvases = createdCanvases;
+    }
+
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  };
+
+  const cleanupAfterPrinting = (): void => {
+    if (printRef.current) {
+      const svgElements = printRef.current.querySelectorAll("svg");
+      svgElements.forEach((svg) => {
+        svg.style.display = "";
+      });
+    }
+
+    const canvases = document.querySelectorAll(".temp-print-canvas");
+    canvases.forEach((canvas) => canvas.remove());
+
+    setIsPrinting(false);
+  };
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Data Graphs",
-    onBeforePrint: () => {
-      setIsPrinting(true);
-      return new Promise((resolve) => {
-        setTimeout(resolve, 1000);
-      });
-    },
-    onAfterPrint: () => {
-      setIsPrinting(false);
-      console.log("Printing completed");
-    },
+    onBeforePrint: prepareChartsForPrinting,
+    onAfterPrint: cleanupAfterPrinting,
   });
 
   const handlePrintWrapper = (e: any) => {
     setTimeout(() => {
       handlePrint();
-    }, 500);
+    }, 300);
   };
 
   const columns = [
@@ -788,7 +897,10 @@ const SelectedProgramView = ({
           endContent={
             isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
           }
-          onPress={handlePrintWrapper}
+          onPress={(e) => {
+            setIsPrinting(true);
+            handlePrintWrapper(e);
+          }}
           isDisabled={isPrinting}
         >
           {isPrinting ? "Exporting..." : "Export"}

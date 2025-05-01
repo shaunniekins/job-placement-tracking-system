@@ -44,4 +44,21 @@
     flex-direction: column;
     width: 100%;
   }
+
+  .svg-print-container > svg {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .recharts-wrapper {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .temp-print-canvas {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    max-width: 100% !important;
+  }
 }
