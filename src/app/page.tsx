@@ -15,26 +15,26 @@ const userTypes = [
   {
     id: "superadmin",
     name: "Super Admin",
-    description: "Full access.",
+    description: "Full access",
     icon: "SA",
   },
-  { id: "admin", name: "Admin", description: "Dean/ARO users.", icon: "AD" },
+  { id: "admin", name: "Admin", description: "Dean/ARO", icon: "AD" },
   {
     id: "program-chair",
     name: "Chair",
-    description: "Program specific.",
+    description: "Program specific",
     icon: "PC",
   },
   {
     id: "agency",
     name: "Agency",
-    description: "Agency specific.",
+    description: "Agency specific",
     icon: "AG",
   },
   {
     id: "alumni",
     name: "Alumni",
-    description: "Alumni access.",
+    description: "Alumni access",
     icon: "AL",
   },
 ];
@@ -65,13 +65,13 @@ export default function Home() {
         </div>
 
         {/* Role Selection Card */}
-        <Card className="w-full max-w-2xl h-auto shadow-xl rounded-xl">
+        <Card className="w-full max-w-3xl h-auto shadow-xl rounded-xl">
           <CardHeader className="bg-[#008B47] flex justify-center items-center py-4 rounded-t-xl">
             <p className="text-center text-white text-xl font-medium">
               Select Your Role
             </p>
           </CardHeader>
-          <CardBody className="p-6">
+          <CardBody className="p-3">
             {/* Grid layout for user types */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {userTypes.map((user) => (

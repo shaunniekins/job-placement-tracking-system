@@ -11,6 +11,8 @@ import {
   ModalFooter,
   Select,
   SelectItem,
+  Textarea,
+  Card,
 } from "@nextui-org/react";
 import useApplicationStatus from "@/hooks/useApplicationStatus";
 import { updateApplicationStatus } from "@/app/api/applicationStatusIUD";
@@ -51,6 +53,7 @@ const ApplicationStatusModalComponent: React.FC<
   const [currentStep, setCurrentStep] = useState<string | null>(null);
   const [newDate, setNewDate] = useState<string>("");
   const [finalResult, setFinalResult] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
   const steps = [
     {
@@ -58,12 +61,14 @@ const ApplicationStatusModalComponent: React.FC<
       date: applicationStatus?.date_applied,
       completed: applicationStatus?.date_applied !== null,
       key: "date_applied",
+      description: null,
     },
     {
       name: "Initial Interview",
       date: applicationStatus?.date_initial_interview,
       completed: applicationStatus?.date_initial_interview !== null,
       key: "date_initial_interview",
+      description: applicationStatus?.description_initial_interview,
     },
     {
       name: "Exam",
@@ -72,24 +77,34 @@ const ApplicationStatusModalComponent: React.FC<
         applicationStatus?.date_exam !== null ||
         applicationStatus?.date_final !== null,
       key: "date_exam",
+      description: applicationStatus?.description_exam,
     },
     {
       name: "Result",
       date: applicationStatus?.date_final,
       completed: applicationStatus?.date_final !== null,
       key: "date_final",
+      description: null,
     },
   ];
 
   const handleCircleClick = (stepKey: string) => {
     if (isReadOnly) return;
-    if (currentStep === "date_applied") return;
+    if (stepKey === "date_applied") return;
+
     setCurrentStep(stepKey);
     setIsUpdateModalOpen(true);
-    setNewDate(applicationStatus[stepKey]);
+    setNewDate(applicationStatus?.[stepKey] || "");
+
+    // Set description based on step
+    if (stepKey === "date_initial_interview") {
+      setDescription(applicationStatus?.description_initial_interview || "");
+    } else if (stepKey === "date_exam") {
+      setDescription(applicationStatus?.description_exam || "");
+    }
 
     if (stepKey === "date_final") {
-      setFinalResult(applicationStatus.final_result);
+      setFinalResult(applicationStatus?.final_result || "");
     }
   };
 
@@ -104,8 +119,10 @@ const ApplicationStatusModalComponent: React.FC<
 
       if (currentStep === "date_initial_interview") {
         newStatus = "interview";
+        updatedApplicationStatus.description_initial_interview = description;
       } else if (currentStep === "date_exam") {
         newStatus = "examination";
+        updatedApplicationStatus.description_exam = description;
       } else if (currentStep === "date_final") {
         updatedApplicationStatus = {
           date_final: new Date().toISOString() || null,
@@ -216,6 +233,7 @@ const ApplicationStatusModalComponent: React.FC<
         setIsUpdateModalOpen(false);
         setNewDate("");
         setFinalResult("");
+        setDescription("");
       } else if (response) {
         console.error(
           "[handleUpdate] Error updating ApplicationStatus table:",
@@ -239,7 +257,7 @@ const ApplicationStatusModalComponent: React.FC<
   return (
     <>
       <Modal
-        size="xl"
+        size="2xl"
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         onClose={() => {
@@ -252,37 +270,65 @@ const ApplicationStatusModalComponent: React.FC<
               <ModalHeader>Application Status</ModalHeader>
               <ModalBody>
                 <div className="w-full max-w-3xl mx-auto">
-                  <div className="flex items-center justify-between">
-                    {steps.map((step, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col items-center w-1/4"
-                        onClick={() => handleCircleClick(step.key)}
-                      >
+                  <div className="flex flex-col items-center justify-between">
+                    <div className="flex w-full items-center justify-between mb-6">
+                      {steps.map((step, index) => (
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            step.completed
-                              ? "bg-[#008B47] text-white"
-                              : "bg-gray-200 text-gray-500"
-                          } cursor-pointer`}
+                          key={index}
+                          className="flex flex-col items-center w-1/4"
+                          onClick={() => handleCircleClick(step.key)}
                         >
-                          {index + 1}
-                        </div>
-                        <div className="mt-2 text-center">
-                          <div className="text-sm font-medium">{step.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {step.date ? step.date : "N/A"}
-                          </div>
-                        </div>
-                        {index < steps.length && (
                           <div
-                            className={`w-full h-1 mt-2 ${
-                              step.completed ? "bg-[#008B47]" : "bg-gray-200"
-                            }`}
-                          ></div>
-                        )}
-                      </div>
-                    ))}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              step.completed
+                                ? "bg-[#008B47] text-white"
+                                : "bg-gray-200 text-gray-500"
+                            } ${!isReadOnly ? "cursor-pointer" : ""}`}
+                          >
+                            {index + 1}
+                          </div>
+                          <div className="mt-2 mb-4 text-center">
+                            <div className="text-sm font-medium">
+                              {step.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {step.date ? step.date : "N/A"}
+                            </div>
+                          </div>
+                          {index < steps.length - 1 && (
+                            <div className="w-full h-1 bg-gray-200 relative">
+                              <div
+                                className={`absolute top-0 left-0 h-full bg-[#008B47]`}
+                                style={{
+                                  width: step.completed ? "100%" : "0%",
+                                  transition: "width 0.5s ease",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Display descriptions */}
+                    <div className="w-full mt-2">
+                      {steps.map(
+                        (step, index) =>
+                          step.description && (
+                            <Card
+                              key={index}
+                              className="p-3 mb-3 w-full bg-green-50 shadow-none rounded-lg text-sm"
+                            >
+                              <h3 className="font-semibold text-gray-600">
+                                {step.name} Details:
+                              </h3>
+                              <p className="whitespace-pre-wrap mt-1">
+                                {step.description}
+                              </p>
+                            </Card>
+                          )
+                      )}
+                    </div>
                   </div>
                 </div>
               </ModalBody>
@@ -313,16 +359,27 @@ const ApplicationStatusModalComponent: React.FC<
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>Update Date</ModalHeader>
+              <ModalHeader>Update Status</ModalHeader>
               <ModalBody>
                 {currentStep !== "date_final" && (
-                  <Input
-                    label="New Date"
-                    type="date"
-                    color="success"
-                    value={newDate || ""}
-                    onChange={(e) => setNewDate(e.target.value)}
-                  />
+                  <>
+                    <Input
+                      label="Date"
+                      type="date"
+                      color="success"
+                      value={newDate || ""}
+                      onChange={(e) => setNewDate(e.target.value)}
+                    />
+                    <Textarea
+                      label="Description"
+                      placeholder="Add details about this stage (e.g., interview details, exam instructions)"
+                      color="success"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      minRows={3}
+                      maxRows={5}
+                    />
+                  </>
                 )}
                 {currentStep === "date_final" && (
                   <Select
