@@ -60,7 +60,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (request.nextUrl.pathname === "/alumni") {
-    return NextResponse.redirect(new URL("/alumni/dashboard", request.url));
+    return NextResponse.redirect(
+      new URL("/alumni/profile?document=gts", request.url)
+    );
   }
 
   if (request.nextUrl.pathname === "/ident") {

@@ -44,9 +44,11 @@ const AlumniUserComponent = () => {
   const userCollege = user?.user_metadata?.college;
   const userType = user?.user_metadata?.faculty_type;
   const isProgramChair = userType === "Program Chair";
+  const isARO = userType === "ARO";
 
   const [collegePrograms, setCollegePrograms] = useState<any[]>([]);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [usersData, setUsersData] = useState<any[]>([]);
 
   useEffect(() => {
     if (userCollege) {
@@ -59,7 +61,7 @@ const AlumniUserComponent = () => {
     }
   }, [userCollege]);
 
-  const { usersData, totalUserEntries } = useUsers(
+  const { usersData: initialUsersData, totalUserEntries } = useUsers(
     rowsPerPage,
     page,
     "alumni",
@@ -69,6 +71,44 @@ const AlumniUserComponent = () => {
     batchYearFilter,
     programFilter
   );
+
+  useEffect(() => {
+    // Reset user data when filters change to ensure clean filtering
+    setUsersData([]);
+
+    // Reset to page 1 when filters change
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [batchYearFilter, programFilter, searchInput]);
+
+  useEffect(() => {
+    const fetchGtsData = async () => {
+      if (initialUsersData && initialUsersData.length > 0) {
+        const userIds = initialUsersData.map((user) => user.id);
+        const { data: gtsData, error } = await supabase
+          .from("GraduateTracerStudy")
+          .select("alumni_id, agency")
+          .in("alumni_id", userIds);
+
+        if (!error && gtsData) {
+          const gtsMap: Record<string, string> = {};
+          gtsData.forEach((item) => {
+            gtsMap[item.alumni_id] = item.agency;
+          });
+
+          const updatedUsersData = initialUsersData.map((user) => ({
+            ...user,
+            gtsAgency: gtsMap[user.id] || "",
+          }));
+
+          setUsersData(updatedUsersData);
+        }
+      }
+    };
+
+    fetchGtsData();
+  }, [initialUsersData]);
 
   const totalPages = Math.ceil(totalUserEntries / rowsPerPage);
 
@@ -85,19 +125,16 @@ const AlumniUserComponent = () => {
     setBatchYearFormatted(formattedData);
   }, [batchYears]);
 
-  useEffect(() => {
-    if (usersData && usersData.length > 0) {
-      const sortedData = [...usersData].sort((a, b) => {
-        const lastNameA = a.meta_data?.last_name?.toLowerCase() || "";
-        const lastNameB = b.meta_data?.last_name?.toLowerCase() || "";
-        return lastNameA.localeCompare(lastNameB);
-      });
-    }
-  }, [usersData]);
-
   const fetchFilteredAlumniForReport = async (): Promise<
     AlumniReportDataRPC[]
   > => {
+    // console.log("Fetching all alumni data for report with filters:", {
+    //   college: userCollege,
+    //   program: programFilter,
+    //   batchYear: batchYearFilter,
+    //   searchTerm: searchInput || null,
+    // });
+
     const args = {
       filter_college: userCollege && userCollege !== "all" ? userCollege : null,
       filter_program:
@@ -107,23 +144,64 @@ const AlumniUserComponent = () => {
       search_term: searchInput || null,
     };
 
-    const { data, error } = await supabase.rpc(
-      "get_filtered_alumni_report_data",
-      args
-    );
+    try {
+      const { data, error } = await supabase.rpc(
+        "get_filtered_alumni_report_data",
+        args
+      );
 
-    if (error) {
-      console.error("Error fetching alumni for report via RPC:", error);
-      alert(`Failed to fetch report data: ${error.message}`);
+      if (error) {
+        console.error("Error fetching alumni for report via RPC:", error);
+        alert(`Failed to fetch report data: ${error.message}`);
+        return [];
+      }
+
+      // console.log(`RPC returned ${data?.length || 0} alumni records`);
+
+      if (data && data.length > 0) {
+        const userIds = data.map((item: any) => item.user_id);
+
+        const { data: gtsData, error: gtsError } = await supabase
+          .from("GraduateTracerStudy")
+          .select("alumni_id, agency")
+          .in("alumni_id", userIds);
+
+        // console.log(`Found ${gtsData?.length || 0} GTS records for the alumni`);
+
+        if (!gtsError && gtsData) {
+          const gtsMap: Record<string, string> = {};
+          gtsData.forEach((item) => {
+            gtsMap[item.alumni_id] = item.agency;
+          });
+
+          const enrichedData = data.map((item: any) => ({
+            ...item,
+            agency: gtsMap[item.user_id] || item.agency || "N/A",
+          }));
+
+          // console.log(
+          //   `Returning ${enrichedData.length} enriched alumni records for the report`
+          // );
+          return enrichedData;
+        } else if (gtsError) {
+          console.error("Error fetching GTS data:", gtsError);
+        }
+      }
+
+      return (data as AlumniReportDataRPC[]) || [];
+    } catch (err) {
+      console.error("Exception in fetchFilteredAlumniForReport:", err);
       return [];
     }
-    return (data as AlumniReportDataRPC[]) || [];
   };
 
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
     try {
       const alumniData = await fetchFilteredAlumniForReport();
+      // console.log(
+      //   `Retrieved ${alumniData.length} total alumni records for report generation`
+      // );
 
       if (alumniData.length === 0) {
         alert("No data found for the selected filters.");
@@ -131,15 +209,24 @@ const AlumniUserComponent = () => {
         return;
       }
 
-      // Group alumni by gender
+      // Improved gender filtering with safety checks
       const maleAlumni = alumniData.filter(
         (user) => user.gender?.toLowerCase() === "male"
       );
       const femaleAlumni = alumniData.filter(
         (user) => user.gender?.toLowerCase() === "female"
       );
+      // Add category for alumni with unknown/unspecified gender
+      const unknownGenderAlumni = alumniData.filter(
+        (user) =>
+          !user.gender ||
+          !["male", "female"].includes(user.gender.toLowerCase())
+      );
 
-      // Sort both groups alphabetically by last name
+      // console.log(
+      //   `Gender distribution: Males: ${maleAlumni.length}, Females: ${femaleAlumni.length}, Unknown: ${unknownGenderAlumni.length}`
+      // );
+
       const sortAlumni = (a: AlumniReportDataRPC, b: AlumniReportDataRPC) => {
         const lastNameA = a.last_name || "";
         const lastNameB = b.last_name || "";
@@ -148,21 +235,9 @@ const AlumniUserComponent = () => {
 
       maleAlumni.sort(sortAlumni);
       femaleAlumni.sort(sortAlumni);
+      unknownGenderAlumni.sort(sortAlumni);
 
-      // Define headers as requested
-      const headers = [
-        "No.",
-        "Name",
-        "STATUS\n(Employed / Unemployed / Not Responded)",
-        "PROGRAM",
-        "AGENCY EMPLOYED",
-      ];
-      const numColumns = headers.length;
-
-      // Convert column headers to uppercase
-      const uppercaseHeaders = headers.map((header) => header.toUpperCase());
-
-      // Helper function to properly capitalize names
+      // Format all alumni data, including those with unknown gender
       const properCapitalize = (name: string) => {
         if (!name) return "";
         return name
@@ -173,8 +248,7 @@ const AlumniUserComponent = () => {
           .join(" ");
       };
 
-      // Process male alumni data with properly capitalized names
-      const maleData = maleAlumni.map((user, index) => {
+      const formatUserData = (user: AlumniReportDataRPC, index: number) => {
         const firstName = properCapitalize(user.first_name || "");
         const lastName = properCapitalize(user.last_name || "");
         const middleInitial = user.middle_name
@@ -191,29 +265,19 @@ const AlumniUserComponent = () => {
           PROGRAM: user.program?.toUpperCase() || "N/A",
           "AGENCY EMPLOYED": user.agency || "N/A",
         };
-      });
+      };
 
-      // Process female alumni data with properly capitalized names
-      const femaleData = femaleAlumni.map((user, index) => {
-        const firstName = properCapitalize(user.first_name || "");
-        const lastName = properCapitalize(user.last_name || "");
-        const middleInitial = user.middle_name
-          ? properCapitalize(user.middle_name.charAt(0)) + "."
-          : "";
+      const maleData = maleAlumni.map((user, index) =>
+        formatUserData(user, index)
+      );
+      const femaleData = femaleAlumni.map((user, index) =>
+        formatUserData(user, index)
+      );
+      const unknownGenderData = unknownGenderAlumni.map((user, index) =>
+        formatUserData(user, index)
+      );
 
-        return {
-          "No.": index + 1, // Just use the number without quotes
-          Name: `${lastName}, ${firstName}${
-            middleInitial ? " " + middleInitial : ""
-          }`,
-          "STATUS\n(Employed / Unemployed / Not Responded":
-            user.present_employment_status || "Not Responded",
-          PROGRAM: user.program?.toUpperCase() || "N/A",
-          "AGENCY EMPLOYED": user.agency || "N/A",
-        };
-      });
-
-      // Get college name for title
+      // Generate the report with college title
       let collegeTitle = "ARO Report";
       if (userCollege) {
         const collegeObj = colleges.find((c) => c.key === userCollege);
@@ -222,42 +286,45 @@ const AlumniUserComponent = () => {
         }
       }
 
-      // Generate CSV content directly with better formatting
       let csvContent = "";
-
-      // Create title row that spans all columns using comma separators for empty cells
-      // This format helps Excel interpret it as merged cells.
-      csvContent += `"${collegeTitle}",,,,\n`; // Title spans 5 columns
-
-      // Create the header row. Ensure multi-line headers are quoted.
+      csvContent += `"${collegeTitle}",,,,\n`;
       csvContent += `"NO.","NAME","STATUS\n(EMPLOYED / UNEMPLOYED / NOT RESPONDED)","PROGRAM","AGENCY EMPLOYED"\n`;
+      // csvContent += `"Total Alumni: ${alumniData.length}",,,,\n\n`;
 
-      // Add male section if there are male alumni
       if (maleAlumni.length > 0) {
-        csvContent += `"MALE",,,,\n`; // Male heading spans 5 columns
+        csvContent += `"MALE (${maleAlumni.length})",,,,\n`;
         for (let i = 0; i < maleData.length; i++) {
           const user = maleData[i];
-          // Output the number directly without quotes for the first column
           csvContent += `${i + 1},"${user.Name}","${
             user["STATUS\n(Employed / Unemployed / Not Responded"]
           }","${user.PROGRAM}","${user["AGENCY EMPLOYED"]}"\n`;
         }
-        csvContent += "\n"; // Extra line between sections
+        csvContent += "\n";
       }
 
-      // Add female section if there are female alumni
       if (femaleAlumni.length > 0) {
-        csvContent += `"FEMALE",,,,\n`; // Female heading spans 5 columns
+        csvContent += `"FEMALE (${femaleAlumni.length})",,,,\n`;
         for (let i = 0; i < femaleData.length; i++) {
           const user = femaleData[i];
-          // Output the number directly without quotes for the first column
+          csvContent += `${i + 1},"${user.Name}","${
+            user["STATUS\n(Employed / Unemployed / Not Responded"]
+          }","${user.PROGRAM}","${user["AGENCY EMPLOYED"]}"\n`;
+        }
+        csvContent += "\n";
+      }
+
+      // Add section for alumni with unknown gender
+      if (unknownGenderAlumni.length > 0) {
+        csvContent += `"UNSPECIFIED GENDER (${unknownGenderAlumni.length})",,,,\n`;
+        for (let i = 0; i < unknownGenderData.length; i++) {
+          const user = unknownGenderData[i];
           csvContent += `${i + 1},"${user.Name}","${
             user["STATUS\n(Employed / Unemployed / Not Responded"]
           }","${user.PROGRAM}","${user["AGENCY EMPLOYED"]}"\n`;
         }
       }
 
-      // Create and download the file
+      // Create and download the CSV file
       const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;",
       });
@@ -265,7 +332,6 @@ const AlumniUserComponent = () => {
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
 
-      // Update filename to include college name
       const collegeAbbrev = userCollege ? userCollege.toUpperCase() : "ALL";
       link.setAttribute(
         "download",
@@ -278,6 +344,8 @@ const AlumniUserComponent = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      // console.log(`CSV report generated with all ${alumniData.length} records`);
     } catch (error) {
       console.error("Error generating report:", error);
       alert(
@@ -290,11 +358,9 @@ const AlumniUserComponent = () => {
     }
   };
 
-  // Define columns based on user type
   const columns = isProgramChair
     ? [
         { key: "full_name", label: "Full Name" },
-        // { key: "program", label: "Program" },
         { key: "employment_status", label: "Employment Status" },
         { key: "job_alignment", label: "Job Alignment" },
         { key: "agency", label: "Agency" },
@@ -327,15 +393,21 @@ const AlumniUserComponent = () => {
               ))}
             </Select>
 
-            <Button
-              color="success"
-              size="sm"
-              className="text-white"
-              onClick={handleGenerateReport}
-              isLoading={isGeneratingReport}
-            >
-              {isGeneratingReport ? "Generating..." : "REPORT FOR ARO"}
-            </Button>
+            {(isProgramChair || isARO) && (
+              <Button
+                color="success"
+                size="sm"
+                className="text-white"
+                onClick={handleGenerateReport}
+                isLoading={isGeneratingReport}
+              >
+                {isGeneratingReport
+                  ? "Generating..."
+                  : isProgramChair
+                  ? "REPORT FOR PC"
+                  : "REPORT FOR ARO"}
+              </Button>
+            )}
           </div>
 
           <div className="w-full flex justify-end gap-3">
@@ -378,7 +450,7 @@ const AlumniUserComponent = () => {
         color="default"
         page={page}
         total={totalPages}
-        className={`self-end ${usersData.length === 0 && "hidden"}`}
+        className="self-end"
         onChange={(newPage) => setPage(newPage)}
       />
 
@@ -390,7 +462,7 @@ const AlumniUserComponent = () => {
           aria-label="Job Applications Table"
           classNames={{
             wrapper:
-              "h-full bg-[#F4FFFC] border-2 border-[#008B47] overflow-x-auto", // Added overflow-x-auto
+              "h-full bg-[#F4FFFC] border-2 border-[#008B47] overflow-x-auto",
           }}
           className="h-full w-full flex items-center justify-center"
         >
@@ -422,8 +494,6 @@ const AlumniUserComponent = () => {
                   if (columnKey === "full_name") {
                     return (
                       <TableCell className="text-center whitespace-nowrap">
-                        {" "}
-                        {/* Added whitespace-nowrap */}
                         {item.meta_data.first_name} {item.meta_data.last_name}
                       </TableCell>
                     );
@@ -469,11 +539,10 @@ const AlumniUserComponent = () => {
                     );
                   }
 
-                  // Add rendering for the agency column
                   if (columnKey === "agency") {
                     return (
                       <TableCell className="text-center">
-                        {item.meta_data.profile_of_employment || "N/A"}
+                        {item.gtsAgency || "N/A"}
                       </TableCell>
                     );
                   }

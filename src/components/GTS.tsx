@@ -1728,7 +1728,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       "As walk-in applicant",
                       "Recommended by someone",
                       "Information from friends",
-                      "Arranged by school&apos;s job placement officer",
+                      "Arranged by school's job placement officer",
                       "Family business",
                       "Job Fair or Public Employment Service Office (PESO)",
                     ].map((reason) => (

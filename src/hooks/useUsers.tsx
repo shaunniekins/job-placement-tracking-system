@@ -59,7 +59,8 @@ const useUsers = (
         batchYearFilter &&
         batchYearFilter !== "all"
       ) {
-        query = query.eq("meta_data->>batch_year", batchYearFilter);
+        // Ensure we're filtering correctly by comparing as strings
+        query = query.eq("meta_data->>batch_year", batchYearFilter.toString());
       }
 
       // Search filter

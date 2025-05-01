@@ -29,7 +29,8 @@ const useCollegeStats2 = (
       let query = supabase.from("ViewCollegeProgramStats2").select("*");
 
       if (batchYearFilter && batchYearFilter !== "all") {
-        query = query.eq("batch_year", batchYearFilter);
+        // Ensure we're filtering correctly by comparing as strings
+        query = query.eq("batch_year", batchYearFilter.toString());
       }
 
       if (collegeFilter && collegeFilter !== "all") {

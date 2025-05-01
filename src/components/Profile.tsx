@@ -43,6 +43,7 @@ import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
 import { IoOptionsOutline } from "react-icons/io5";
 import { insertMOAFiles } from "@/app/api/moaIUD";
 import DocumentComponent from "./DocumentComponent";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const ProfileComponent = () => {
   const user = useSelector((state: RootState) => state.user?.user);
@@ -51,6 +52,9 @@ const ProfileComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserType, setCurrentUserType] = useState("");
   const handleLogout = useHandleLogout();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
 
@@ -244,6 +248,19 @@ const ProfileComponent = () => {
       setUserId(user.id);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user || isLoading) return;
+
+    const documentParam = searchParams.get("document");
+
+    if (documentParam === "gts") {
+      setOpenGPTSModal(true);
+    } else if (documentParam && documentFiles.includes(documentParam)) {
+      setDocumentType(documentParam);
+      setIsDocumentModalOpen(true);
+    }
+  }, [searchParams, user, isLoading]);
 
   const reloadUser = async () => {
     const {
@@ -450,10 +467,32 @@ const ProfileComponent = () => {
 
   const handleGTSModalChange = (isOpen: boolean) => {
     setOpenGPTSModal(isOpen);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (isOpen) {
+      params.set("document", "gts");
+      router.push(`?${params.toString()}`);
+    } else {
+      params.delete("document");
+      router.push(`?${params.toString()}`);
+    }
   };
 
-  const handleDocumentModalChange = (isOpen: boolean) => {
+  const handleDocumentModalChange = (isOpen: boolean, docType?: string) => {
     setIsDocumentModalOpen(isOpen);
+
+    if (docType && docType !== documentType) {
+      setDocumentType(docType);
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (isOpen && (docType || documentType)) {
+      params.set("document", docType || documentType);
+      router.push(`?${params.toString()}`);
+    } else {
+      params.delete("document");
+      router.push(`?${params.toString()}`);
+    }
   };
 
   if (!user || isLoading) {
@@ -476,7 +515,7 @@ const ProfileComponent = () => {
       <DocumentComponent
         userID={user.id}
         isDocumentModalOpen={isDocumentModalOpen}
-        setIsDocumentModalOpen={handleDocumentModalChange}
+        setIsDocumentModalOpen={(isOpen) => handleDocumentModalChange(isOpen)}
         reloadUser={reloadUser}
         documentFile={documentFile}
         setDocumentFile={setDocumentFile}
@@ -574,7 +613,7 @@ const ProfileComponent = () => {
                     } bg-[#008B47] text-white`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setOpenGPTSModal(true);
+                      handleGTSModalChange(true);
                     }}
                   >
                     GTS
@@ -598,8 +637,7 @@ const ProfileComponent = () => {
                           } `}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDocumentType(document);
-                            setIsDocumentModalOpen(true);
+                            handleDocumentModalChange(true, document);
                           }}
                         >
                           {document}
