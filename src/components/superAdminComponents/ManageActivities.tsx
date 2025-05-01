@@ -147,38 +147,52 @@ const ManageActivities = () => {
       setOpenModal(false);
 
       if (modalType === "insert") {
-        await insertActivity(formattedActivityForm);
+        const activityFormResponse = await insertActivity(
+          formattedActivityForm
+        );
 
         // Process notifications in the background
         setTimeout(async () => {
           try {
-            // Loop through usersData and create a notification for each approved alumni user
-            const notifications = usersData.map((user: any) => ({
-              receiver_id: user.id,
-              message: `New activity posted: ${activityForm.activity_title}`,
-            }));
+            // Add null check and ensure activity_id exists before using it
+            if (
+              activityFormResponse &&
+              activityFormResponse.length > 0 &&
+              activityFormResponse[0].activity_id
+            ) {
+              // Loop through usersData and create a notification for each approved alumni user
+              const notifications = usersData.map((user: any) => ({
+                receiver_id: user.id,
+                message: `New activity posted: ${activityForm.activity_title}`,
+                url: `/alumni/dashboard?view=activities&activityId=${activityFormResponse[0].activity_id}`,
+              }));
 
-            await Promise.all(notifications.map(insertNotification));
+              await Promise.all(notifications.map(insertNotification));
 
-            // Loop through usersData and send an email notification to each user
-            const emailNotifications = usersData.map((user: any) => {
-              const alumniSendEmailData = {
-                email: user.email,
-                recipient_name: `${user.first_name} ${user.last_name}`,
-                subject: "Activity Posting",
-                message: `
+              // Loop through usersData and send an email notification to each user
+              const emailNotifications = usersData.map((user: any) => {
+                const alumniSendEmailData = {
+                  email: user.email,
+                  recipient_name: `${user.first_name} ${user.last_name}`,
+                  subject: "Activity Posting",
+                  message: `
 Greetings!
 
 We are pleased to inform you that a new activity has been posted: ${activityForm.activity_title}. Please check the site for more details.
 
 Best regards,
 JPTS Team`,
-              };
+                };
 
-              return sendEmailNotification(alumniSendEmailData);
-            });
+                return sendEmailNotification(alumniSendEmailData);
+              });
 
-            await Promise.all(emailNotifications);
+              await Promise.all(emailNotifications);
+            } else {
+              console.error(
+                "Failed to get valid activity ID from insert operation"
+              );
+            }
           } catch (error) {
             console.error("Error processing notifications:", error);
           }

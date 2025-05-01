@@ -5,6 +5,7 @@ create table public."Notifications" (
   created_at timestamp with time zone not null default now(),
   seen boolean not null default false,
   is_notif_sent boolean not null default false,
+  url text null,
   constraint Notifications_pkey primary key (notification_id),
   constraint Notifications_receiver_id_fkey foreign KEY (receiver_id) references auth.users (id) on update CASCADE on delete CASCADE
 ) TABLESPACE pg_default;

@@ -115,7 +115,11 @@ const AlumniDashboardComponent = () => {
     const keyString = key.toString();
     if (keyString !== currentView) {
       setCurrentView(keyString);
-      updateUrlParams({ view: keyString });
+      updateUrlParams({
+        view: keyString,
+        jobId: null,
+        activityId: null,
+      });
     }
   };
 
@@ -279,6 +283,8 @@ const AlumniDashboardComponent = () => {
                                       setIsJobPostingModalOpen(true);
                                       updateUrlParams({
                                         jobId: item.job_posting_id.toString(),
+                                        view: "jobPostings",
+                                        activityId: null,
                                       });
                                     }}
                                   >
@@ -357,6 +363,8 @@ const AlumniDashboardComponent = () => {
                                     setIsActivityModalOpen(true);
                                     updateUrlParams({
                                       activityId: item.activity_id.toString(),
+                                      view: "activities",
+                                      jobId: null,
                                     });
                                   }}
                                 >
@@ -393,7 +401,10 @@ const AlumniDashboardComponent = () => {
             if (!isOpen) {
               updateUrlParams({ jobId: null });
             } else {
-              updateUrlParams({ jobId: selectedJob.job_posting_id.toString() });
+              updateUrlParams({
+                jobId: selectedJob.job_posting_id.toString(),
+                view: "jobPostings",
+              });
             }
           }}
         />
@@ -410,6 +421,7 @@ const AlumniDashboardComponent = () => {
             } else {
               updateUrlParams({
                 activityId: selectedActivity.activity_id.toString(),
+                view: "activities",
               });
             }
           }}
@@ -513,6 +525,7 @@ const JobPostingDetails = ({
         await insertNotification({
           receiver_id: job.agency_id,
           message: `New application for job posting: ${job.job_title} by ${userName}.`,
+          url: `/agency/applications?applicationId=${response[0].job_application_id}`,
         });
 
         const agencySendEmailData = {
@@ -533,6 +546,7 @@ const JobPostingDetails = ({
         await insertNotification({
           receiver_id: userId,
           message: `You have successfully applied for the job posting: ${job.job_title}. Please expect further communication from the agency.`,
+          url: `/alumni/placement?applicationId=${response[0].job_application_id}`,
         });
 
         const alumniSendEmailData = {

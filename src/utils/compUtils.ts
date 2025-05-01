@@ -63,44 +63,60 @@ export const formatDateSuffix = (timestamp: string) => {
 
 // send email notification function
 export const sendEmailNotification = async (sendEmailData: any) => {
-  try {
-    const response = await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(sendEmailData),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Notification sent successfully!");
-    } else {
-      console.log(
-        `Failed to send notification: ${data?.error || "Unknown error"}`
-      );
-    }
-  } catch (error) {
-    console.error("Error sending notification:", error);
-  }
+  // try {
+  //   const response = await fetch("/api/send-email", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(sendEmailData),
+  //   });
+  //   const data = await response.json();
+  //   if (response.ok) {
+  //     console.log("Notification sent successfully!");
+  //   } else {
+  //     console.log(
+  //       `Failed to send notification: ${data?.error || "Unknown error"}`
+  //     );
+  //   }
+  // } catch (error) {
+  //   console.error("Error sending notification:", error);
+  // }
 };
 
 // send SMS notification function
-export const sendSMSNotification = async (sendSMSData: any) => {
-  try {
-    const response = await fetch("/api/send-sms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(sendSMSData),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      console.log("Notification sent successfully!");
-    } else {
-      console.log(
-        `Failed to send notification: ${data?.error || "Unknown error"}`
-      );
-    }
-  } catch (error) {
-    console.error("Error sending notification:", error);
-  }
+export const sendSMSNotification = async ({
+  phone,
+  message,
+}: {
+  phone: string;
+  message: string;
+}) => {
+  // try {
+  //   // Validate phone number format
+  //   if (!validatePhoneNumber(phone)) {
+  //     console.error(
+  //       "Invalid phone number format. Must be in +639********* format"
+  //     );
+  //     return { success: false, error: "Invalid phone number format" };
+  //   }
+  //   const response = await fetch("/api/send-sms", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ phone, message }),
+  //   });
+  //   const data = await response.json();
+  //   if (response.ok) {
+  //     console.log("SMS notification sent successfully!");
+  //     return { success: true };
+  //   } else {
+  //     console.log(
+  //       `Failed to send SMS notification: ${data?.error || "Unknown error"}`
+  //     );
+  //     return { success: false, error: data?.error || "Unknown error" };
+  //   }
+  // } catch (error) {
+  //   console.error("Error sending SMS notification:", error);
+  //   return { success: false, error };
+  // }
 };
 
 export const formatActivityType = (text: string) => {

@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
 import { useValidationBadge } from "@/contexts/ValidationBadgeContext";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 interface SidebarComponentProps {
   isSidebarOpen: boolean;
@@ -51,6 +52,8 @@ const SidebarComponent = ({
   const { agencyCount, alumniCount, jpCount, isLoadingCounts } =
     useValidationBadge();
 
+  const { unreadCount, refreshUnreadCount } = useNotificationContext();
+
   useEffect(() => {
     if (!isLoadingCounts) {
       if (agencyCount > 0 || alumniCount > 0 || jpCount > 0) {
@@ -62,6 +65,16 @@ const SidebarComponent = ({
       setIsBadgeInvisible(true);
     }
   }, [agencyCount, alumniCount, jpCount, isLoadingCounts]);
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshUnreadCount(user.id);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    console.log("[Sidebar] Current unread count:", unreadCount);
+  }, [unreadCount]);
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
@@ -241,36 +254,61 @@ const SidebarComponent = ({
         <FaBars />
       </button>
       <ul className="flex flex-col py-5 px-5">
-        {items.map((item) =>
-          item.label === "Validation" ? (
-            <Badge
-              key={item.path}
-              isOneChar
-              content=""
-              isInvisible={isBadgeInvisible || isLoadingCounts}
-              size="sm"
-              color="danger"
-              shape="circle"
-              placement="top-right"
-              className="absolute top-1/2 right-8"
-            >
+        {items.map((item) => {
+          if (item.label === "Validation") {
+            return (
+              <Badge
+                key={item.path}
+                isOneChar
+                content=""
+                isInvisible={isBadgeInvisible || isLoadingCounts}
+                size="sm"
+                color="danger"
+                shape="circle"
+                placement="top-right"
+                className="absolute top-1/2 right-8"
+              >
+                <NavItem
+                  path={item.path}
+                  label={item.label}
+                  icon={item.icon}
+                  userType={userType}
+                />
+              </Badge>
+            );
+          } else if (item.label === "Notifications") {
+            return (
+              <Badge
+                key={item.path}
+                isOneChar
+                content=""
+                isInvisible={unreadCount <= 0}
+                size="sm"
+                color="danger"
+                shape="circle"
+                placement="top-right"
+                className="absolute top-1/2 right-8"
+              >
+                <NavItem
+                  path={item.path}
+                  label={item.label}
+                  icon={item.icon}
+                  userType={userType}
+                />
+              </Badge>
+            );
+          } else {
+            return (
               <NavItem
+                key={item.path}
                 path={item.path}
                 label={item.label}
                 icon={item.icon}
                 userType={userType}
               />
-            </Badge>
-          ) : (
-            <NavItem
-              key={item.path}
-              path={item.path}
-              label={item.label}
-              icon={item.icon}
-              userType={userType}
-            />
-          )
-        )}
+            );
+          }
+        })}
       </ul>
     </div>
   );

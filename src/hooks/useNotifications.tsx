@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 const useNotifications = (
   rowsPerPage: number,
@@ -13,6 +14,9 @@ const useNotifications = (
   const [errorNotifications, setErrorNotifications] = useState<string | null>(
     null
   );
+
+  // Use the global notification context
+  const { refreshUnreadCount } = useNotificationContext();
 
   const fetchNotifications = useCallback(async () => {
     const offset = (currentPage - 1) * rowsPerPage;
@@ -51,8 +55,15 @@ const useNotifications = (
   }, [rowsPerPage, currentPage, userId]);
 
   const subscribeToChanges = useCallback(() => {
+    if (!userId) return () => {};
+
+    console.log(`[useNotifications] Setting up subscription for ${userId}`);
+
+    // Create a unique channel name for this user to avoid conflicts
+    const channelName = `notifications_user_${userId}_${Date.now()}`;
+
     const channel = supabase
-      .channel("notifications_sessions")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -61,9 +72,14 @@ const useNotifications = (
           table: "Notifications",
           filter: `receiver_id=eq.${userId}`,
         },
-        (payload) => {
+        async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
+          console.log(
+            `[useNotifications] Change detected: ${eventType}`,
+            payload
+          );
 
+          // Update notifications list
           setNotifications((prevNotifications) => {
             switch (eventType) {
               case "INSERT":
@@ -83,29 +99,44 @@ const useNotifications = (
                 return prevNotifications;
             }
           });
+
+          // Update global unread count
+          await refreshUnreadCount(userId);
         }
       )
       .subscribe((status) => {
         if (status !== "SUBSCRIBED") {
-          setErrorNotifications("Error subscribing to real-time updates");
-          // console.error("Error subscribing to channel:", status);
+          console.error(`[useNotifications] Failed to subscribe: ${status}`);
+        } else {
+          console.log(`[useNotifications] Successfully subscribed: ${status}`);
         }
       });
 
     return () => {
+      console.log(`[useNotifications] Cleaning up subscription for ${userId}`);
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, refreshUnreadCount]);
 
+  // Reset state when userId changes
   useEffect(() => {
-    fetchNotifications();
+    if (!userId) return;
 
+    // Refresh unread count when userId changes
+    refreshUnreadCount(userId);
+  }, [userId, refreshUnreadCount]);
+
+  // Initial data fetch and subscription
+  useEffect(() => {
+    if (!userId) return;
+
+    fetchNotifications();
     const unsubscribe = subscribeToChanges();
 
     return () => {
-      if (unsubscribe) unsubscribe(); // Clean up on unmount
+      if (unsubscribe) unsubscribe();
     };
-  }, [fetchNotifications, subscribeToChanges]); // Add fetchNotifications to dependencies
+  }, [fetchNotifications, subscribeToChanges, userId]);
 
   return {
     notifications,
@@ -113,6 +144,7 @@ const useNotifications = (
     loadingNotifications,
     errorNotifications,
     fetchNotifications,
+    refreshUnreadCount: () => refreshUnreadCount(userId),
   };
 };
 

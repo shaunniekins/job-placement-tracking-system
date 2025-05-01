@@ -24,7 +24,7 @@ import {
 } from "@nextui-org/react";
 import useUsers from "@/hooks/useUsers";
 import useJobPostings from "@/hooks/useJobPostings";
-import { supabaseAdmin } from "@/utils/supabase";
+import { supabaseAdmin, supabase } from "@/utils/supabase";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { deleteJobPosting, updateJobPosting } from "@/app/api/jobPostingsIUD";
 import { MdDelete } from "react-icons/md";
@@ -196,6 +196,76 @@ JPTS Team`,
           receiver_id: itemData.agency_id,
           message: `Your job posting "${itemData.job_title}" status has been updated to ${action}.`,
         });
+
+        if (action === "approved") {
+          try {
+            let { data: eligibleAlumni, error } = await supabase
+              .from("ViewUsers")
+              .select("*")
+              .eq("meta_data->>user_type", "alumni")
+              .eq("meta_data->>account_status", "approved");
+
+            if (error) throw error;
+
+            let filteredAlumni = eligibleAlumni || [];
+            if (
+              itemData.programs &&
+              Array.isArray(itemData.programs) &&
+              itemData.programs.length > 0
+            ) {
+              filteredAlumni = filteredAlumni.filter((alumni: any) =>
+                itemData.programs.includes(alumni.meta_data?.program)
+              );
+            }
+
+            const notifications = filteredAlumni.map((alumni: any) => ({
+              receiver_id: alumni.id,
+              message: `New job posting: ${itemData.job_title} has been posted.`,
+              url: `/alumni/dashboard?view=jobPostings&jobId=${itemId}`,
+            }));
+
+            await Promise.all(notifications.map(insertNotification));
+
+            const emailPromises = filteredAlumni.map((alumni: any) => {
+              const alumniSendEmailData = {
+                email: alumni.email,
+                recipient_name: `${alumni.meta_data?.first_name || ""} ${
+                  alumni.meta_data?.last_name || ""
+                }`.trim(),
+                subject: "New Job Posting",
+                message: `
+Greetings!
+
+A new job posting has been approved by the admin. Here are the details:
+- Job Title: ${itemData.job_title}
+- Job Type: ${itemData.job_type}
+- Location: ${itemData.job_location}
+- Industry: ${itemData.industry}
+- Application Deadline: ${itemData.application_deadline}
+- Salary Range: PHP ${itemData.salary_range}
+- Job Description: ${itemData.job_description}
+
+For more information, please visit the job postings page.
+
+Best regards,
+JPTS Team`,
+              };
+              return sendEmailNotification(alumniSendEmailData);
+            });
+
+            const batchSize = 10;
+            for (let i = 0; i < emailPromises.length; i += batchSize) {
+              const batch = emailPromises.slice(i, i + batchSize);
+              await Promise.all(batch);
+              if (i + batchSize < emailPromises.length) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
+            }
+          } catch (emailError) {
+            console.error("Error sending notifications to alumni:", emailError);
+          }
+        }
+
         fetchJobPostings();
       } catch (error) {
         console.error("Error updating job posting:", error);

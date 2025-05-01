@@ -3,6 +3,7 @@ import { supabase } from "@/utils/supabase";
 import { PostgrestResponse } from "@supabase/supabase-js";
 import { insertNotification } from "@/app/api/notificationsIUD";
 import { updateJobPosting } from "@/app/api/jobPostingsIUD"; // Import update function
+import { sendSMSNotification } from "@/utils/compUtils";
 
 const useJobPostingsForAgency = (
   rowsPerPage: number,
@@ -122,6 +123,7 @@ const useJobPostingsForAgency = (
               await insertNotification({
                 receiver_id: newRecord.agency_id,
                 message: message,
+                url: `/agency/managejobpostings`,
               });
 
               // Send SMS notification
@@ -133,13 +135,9 @@ const useJobPostingsForAgency = (
 
               if (agencyData?.phone) {
                 try {
-                  await fetch("/api/send-sms", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      phone: agencyData.phone,
-                      message: message,
-                    }),
+                  await sendSMSNotification({
+                    phone: agencyData.phone,
+                    message: message,
                   });
                 } catch (smsError) {
                   console.error("Failed to send SMS:", smsError);

@@ -10,7 +10,7 @@ import { insertNotification } from "@/app/api/notificationsIUD";
 import { RootState } from "@/app/reduxUtils/store";
 import useJobPostingsForAgency from "@/hooks/useJobPostingsForAgency";
 import useUsers from "@/hooks/useUsers";
-import { formatDate, sendEmailNotification } from "@/utils/compUtils";
+import { formatDate } from "@/utils/compUtils";
 import {
   Button,
   Modal,
@@ -233,48 +233,17 @@ const ManageJobPostingsComponent = () => {
   }, [jobForm.requirements]);
 
   const handleSubmit = async () => {
-    const filteredUsersData = jobForm.programs?.length
-      ? usersData.filter((user: any) =>
-          jobForm.programs.includes(user.meta_data.program)
-        )
-      : usersData;
-
     if (modalType === "insert") {
-      await insertJobPosting(jobForm);
+      const response = await insertJobPosting(jobForm);
 
-      const notifications = filteredUsersData.map((user: any) => ({
-        receiver_id: user.id,
-        message: `New job posting: ${jobForm.job_title} has been posted.`,
-      }));
-
-      await Promise.all(notifications.map(insertNotification));
-
-      const emailNotifications = filteredUsersData.map((user: any) => {
-        const alumniSendEmailData = {
-          email: user.email,
-          recipient_name: `${user.first_name} ${user.last_name}`,
-          subject: "New Job Posting",
-          message: `
-  Greetings!
-  
-  A new job posting has been posted by the agency. Here are the details:
-  - Job Title: ${jobForm.job_title}
-  - Job Type: ${jobForm.job_type}
-  - Location: ${jobForm.job_location}
-  - Industry: ${jobForm.industry}
-  - Application Deadline: ${jobForm.application_deadline}
-  - Salary Range: PHP ${jobForm.salary_range}
-  - Job Description: ${jobForm.job_description}
-  
-  For more information, please visit the job postings page.
-  
-  Best regards,
-  JPTS Team`,
-        };
-        return sendEmailNotification(alumniSendEmailData);
-      });
-
-      // await Promise.all(emailNotifications);
+      if (response) {
+        // Instead of sending emails to all alumni, just notify the agency that their posting is pending approval
+        await insertNotification({
+          receiver_id: userId,
+          message: `Your job posting "${jobForm.job_title}" has been submitted and is pending approval.`,
+          url: `/agency/managejobpostings`,
+        });
+      }
     } else if (modalType === "update" && selectedJob) {
       const res = await updateJobPosting(selectedJob.job_posting_id, jobForm);
     }

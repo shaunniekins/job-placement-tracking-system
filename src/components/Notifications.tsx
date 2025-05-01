@@ -26,12 +26,16 @@ import {
   markNotificationAsSeen,
   deleteNotification,
 } from "@/app/api/notificationsIUD";
+import { useRouter } from "next/navigation";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 
 const NotificationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
   const rowsPerPage = 13;
+  const router = useRouter();
+  const { refreshUnreadCount } = useNotificationContext();
 
   useEffect(() => {
     if (user) {
@@ -54,13 +58,21 @@ const NotificationsComponent = () => {
     { key: "actions", label: "Actions" },
   ];
 
-  if (loadingNotifications) {
-    return (
-      <div className="h-full w-full flex justify-center items-center">
-        <Spinner color="success" />
-      </div>
-    );
-  }
+  const handleNotificationClick = async (notification: any) => {
+    // Mark as seen if not already seen
+    if (!notification.seen) {
+      await markNotificationAsSeen(
+        notification.notification_id,
+        notification.seen
+      );
+      refreshUnreadCount(userId); // Update global context
+    }
+
+    // Navigate to URL if present
+    if (notification.url) {
+      router.push(notification.url);
+    }
+  };
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
@@ -68,7 +80,10 @@ const NotificationsComponent = () => {
         <Button
           variant="flat"
           startContent={<HiOutlineMailOpen />}
-          onClick={async () => await markAllNotificationsAsSeen(userId)}
+          onClick={async () => {
+            await markAllNotificationsAsSeen(userId);
+            refreshUnreadCount(userId); // Update global context
+          }}
         >
           Mark all as read
         </Button>
@@ -115,7 +130,10 @@ const NotificationsComponent = () => {
                 key={item.notification_id}
                 className={`${
                   !item.seen ? "bg-gray-200" : ""
-                } hover:border-3 border-none hover:border-gray-600 hover:shadow-sm text-center`}
+                } hover:border-3 border-none hover:border-gray-600 hover:shadow-sm text-center ${
+                  item.url ? "cursor-pointer" : ""
+                }`}
+                onClick={() => item.url && handleNotificationClick(item)}
               >
                 {(columnKey) => {
                   if (columnKey === "message") {
@@ -135,15 +153,20 @@ const NotificationsComponent = () => {
 
                   if (columnKey === "actions") {
                     return (
-                      <TableCell className="m-0 flex justify-between gap-2">
+                      <TableCell
+                        className="m-0 flex justify-between gap-2"
+                        // Stop propagation to prevent row click handling
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           isIconOnly
-                          onPress={() =>
-                            markNotificationAsSeen(
+                          onPress={async () => {
+                            await markNotificationAsSeen(
                               item.notification_id,
                               item.seen
-                            )
-                          }
+                            );
+                            refreshUnreadCount(userId); // Update global context
+                          }}
                         >
                           {item.seen ? (
                             <HiOutlineMail />
@@ -159,6 +182,7 @@ const NotificationsComponent = () => {
                           onPress={async () => {
                             await deleteNotification(item.notification_id);
                             fetchNotifications();
+                            refreshUnreadCount(userId); // Update global context
                           }}
                         >
                           <HiOutlineTrash />

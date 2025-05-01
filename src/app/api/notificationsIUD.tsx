@@ -17,7 +17,12 @@ export const notificationCheckerToSendForSMS = async (userId: string) => {
   return data?.[0] || null; // Return the first (latest) item or null if none found
 };
 
-export const insertNotification = async (newNotification: any) => {
+export const insertNotification = async (newNotification: {
+  receiver_id: string;
+  message: string;
+  url?: string;
+  is_notif_sent?: boolean;
+}) => {
   try {
     const response = await supabase
       .from("Notifications")

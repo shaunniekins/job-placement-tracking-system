@@ -211,6 +211,7 @@ const ApplicationStatusModalComponent: React.FC<
             await insertNotification({
               receiver_id: applicantId,
               message: message,
+              url: `/alumni/placement?applicationId=${currentJobApplicationId}`,
             });
 
             const alumniSendEmailData = {

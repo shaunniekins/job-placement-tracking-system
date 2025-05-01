@@ -10,42 +10,12 @@ import {
   notificationCheckerToSendForSMS,
   updateNotification,
 } from "@/app/api/notificationsIUD";
-import { validatePhoneNumber } from "@/utils/compUtils";
+import { sendSMSNotification } from "@/utils/compUtils";
 
 const AgencyDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
 
   const { stats } = useAgencyStats(user?.id);
-
-  const handleSmsSend = async (message: string, phone: string) => {
-    if (!message || !phone) return;
-
-    // Validate phone number format
-    if (!validatePhoneNumber(phone)) {
-      console.error(
-        "Invalid phone number format. Must be in +639********* format"
-      );
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/send-sms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone, message }),
-      });
-
-      await response.json();
-
-      if (response.ok) {
-        // console.log("Message sent successfully!");
-      }
-    } catch (error) {
-      // console.error("Error sending SMS:", error);
-    }
-  };
 
   useEffect(() => {
     let isSubscribed = true; // For cleanup
@@ -67,10 +37,10 @@ const AgencyDashboardComponent = () => {
           });
 
           // Send SMS for the first time
-          await handleSmsSend(
-            "Your MOA has been expired!",
-            user.user_metadata?.contact_number
-          );
+          await sendSMSNotification({
+            phone: user.user_metadata?.contact_number,
+            message: "Your MOA has been expired!",
+          });
         } else if (!notifData.is_notif_sent) {
           // Update notification to mark as sent first
           await updateNotification(notifData.notification_id, {
@@ -78,10 +48,10 @@ const AgencyDashboardComponent = () => {
           });
 
           // Then send SMS
-          await handleSmsSend(
-            "Your MOA has been expired!",
-            user.user_metadata?.contact_number
-          );
+          await sendSMSNotification({
+            phone: user.user_metadata?.contact_number,
+            message: "Your MOA has been expired!",
+          });
         }
       }
     };
