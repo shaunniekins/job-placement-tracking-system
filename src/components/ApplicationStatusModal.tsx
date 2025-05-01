@@ -64,7 +64,12 @@ const ApplicationStatusModalComponent: React.FC<
       description: null,
     },
     {
-      name: "Initial Interview",
+      name: (
+        <>
+          <span className="hidden md:inline">Initial Interview</span>
+          <span className="md:hidden">Interview</span>
+        </>
+      ),
       date: applicationStatus?.date_initial_interview,
       completed: applicationStatus?.date_initial_interview !== null,
       key: "date_initial_interview",

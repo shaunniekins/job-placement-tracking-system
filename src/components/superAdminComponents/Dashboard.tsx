@@ -129,7 +129,9 @@ const DashboardComponent = () => {
             userType === "program-chair" ||
             (selectedCollege && !selectedProgram)) &&
           "invisible"
-        } -mt-10 mb-2 hidden lg:block`}
+        } 
+        ${userType == "admin" ? "-mt-20" : "-mt-10"}  
+         mb-2 hidden lg:block`}
       >
         <div className="flex justify-end items-center space-x-4 p-4">
           <div className="flex items-center">
@@ -147,7 +149,7 @@ const DashboardComponent = () => {
           </div>
         </div>
       </div>
-      <div className="lg:h-44 flex justify-around gap-4 overflow-x-auto overflow-y-hidden lg:overflow-hidden">
+      <div className="h-44 flex justify-around gap-4 overflow-x-auto overflow-y-hidden lg:overflow-hidden">
         {collegesToDisplay.map((college, index) => (
           <div
             key={index}
@@ -162,15 +164,17 @@ const DashboardComponent = () => {
             }`}
             onClick={() => handleImageClick(college.name)}
           >
-            <Image
-              src={college.src}
-              alt={college.name}
-              className={`w-full lg:w-24 lg:h-24 ${
-                userType !== "admin" && userType !== "program-chair"
-                  ? "cursor-pointer"
-                  : "cursor-default"
-              }`}
-            />
+            <div className="h-24 w-24 flex items-center justify-center">
+              <Image
+                src={college.src}
+                alt={college.name}
+                className={`max-h-full max-w-full object-contain ${
+                  userType !== "admin" && userType !== "program-chair"
+                    ? "cursor-pointer"
+                    : "cursor-default"
+                }`}
+              />
+            </div>
             <span className="mt-2 text-center">{college.name}</span>
           </div>
         ))}
@@ -482,7 +486,7 @@ const DefaultView = () => {
           disallowEmptySelection={true}
           size="sm"
           color="success"
-          className="max-w-32"
+          className="w-full lg:max-w-32"
           defaultSelectedKeys={["all"]}
           value={batchYearFilter}
           onChange={(e) => setBatchYearFilter(e.target.value)}
@@ -493,7 +497,7 @@ const DefaultView = () => {
         </Select>
         <Button
           color="success"
-          className="text-white"
+          className="w-full text-white lg:max-w-32"
           endContent={
             isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
           }
@@ -872,7 +876,7 @@ const SelectedProgramView = ({
             disallowEmptySelection={true}
             size="sm"
             color="success"
-            className="max-w-32"
+            className="w-full lg:max-w-32"
             defaultSelectedKeys={["all"]}
             value={batchYearFilter}
             onChange={(e) => setBatchYearFilter(e.target.value)}
@@ -893,7 +897,7 @@ const SelectedProgramView = ({
 
         <Button
           color="success"
-          className="text-white"
+          className="w-full text-white lg:max-w-32"
           endContent={
             isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
           }
@@ -907,55 +911,57 @@ const SelectedProgramView = ({
         </Button>
       </div>
 
-      <div
-        className="h-full w-full flex flex-col overflow-y-auto print:overflow-visible"
-        ref={printRef}
-      >
+      <div className="h-full w-full flex flex-col" ref={printRef}>
         <div className="print:block hidden pt-5 pb-7 whitespace-nowrap w-full text-center text-2xl font-bold border-black text-green-600 print:mb-7 uppercase">
           {selectedProgram} DATA VISUALIZATION
         </div>
-        <Table
-          fullWidth
-          layout="auto"
-          isHeaderSticky={true}
-          aria-label="Specific Program and College Stats Table"
-          classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
-          }}
-          className="h-full w-full flex items-center justify-center"
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn
-                key={column.key}
-                className="bg-[#008B47] text-white whitespace-nowrap text-center flex-nowrap"
-              >
-                {column.label}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody>
-            {processedStats.map((stat, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <StatsBarChart
-                    data={formatChartData(stat, "employed_count")}
-                  />
-                </TableCell>
-                <TableCell>
-                  <StatsBarChart
-                    data={formatChartData(stat, "scholarship_count")}
-                  />
-                </TableCell>
-                <TableCell>
-                  <StatsBarChart
-                    data={formatChartData(stat, "course_aligned_count")}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <div className="min-w-[900px]">
+            <Table
+              fullWidth
+              layout="auto"
+              isHeaderSticky={true}
+              aria-label="Specific Program and College Stats Table"
+              classNames={{
+                wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
+                table: "min-w-full",
+              }}
+              className="h-full w-full flex items-center justify-center"
+            >
+              <TableHeader columns={columns}>
+                {(column) => (
+                  <TableColumn
+                    key={column.key}
+                    className="bg-[#008B47] text-white whitespace-nowrap text-center flex-nowrap min-w-[300px]"
+                  >
+                    {column.label}
+                  </TableColumn>
+                )}
+              </TableHeader>
+              <TableBody>
+                {processedStats.map((stat, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <StatsBarChart
+                        data={formatChartData(stat, "employed_count")}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StatsBarChart
+                        data={formatChartData(stat, "scholarship_count")}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <StatsBarChart
+                        data={formatChartData(stat, "course_aligned_count")}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
     </div>
   );

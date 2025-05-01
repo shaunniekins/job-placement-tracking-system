@@ -166,7 +166,7 @@ const AlumniDashboardComponent = () => {
         <div
           className={`h-full w-full flex flex-col gap-2 overflow-y-auto overflow-x-hidden`}
         >
-          <div className="w-full flex justify-between gap-2">
+          <div className="flex flex-col sm:flex-row justify-between gap-2">
             <Tabs
               aria-label="Tab Options"
               selectedKey={currentView}
@@ -178,11 +178,11 @@ const AlumniDashboardComponent = () => {
               <Tab key="jobPostings" title={"Job Postings"} />
               <Tab key="activities" title={"Activities"} />
             </Tabs>
-            <div className="flex gap-5 items-center">
+            <div className="w-full justify-end flex flex-col sm:flex-row gap-5 items-center">
               <Input
                 size="sm"
-                className={`max-w-64 ${
-                  currentView === "activities" && "hidden"
+                className={`sm:max-w-64 ${
+                  currentView === "activities" && "hidden md:invisible"
                 }`}
                 label="Search Agency or Job Title"
                 value={searchInput}
@@ -191,6 +191,7 @@ const AlumniDashboardComponent = () => {
 
               <Pagination
                 isCompact
+                size="sm"
                 showControls
                 showShadow
                 color="default"
@@ -212,7 +213,7 @@ const AlumniDashboardComponent = () => {
                 className={`${
                   (currentView === "jobPostings" ? jobPostings : activities)
                     .length === 0 && "hidden"
-                }`}
+                } `}
               />
             </div>
           </div>

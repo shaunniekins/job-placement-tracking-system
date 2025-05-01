@@ -51,7 +51,7 @@ const UserComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
-  const rowsPerPage = 13;
+  const [rowsPerPage, setRowsPerPage] = useState(13); // Add state for rowsPerPage
   const [currentView, setCurrentView] = useState("agency");
   const [currenViewContent, setCurrentViewContent] = useState<any[]>([]);
   const [collegeFilter, setCollegeFilter] = useState("all");
@@ -74,6 +74,22 @@ const UserComponent = () => {
   const [csvUploadErrors, setCsvUploadErrors] = useState<CsvError[]>([]);
   const [isCsvErrorModalOpen, setIsCsvErrorModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setRowsPerPage(8);
+      } else {
+        setRowsPerPage(13);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -163,7 +179,14 @@ const UserComponent = () => {
     }
 
     setTotalPages(Math.ceil(totalUserEntries / rowsPerPage));
-  }, [currentView, usersData, totalUserEntries, collegeFilter, searchInput]);
+  }, [
+    currentView,
+    usersData,
+    totalUserEntries,
+    collegeFilter,
+    searchInput,
+    rowsPerPage,
+  ]);
 
   const [isAddNewAdminModalOpen, setIsAddNewAdminModalOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -849,59 +872,65 @@ JPTS Team`,
             Add New Admin
           </Button>
 
-          {/* College Filter */}
-          <Select
-            label="College"
-            disallowEmptySelection={true}
-            size="sm"
-            className={`${currentView === "agency" && "hidden"} max-w-32`}
-            defaultSelectedKeys={["all"]}
-            selectedKeys={new Set([collegeFilter])}
-            onSelectionChange={(keys) => {
-              if (keys !== "all" && keys instanceof Set) {
-                const selectedKey = Array.from(keys)[0];
-                if (typeof selectedKey === "string") {
-                  setCollegeFilter(selectedKey);
+          {/* Wrap College and Year filters in a flex container */}
+          <div className="flex flex-row gap-2 w-full md:w-auto">
+            {/* College Filter */}
+            <Select
+              label="College"
+              disallowEmptySelection={true}
+              size="sm"
+              className={`${
+                currentView === "agency" && "hidden"
+              } w-full md:w-32`}
+              defaultSelectedKeys={["all"]}
+              selectedKeys={new Set([collegeFilter])}
+              onSelectionChange={(keys) => {
+                if (keys !== "all" && keys instanceof Set) {
+                  const selectedKey = Array.from(keys)[0];
+                  if (typeof selectedKey === "string") {
+                    setCollegeFilter(selectedKey);
+                  }
                 }
-              }
-            }}
-          >
-            <SelectItem key={"all"}>All</SelectItem>
-            <SelectItem key={"CA"}>CA</SelectItem>
-            <SelectItem key={"CAS"}>CAS</SelectItem>
-            <SelectItem key={"CBA"}>CBA</SelectItem>
-            <SelectItem key={"CCIS"}>CCIS</SelectItem>
-            <SelectItem key={"CEIT"}>CEIT</SelectItem>
-            <SelectItem key={"CTE"}>CTE</SelectItem>
-          </Select>
+              }}
+            >
+              <SelectItem key={"all"}>All</SelectItem>
+              <SelectItem key={"CA"}>CA</SelectItem>
+              <SelectItem key={"CAS"}>CAS</SelectItem>
+              <SelectItem key={"CBA"}>CBA</SelectItem>
+              <SelectItem key={"CCIS"}>CCIS</SelectItem>
+              <SelectItem key={"CEIT"}>CEIT</SelectItem>
+              <SelectItem key={"CTE"}>CTE</SelectItem>
+            </Select>
 
-          {/* Batch Year Filter */}
-          <Select
-            items={batchYearFormatted}
-            label="Year"
-            disallowEmptySelection={true}
-            size="sm"
-            className={`${currentView !== "alumni" && "hidden"} max-w-32`}
-            selectedKeys={new Set([batchYearFilter])} // Use selectedKeys with a Set
-            onSelectionChange={(keys) => {
-              // Use onSelectionChange
-              if (keys instanceof Set) {
-                const selectedKey = Array.from(keys)[0];
-                if (typeof selectedKey === "string") {
-                  setBatchYearFilter(selectedKey);
+            {/* Batch Year Filter */}
+            <Select
+              items={batchYearFormatted}
+              label="Year"
+              disallowEmptySelection={true}
+              size="sm"
+              className={`${
+                currentView !== "alumni" && "hidden"
+              } w-full md:w-32`}
+              selectedKeys={new Set([batchYearFilter])}
+              onSelectionChange={(keys) => {
+                if (keys instanceof Set) {
+                  const selectedKey = Array.from(keys)[0];
+                  if (typeof selectedKey === "string") {
+                    setBatchYearFilter(selectedKey);
+                  }
                 }
-              }
-            }}
-          >
-            {batchYearFormatted.map((item) => (
-              <SelectItem key={item.key}>{item.label}</SelectItem>
-            ))}
-          </Select>
+              }}
+            >
+              {batchYearFormatted.map((item) => (
+                <SelectItem key={item.key}>{item.label}</SelectItem>
+              ))}
+            </Select>
+          </div>
 
           {/* Search Input */}
           <Input
             size="sm"
-            className="max-w-60"
+            className="w-full lg:max-w-60"
             label="Search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -909,8 +938,8 @@ JPTS Team`,
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="flex h-full w-full overflow-y-auto relative">
+      {/* Table Section - MODIFIED */}
+      <div className="h-full w-full flex overflow-y-auo text-sm">
         <Table
           fullWidth
           layout="auto"
