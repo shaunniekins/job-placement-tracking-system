@@ -194,13 +194,21 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
   return (
     <div className="h-48 lg:h-96 print:h-96">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart
+          data={data}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
+          <YAxis />
           <Tooltip />
-          <Bar dataKey="value">
+          <Bar dataKey="value" className="print:!opacity-100">
             {data.map((entry: any, index: any) => (
-              <Cell key={`cell-${index}`} fill={colors[entry.name]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[entry.name]}
+                className="print:!opacity-100"
+              />
             ))}
           </Bar>
         </BarChart>
@@ -212,6 +220,7 @@ const StatsBarChart = ({ data }: { data: any[] }) => {
 const DefaultView = () => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
+  const [isPrinting, setIsPrinting] = useState(false);
   const { batchYears } = useBatchYears();
   const { collegeStats } = useCollegeStats(batchYearFilter);
 
@@ -220,10 +229,22 @@ const DefaultView = () => {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Data Graphs",
+    onBeforePrint: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
+    },
+    onAfterPrint: () => {
+      setIsPrinting(false);
+      console.log("Printing completed");
+    },
   });
 
   const handlePrintWrapper = (e: any) => {
-    handlePrint();
+    setTimeout(() => {
+      handlePrint();
+    }, 500);
   };
 
   const getCollegeData = (collegeKey: any, batchYear: any) => {
@@ -302,9 +323,13 @@ const DefaultView = () => {
               <XAxis dataKey="category" fontSize={10} interval={0} />
               <YAxis fontSize={10} />
               <Tooltip wrapperStyle={{ fontSize: "10px" }} />
-              <Bar dataKey="value">
+              <Bar dataKey="value" className="print:!opacity-100">
                 {data.map((entry: any, index: any) => (
-                  <Cell key={`cell-${index}`} fill={colors[entry.category]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={colors[entry.category]}
+                    className="print:!opacity-100"
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -414,10 +439,13 @@ const DefaultView = () => {
         <Button
           color="success"
           className="text-white"
-          endContent={<FaPrint />}
+          endContent={
+            isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
+          }
           onPress={handlePrintWrapper}
+          isDisabled={isPrinting}
         >
-          Export
+          {isPrinting ? "Exporting..." : "Export"}
         </Button>
       </div>
 
@@ -620,6 +648,7 @@ const SelectedProgramView = ({
 }) => {
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const [batchYearFilter, setBatchYearFilter] = useState<string>("all");
+  const [isPrinting, setIsPrinting] = useState(false);
   const { batchYears } = useBatchYears();
   const allColleges = [
     { name: "CA", key: "ca" },
@@ -642,10 +671,22 @@ const SelectedProgramView = ({
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Data Graphs",
+    onBeforePrint: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
+    },
+    onAfterPrint: () => {
+      setIsPrinting(false);
+      console.log("Printing completed");
+    },
   });
 
   const handlePrintWrapper = (e: any) => {
-    handlePrint();
+    setTimeout(() => {
+      handlePrint();
+    }, 500);
   };
 
   const columns = [
@@ -744,10 +785,13 @@ const SelectedProgramView = ({
         <Button
           color="success"
           className="text-white"
-          endContent={<FaPrint />}
+          endContent={
+            isPrinting ? <Spinner size="sm" color="white" /> : <FaPrint />
+          }
           onPress={handlePrintWrapper}
+          isDisabled={isPrinting}
         >
-          Export
+          {isPrinting ? "Exporting..." : "Export"}
         </Button>
       </div>
 
