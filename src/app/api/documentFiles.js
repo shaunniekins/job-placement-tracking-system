@@ -4,5 +4,5 @@ export const documentFiles = [
   "Certificate of Employment",
   "TOR",
   "Work Portfolio",
-  "Certificate of Trainings and Seminars",
+  "Certificate of Trainings / Seminars",
 ];

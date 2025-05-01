@@ -66,10 +66,15 @@ const SidebarComponent = ({
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
     { path: "/admin/alumni", label: "Alumni", icon: <FaUsers /> },
+    { path: "/admin/reports", label: "Reports", icon: <FaChartBar /> },
     { path: "/admin/profile", label: "Profile", icon: <FaUser /> },
     { path: "/admin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     { path: "/admin/calendar", label: "Calendar", icon: <FaCalendarAlt /> },
   ];
+
+  const standardAdminItems: MenuItem[] = adminItems.filter(
+    (item) => item.label !== "Reports"
+  );
 
   const superAdminItems: MenuItem[] = [
     {
@@ -139,6 +144,7 @@ const SidebarComponent = ({
         first_name,
         last_name,
         company_name,
+        faculty_type,
       } = user.user_metadata;
 
       if (user_type === "agency" && company_name) {
@@ -162,7 +168,11 @@ const SidebarComponent = ({
 
       switch (user_type) {
         case "admin":
-          setItems(adminItems);
+          if (faculty_type === "Program Chair") {
+            setItems(adminItems);
+          } else {
+            setItems(standardAdminItems);
+          }
           break;
         case "agency":
           setItems(agencyItems);

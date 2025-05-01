@@ -320,12 +320,15 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
         <></>
       ) : (
         <Modal
-          size="5xl"
           isOpen={isDocumentModalOpen}
-          onOpenChange={setIsDocumentModalOpen}
-          scrollBehavior="inside"
+          onOpenChange={(isOpen) => {
+            // Prevent event propagation when closing this modal
+            setIsDocumentModalOpen(isOpen);
+          }}
+          isDismissable={true}
+          isKeyboardDismissDisabled={false}
         >
-          <ModalContent>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
             {(onClose) => (
               <>
                 <ModalHeader>{documentType}</ModalHeader>

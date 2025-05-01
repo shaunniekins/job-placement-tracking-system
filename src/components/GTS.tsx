@@ -581,10 +581,18 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     <Modal
       size="xl"
       isOpen={openGPTSModal}
-      onOpenChange={setOpenGPTSModal}
+      onOpenChange={(isOpen) => {
+        // Prevent event propagation when closing this modal
+        setOpenGPTSModal(isOpen);
+      }}
       className="overflow-hidden"
+      isDismissable={true}
+      isKeyboardDismissDisabled={false}
     >
-      <ModalContent className="h-full w-full">
+      <ModalContent
+        className="h-full w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
         {(onClose) => (
           <>
             <ModalHeader>GRADUATE TRACER SURVEY (GTS)</ModalHeader>

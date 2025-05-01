@@ -137,52 +137,62 @@ const ManageActivities = () => {
     // Convert activity_date to a string in the format YYYY-MM-DD
     const formattedActivityForm = {
       ...activityForm,
-
       activity_date: activityForm.activity_date
         ? activityForm.activity_date.toString()
         : null,
     };
 
     try {
+      // Close the modal immediately
+      setOpenModal(false);
+
       if (modalType === "insert") {
         await insertActivity(formattedActivityForm);
 
-        // Loop through usersData and create a notification for each approved alumni user
-        const notifications = usersData.map((user: any) => ({
-          receiver_id: user.id,
-          message: `New activity posted: ${activityForm.activity_title}`,
-        }));
+        // Process notifications in the background
+        setTimeout(async () => {
+          try {
+            // Loop through usersData and create a notification for each approved alumni user
+            const notifications = usersData.map((user: any) => ({
+              receiver_id: user.id,
+              message: `New activity posted: ${activityForm.activity_title}`,
+            }));
 
-        await Promise.all(notifications.map(insertNotification));
+            await Promise.all(notifications.map(insertNotification));
 
-        // Loop through usersData and send an email notification to each user
-        const emailNotifications = usersData.map((user: any) => {
-          const alumniSendEmailData = {
-            email: user.email,
-            recipient_name: `${user.first_name} ${user.last_name}`,
-            subject: "Activity Posting",
-            message: `
+            // Loop through usersData and send an email notification to each user
+            const emailNotifications = usersData.map((user: any) => {
+              const alumniSendEmailData = {
+                email: user.email,
+                recipient_name: `${user.first_name} ${user.last_name}`,
+                subject: "Activity Posting",
+                message: `
 Greetings!
 
 We are pleased to inform you that a new activity has been posted: ${activityForm.activity_title}. Please check the site for more details.
 
 Best regards,
 JPTS Team`,
-          };
+              };
 
-          return sendEmailNotification(alumniSendEmailData);
-        });
+              return sendEmailNotification(alumniSendEmailData);
+            });
 
-        await Promise.all(emailNotifications);
+            await Promise.all(emailNotifications);
+          } catch (error) {
+            console.error("Error processing notifications:", error);
+          }
+        }, 0);
       } else if (modalType === "update" && selectedActivity) {
         await updateActivity(
           selectedActivity.activity_id,
           formattedActivityForm
         );
       }
-      setOpenModal(false);
     } catch (error) {
       console.error("Error submitting activity:", error);
+      // If there's an error, reopen the modal
+      setOpenModal(true);
     }
   };
 

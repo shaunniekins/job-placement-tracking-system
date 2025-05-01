@@ -1,6 +1,6 @@
 "use client";
 
-import { Key, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
 import {
@@ -15,23 +15,11 @@ import {
   Select,
   Button,
   Spinner,
-  Tabs,
-  Tab,
   Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
 } from "@nextui-org/react";
 import useUsers from "@/hooks/useUsers";
-import { supabaseAdmin } from "@/utils/supabase";
 import useBatchYears from "@/hooks/useBatchYears";
-import { IoAdd, IoAddOutline } from "react-icons/io5";
-import { EyeSlashFilledIcon } from "../../../public/icons/EyeSlashFilledIcon";
-import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges, programs } from "@/app/api/collegeAndProgramData";
-import Papa from "papaparse";
 import { supabase } from "@/utils/supabase";
 
 interface AlumniReportDataRPC {
@@ -42,18 +30,20 @@ interface AlumniReportDataRPC {
   gender?: string;
   present_employment_status?: string;
   agency?: string;
-  program?: string; // Add program field to the interface
+  program?: string;
 }
 
 const AlumniUserComponent = () => {
   const [page, setPage] = useState(1);
-  const rowsPerPage = 13;
+  const rowsPerPage = 16;
   const [searchInput, setSearchInput] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
   const [batchYearFilter, setBatchYearFilter] = useState("all");
   const [batchYearFormatted, setBatchYearFormatted] = useState<any[]>([]);
   const user = useSelector((state: RootState) => state.user.user);
   const userCollege = user?.user_metadata?.college;
+  const userType = user?.user_metadata?.faculty_type;
+  const isProgramChair = userType === "Program Chair";
 
   const [collegePrograms, setCollegePrograms] = useState<any[]>([]);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -69,12 +59,7 @@ const AlumniUserComponent = () => {
     }
   }, [userCollege]);
 
-  const {
-    usersData,
-    totalUserEntries,
-    isLoadingUsers,
-    fetchAndSubscribeUsers,
-  } = useUsers(
+  const { usersData, totalUserEntries } = useUsers(
     rowsPerPage,
     page,
     "alumni",
@@ -87,7 +72,7 @@ const AlumniUserComponent = () => {
 
   const totalPages = Math.ceil(totalUserEntries / rowsPerPage);
 
-  const { batchYears, isBatchYearsLoading } = useBatchYears();
+  const { batchYears } = useBatchYears();
 
   useEffect(() => {
     const formattedData = batchYears.map((item: any) => ({
@@ -197,7 +182,7 @@ const AlumniUserComponent = () => {
           : "";
 
         return {
-          "No.": index + 1, // Just use the number without quotes
+          "No.": index + 1,
           Name: `${lastName}, ${firstName}${
             middleInitial ? " " + middleInitial : ""
           }`,
@@ -305,21 +290,22 @@ const AlumniUserComponent = () => {
     }
   };
 
-  const columns = [
-    { key: "full_name", label: "Full Name" },
-    { key: "program", label: "Program" },
-    { key: "employment_status", label: "Employment Status" },
-    { key: "job_alignment", label: "Job Alignment" },
-    { key: "scholarship", label: "Scholarship" },
-  ];
-
-  if (isLoadingUsers) {
-    return (
-      <div className="h-full w-full flex justify-center items-center">
-        <Spinner color="success" />
-      </div>
-    );
-  }
+  // Define columns based on user type
+  const columns = isProgramChair
+    ? [
+        { key: "full_name", label: "Full Name" },
+        // { key: "program", label: "Program" },
+        { key: "employment_status", label: "Employment Status" },
+        { key: "job_alignment", label: "Job Alignment" },
+        { key: "agency", label: "Agency" },
+      ]
+    : [
+        { key: "full_name", label: "Full Name" },
+        { key: "program", label: "Program" },
+        { key: "employment_status", label: "Employment Status" },
+        { key: "job_alignment", label: "Job Alignment" },
+        { key: "scholarship", label: "Scholarship" },
+      ];
 
   return (
     <div className="h-full w-full flex flex-col gap-2">
@@ -351,8 +337,6 @@ const AlumniUserComponent = () => {
               {isGeneratingReport ? "Generating..." : "REPORT FOR ARO"}
             </Button>
           </div>
-
-          {/* <div className="flex-grow"></div> */}
 
           <div className="w-full flex justify-end gap-3">
             <Select
@@ -398,14 +382,15 @@ const AlumniUserComponent = () => {
         onChange={(newPage) => setPage(newPage)}
       />
 
-      <div className="flex h-full w-full overflow-y-auto relative">
+      <div className="mt-2 flex h-full w-full overflow-y-auto relative">
         <Table
           fullWidth
           layout="auto"
           isHeaderSticky={true}
           aria-label="Job Applications Table"
           classNames={{
-            wrapper: "h-full bg-[#F4FFFC] border-2 border-[#008B47]",
+            wrapper:
+              "h-full bg-[#F4FFFC] border-2 border-[#008B47] overflow-x-auto", // Added overflow-x-auto
           }}
           className="h-full w-full flex items-center justify-center"
         >
@@ -436,7 +421,9 @@ const AlumniUserComponent = () => {
                 {(columnKey) => {
                   if (columnKey === "full_name") {
                     return (
-                      <TableCell className="text-center">
+                      <TableCell className="text-center whitespace-nowrap">
+                        {" "}
+                        {/* Added whitespace-nowrap */}
                         {item.meta_data.first_name} {item.meta_data.last_name}
                       </TableCell>
                     );
@@ -455,17 +442,19 @@ const AlumniUserComponent = () => {
                       <TableCell className="text-center">
                         {item.meta_data.is_currently_employed === "yes"
                           ? "Employed"
-                          : "Currently Unemployed"}
+                          : "Unemployed"}
                       </TableCell>
                     );
                   }
 
                   if (columnKey === "job_alignment") {
                     return (
-                      <TableCell className="text-center uppercase">
+                      <TableCell className="text-center">
                         {!item.meta_data.is_course_aligned_with_job
                           ? "N/A"
-                          : item.meta_data.is_course_aligned_with_job}
+                          : item.meta_data.is_course_aligned_with_job === "yes"
+                          ? "Aligned"
+                          : "Not Aligned"}
                       </TableCell>
                     );
                   }
@@ -476,6 +465,15 @@ const AlumniUserComponent = () => {
                         {item.meta_data.scholarship === "n/a"
                           ? "N/A"
                           : item.meta_data.scholarship}
+                      </TableCell>
+                    );
+                  }
+
+                  // Add rendering for the agency column
+                  if (columnKey === "agency") {
+                    return (
+                      <TableCell className="text-center">
+                        {item.meta_data.profile_of_employment || "N/A"}
                       </TableCell>
                     );
                   }

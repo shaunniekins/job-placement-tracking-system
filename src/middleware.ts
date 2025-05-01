@@ -55,12 +55,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
-  if (request.nextUrl.pathname === "/program-chair") {
-    return NextResponse.redirect(
-      new URL("/program-chair/dashboard", request.url)
-    );
-  }
-
   if (request.nextUrl.pathname === "/agency") {
     return NextResponse.redirect(new URL("/agency/dashboard", request.url));
   }
@@ -105,7 +99,6 @@ export async function middleware(request: NextRequest) {
 
     if (
       (user_type === "admin" ||
-        user_type === "program-chair" ||
         user_type === "agency" ||
         user_type === "alumni") &&
       user_status !== "approved"
@@ -122,7 +115,6 @@ export async function middleware(request: NextRequest) {
     if (request.nextUrl.pathname === "/") {
       if (
         user_type === "admin" ||
-        user_type === "program-chair" ||
         user_type === "agency" ||
         user_type === "alumni"
       ) {
@@ -139,7 +131,6 @@ export async function middleware(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith("/ident")) {
       if (
         user_type === "admin" ||
-        user_type === "program-chair" ||
         user_type === "agency" ||
         user_type === "alumni"
       ) {
@@ -154,10 +145,6 @@ export async function middleware(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith("/ident/confirmation")) {
       if (user_type === "admin") {
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-      } else if (user_type === "program-chair") {
-        return NextResponse.redirect(
-          new URL("/program-chair/dashboard", request.url)
-        );
       } else if (user_type === "agency") {
         return NextResponse.redirect(new URL("/agency", request.url));
       } else if (user_type === "alumni") {
@@ -173,7 +160,6 @@ export async function middleware(request: NextRequest) {
     if (
       request.nextUrl.pathname === "/admin" &&
       (user_type === "admin" ||
-        user_type === "program-chair" ||
         user_type === "agency" ||
         user_type === "alumni")
     ) {
@@ -184,14 +170,6 @@ export async function middleware(request: NextRequest) {
     if (
       request.nextUrl.pathname.startsWith("/admin") &&
       user_type !== "admin"
-    ) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    // Redirect non-program-chairs to / if trying to access /program-chair
-    if (
-      request.nextUrl.pathname.startsWith("/program-chair") &&
-      user_type !== "program-chair"
     ) {
       return NextResponse.redirect(new URL("/", request.url));
     }
@@ -216,7 +194,6 @@ export async function middleware(request: NextRequest) {
     if (
       request.nextUrl.pathname.startsWith("/superadmin") ||
       request.nextUrl.pathname.startsWith("/admin") ||
-      request.nextUrl.pathname.startsWith("/program-chair") ||
       request.nextUrl.pathname.startsWith("/agency") ||
       request.nextUrl.pathname.startsWith("/alumni")
     ) {
@@ -241,8 +218,7 @@ export const config = {
     "/admin",
     "/administrator",
     "/admin/:path*",
-    "/program-chair",
-    "/program-chair/:path*",
+
     "/agency",
     "/agency/:path*",
     "/alumni",

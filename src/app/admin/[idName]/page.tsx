@@ -7,6 +7,7 @@ import DashboardComponent from "@/components/superAdminComponents/Dashboard";
 import OrgChartComponent from "@/components/superAdminComponents/OrgChart";
 import CalendarComponent from "@/components/superAdminComponents/Calendar";
 import AlumniUserComponent from "@/components/adminComponents/AlumniUser";
+import ReportsPC from "@/components/pcComponents/Reports";
 
 export default function AdminSlugPage() {
   const pathname = usePathname();
@@ -17,6 +18,8 @@ export default function AdminSlugPage() {
       setDisplay(<DashboardComponent />);
     } else if (pathname.startsWith("/admin/alumni")) {
       setDisplay(<AlumniUserComponent />);
+    } else if (pathname.startsWith("/admin/reports")) {
+      setDisplay(<ReportsPC />);
     } else if (pathname.startsWith("/admin/profile")) {
       setDisplay(<ProfileComponent />);
     } else if (pathname.startsWith("/admin/orgchart")) {

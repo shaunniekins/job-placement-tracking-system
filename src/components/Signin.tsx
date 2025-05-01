@@ -43,7 +43,7 @@ const SigninComponent = ({ userType }: SigninComponentProps) => {
       if (user) {
         dispatch(setUser(user));
       }
-      router.push(`/${userType}`);
+      router.push(`/${userType === "program-chair" ? "admin" : userType}`);
     }
   };
 
@@ -121,7 +121,11 @@ const SigninComponent = ({ userType }: SigninComponentProps) => {
             }
             color="success"
             onClick={() => {
-              return router.push(`/ident/signup?usertype=${userType}`);
+              return router.push(
+                `/ident/signup?usertype=${
+                  userType === "program-chair" ? "admin" : userType
+                }`
+              );
             }}
             className="absolute bottom-5"
           >

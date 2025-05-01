@@ -32,12 +32,7 @@ import {
 import { EyeSlashFilledIcon } from "../../public/icons/EyeSlashFilledIcon";
 import { EyeFilledIcon } from "../../public/icons/EyeFilledIcon";
 import { FaUserCircle } from "react-icons/fa";
-import {
-  RiAwardLine,
-  RiProfileLine,
-  RiQuestionnaireLine,
-  RiUpload2Line,
-} from "react-icons/ri";
+import { RiQuestionnaireLine } from "react-icons/ri";
 import {
   colleges,
   programs,
@@ -453,6 +448,14 @@ const ProfileComponent = () => {
     setEmploymentStatus(status);
   };
 
+  const handleGTSModalChange = (isOpen: boolean) => {
+    setOpenGPTSModal(isOpen);
+  };
+
+  const handleDocumentModalChange = (isOpen: boolean) => {
+    setIsDocumentModalOpen(isOpen);
+  };
+
   if (!user || isLoading) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -467,13 +470,13 @@ const ProfileComponent = () => {
         userInfo={tempUserInfo}
         currentUserId={user.id}
         openGPTSModal={openGPTSModal}
-        setOpenGPTSModal={setOpenGPTSModal}
+        setOpenGPTSModal={handleGTSModalChange}
         onEmploymentStatusChange={handleEmploymentStatusChange}
       />
       <DocumentComponent
         userID={user.id}
         isDocumentModalOpen={isDocumentModalOpen}
-        setIsDocumentModalOpen={setIsDocumentModalOpen}
+        setIsDocumentModalOpen={handleDocumentModalChange}
         reloadUser={reloadUser}
         documentFile={documentFile}
         setDocumentFile={setDocumentFile}
@@ -481,12 +484,14 @@ const ProfileComponent = () => {
         employmentStatus={employmentStatus}
       />
       <Modal
-        size="2xl"
+        size={user.user_metadata.user_type === "alumni" ? "xl" : "xs"}
         isOpen={isOptionModalOpen}
         onOpenChange={setIsOptionModalOpen}
         onClose={() => {
           setIsOptionModalOpen(false);
         }}
+        isDismissable={!(openGPTSModal || isDocumentModalOpen)}
+        isKeyboardDismissDisabled={openGPTSModal || isDocumentModalOpen}
       >
         <ModalContent>
           {(onClose) => (
@@ -501,39 +506,80 @@ const ProfileComponent = () => {
                   >
                     Delete Account
                   </Button>
-                  <Button
-                    startContent={
-                      isUserEditing ? <MdCancel /> : <MdModeEditOutline />
-                    }
-                    color="secondary"
-                    onClick={handleUserEditToggle}
-                  >
-                    {isUserEditing ? "Cancel Edit" : "Edit Info"}
-                  </Button>
-                  <Button
-                    startContent={<MdSave />}
-                    className={`${
-                      !isUserChanged && "hidden"
-                    } bg-[#008B47] capitalize text-white`}
-                    onClick={() => {
-                      if (isUserChanged) {
-                        handleUserSave();
+
+                  {/* User Info Editing Row */}
+                  <div className="flex gap-2">
+                    <Button
+                      startContent={
+                        isUserEditing ? <MdCancel /> : <MdModeEditOutline />
                       }
-                    }}
-                  >
-                    Save Info
-                  </Button>
+                      color="secondary"
+                      onClick={handleUserEditToggle}
+                      className="flex-1"
+                    >
+                      {isUserEditing ? "Cancel Edit" : "Edit Info"}
+                    </Button>
+                    <Button
+                      startContent={<MdSave />}
+                      className={`${
+                        !isUserChanged && "hidden"
+                      } bg-[#008B47] capitalize text-white flex-1`}
+                      onClick={() => {
+                        if (isUserChanged) {
+                          handleUserSave();
+                        }
+                      }}
+                    >
+                      Save Info
+                    </Button>
+                  </div>
+
+                  {/* Login Info Editing Row - Only visible when isUserEditing is true */}
+                  {isUserEditing && (
+                    <div className="flex gap-2">
+                      <Button
+                        startContent={
+                          isLoginEditing ? <MdCancel /> : <MdModeEditOutline />
+                        }
+                        color="secondary"
+                        variant="bordered"
+                        onClick={handleLoginEditToggle}
+                        className="flex-1"
+                      >
+                        {isLoginEditing
+                          ? "Cancel Edit Login"
+                          : "Edit Login Info"}
+                      </Button>
+                      <Button
+                        startContent={<MdSave />}
+                        variant="bordered"
+                        className={`${
+                          !isLoginChanged && "hidden"
+                        } border-[#008B47] capitalize text-[#008B47] flex-1`}
+                        onClick={() => {
+                          if (isLoginChanged) {
+                            handleLoginSave();
+                          }
+                        }}
+                      >
+                        Save Login Info
+                      </Button>
+                    </div>
+                  )}
+
                   <Button
                     startContent={<RiQuestionnaireLine />}
                     className={`${
                       currentUserType !== "alumni" && "hidden"
                     } bg-[#008B47] text-white`}
-                    onClick={() => setOpenGPTSModal(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenGPTSModal(true);
+                    }}
                   >
                     GTS
                   </Button>
 
-                  {/* map documents for buttons */}
                   <div className="grid md:grid-cols-2 gap-2">
                     {documentFiles
                       .filter(
@@ -550,7 +596,8 @@ const ProfileComponent = () => {
                           className={`${
                             currentUserType !== "alumni" && "hidden"
                           } `}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setDocumentType(document);
                             setIsDocumentModalOpen(true);
                           }}
@@ -583,27 +630,6 @@ const ProfileComponent = () => {
           color="default"
           onClick={() => setIsOptionModalOpen(true)}
         />
-        {/* <Button
-          startContent={isUserEditing ? <MdCancel /> : <MdModeEditOutline />}
-          color="secondary"
-          className={`${!isUserEditing && "hidden"}`}
-          onClick={handleUserEditToggle}
-        >
-          {isUserEditing ? "Cancel Edit" : "Edit Info"}
-        </Button>
-        <Button
-          startContent={<MdSave />}
-          className={`${
-            !isUserChanged && "hidden"
-          } bg-[#008B47] capitalize text-white`}
-          onClick={() => {
-            if (isUserChanged) {
-              handleUserSave();
-            }
-          }}
-        >
-         Save Info
-        </Button> */}
       </div>
 
       <div
@@ -618,7 +644,6 @@ const ProfileComponent = () => {
               <h1 className="text-xl font-semibold col-span-3 capitalize">
                 {`  ${currentUserType} Information`}
               </h1>
-              {/* Image field */}
               <div className="col-span-1 flex justify-center">
                 <Popover
                   showArrow
@@ -669,7 +694,6 @@ const ProfileComponent = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              {/* User info fields */}
               {currentUserType === "agency" && (
                 <>
                   <Input
@@ -680,7 +704,6 @@ const ProfileComponent = () => {
                     value={tempUserInfo.company_name}
                     onChange={handleUserInputChange}
                     readOnly={!isUserEditing}
-                    // className="col-span-2"
                   />
                   <Input
                     label="Company Type"
@@ -1033,33 +1056,6 @@ const ProfileComponent = () => {
                       </button>
                     }
                   />
-
-                  <div
-                    className={`${
-                      !isUserEditing && "hidden"
-                    } flex justify-center items-center gap-4`}
-                  >
-                    <Button
-                      fullWidth
-                      startContent={
-                        isLoginEditing ? <MdCancel /> : <MdModeEditOutline />
-                      }
-                      color="secondary"
-                      onClick={handleLoginEditToggle}
-                    >
-                      {isLoginEditing ? "Cancel" : "Edit Login Info"}
-                    </Button>
-                    <Button
-                      fullWidth
-                      startContent={<MdSave />}
-                      className={`${
-                        !isLoginChanged && "hidden"
-                      } bg-[#008B47] text-white`}
-                      onClick={handleLoginSave}
-                    >
-                      Save Login Info
-                    </Button>
-                  </div>
                 </>
               )}
             </div>
