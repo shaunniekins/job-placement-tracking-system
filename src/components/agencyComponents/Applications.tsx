@@ -4,6 +4,7 @@ import { RootState } from "@/app/reduxUtils/store";
 import useJobApplications from "@/hooks/useJobApplications";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Button,
   Pagination,
@@ -26,6 +27,9 @@ import { programs } from "@/app/api/collegeAndProgramData";
 
 const ApplicationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
   const rowsPerPage = 15;
@@ -37,8 +41,8 @@ const ApplicationsComponent = () => {
   const [currentApplicantId, setCurrentApplicantId] = useState("");
   const [currentApplicantEmail, setCurrentApplicantEmail] = useState("");
   const [currentApplicantFirstName, setCurrentApplicantFirstName] =
-    useState(""); // Add state
-  const [currentApplicantLastName, setCurrentApplicantLastName] = useState(""); // Add state
+    useState("");
+  const [currentApplicantLastName, setCurrentApplicantLastName] = useState("");
   const [currentJobPostingId, setCurrentJobPostingId] = useState<number | null>(
     null
   );
@@ -63,6 +67,48 @@ const ApplicationsComponent = () => {
 
   const totalPages = Math.ceil(totalJobApplications / rowsPerPage);
 
+  useEffect(() => {
+    if (!user || loadingJobApplications) return;
+
+    const applicationId = searchParams.get("applicationId");
+    const alumniId = searchParams.get("alumniId");
+
+    if (applicationId && jobApplications.length > 0) {
+      const application = jobApplications.find(
+        (app) => app.job_application_id === applicationId
+      );
+      if (application) {
+        setCurrentJobApplicationId(application.job_application_id);
+        setCurrentJobTitle(application.job_title);
+        setCurrentApplicantId(application.applicant_id);
+        setCurrentApplicantEmail(application.applicant_email);
+        setCurrentApplicantFirstName(application.applicant_first_name);
+        setCurrentApplicantLastName(application.applicant_last_name);
+        setCurrentJobPostingId(application.job_posting_id);
+        setIsActionModal(true);
+      }
+    }
+
+    if (alumniId) {
+      setCurrentAlumniId(alumniId);
+      setIsAlumniProfileOpen(true);
+    }
+  }, [searchParams, user, jobApplications, loadingJobApplications]);
+
+  const updateUrlParams = (params: { [key: string]: string | null }) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    });
+
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
+
   const columns = [
     { key: "job_title", label: "Job Title" },
     { key: "applicant_name", label: "Applicant Name" },
@@ -76,17 +122,27 @@ const ApplicationsComponent = () => {
         alumniId={currentAlumniId}
         setAlumniId={setCurrentAlumniId}
         openAlumniProfile={isAlumniProfileOpen}
-        setOpenAlumniProfile={setIsAlumniProfileOpen}
+        setOpenAlumniProfile={(isOpen) => {
+          setIsAlumniProfileOpen(isOpen);
+          if (!isOpen) {
+            updateUrlParams({ alumniId: null });
+          }
+        }}
       />
       <ApplicationStatusModalComponent
         isOpen={isActionModal}
-        setIsOpen={setIsActionModal}
+        setIsOpen={(isOpen) => {
+          setIsActionModal(isOpen);
+          if (!isOpen) {
+            updateUrlParams({ applicationId: null });
+          }
+        }}
         currentJobApplicationId={currentJobApplicationId}
         jobTitle={currentJobTitle}
         applicantId={currentApplicantId}
         applicantEmail={currentApplicantEmail}
-        applicantFirstName={currentApplicantFirstName} // Pass prop
-        applicantLastName={currentApplicantLastName} // Pass prop
+        applicantFirstName={currentApplicantFirstName}
+        applicantLastName={currentApplicantLastName}
         jobPostingId={currentJobPostingId}
       />
       <div className="h-full w-full flex flex-col gap-2">
@@ -209,12 +265,15 @@ const ApplicationsComponent = () => {
                                   );
                                   setCurrentApplicantFirstName(
                                     item.applicant_first_name
-                                  ); // Set state
+                                  );
                                   setCurrentApplicantLastName(
                                     item.applicant_last_name
-                                  ); // Set state
+                                  );
                                   setCurrentJobPostingId(item.job_posting_id);
                                   setIsActionModal(true);
+                                  updateUrlParams({
+                                    applicationId: item.job_application_id,
+                                  });
                                 }}
                               >
                                 View Status
@@ -227,6 +286,9 @@ const ApplicationsComponent = () => {
                                 onClick={() => {
                                   setCurrentAlumniId(item.applicant_id);
                                   setIsAlumniProfileOpen(true);
+                                  updateUrlParams({
+                                    alumniId: item.applicant_id,
+                                  });
                                 }}
                               >
                                 View Profile

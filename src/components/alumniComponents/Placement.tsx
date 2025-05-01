@@ -15,11 +15,15 @@ import {
 import { useEffect, useState } from "react";
 import { formatDate } from "@/utils/compUtils";
 import { useSelector } from "react-redux";
+import { useRouter, useSearchParams } from "next/navigation";
 import useJobApplications from "@/hooks/useJobApplications";
 import ApplicationStatusModalComponent from "../ApplicationStatusModal";
 
 const PlacementComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
   const rowsPerPage = 15;
@@ -44,6 +48,37 @@ const PlacementComponent = () => {
 
   const totalPages = Math.ceil(totalJobApplications / rowsPerPage);
 
+  useEffect(() => {
+    if (!user || loadingJobApplications) return;
+
+    const applicationId = searchParams.get("applicationId");
+
+    if (applicationId && jobApplications.length > 0) {
+      const application = jobApplications.find(
+        (app) => app.job_application_id === applicationId
+      );
+      if (application) {
+        setCurrentJobApplicationId(applicationId);
+        setCurrentJobPostingId(application.job_posting_id);
+        setIsActionModal(true);
+      }
+    }
+  }, [searchParams, user, jobApplications, loadingJobApplications]);
+
+  const updateUrlParams = (params: { [key: string]: string | null }) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    });
+
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
+
   if (loadingJobApplications) {
     return (
       <div className="h-full w-full flex justify-center items-center">
@@ -64,7 +99,12 @@ const PlacementComponent = () => {
     <>
       <ApplicationStatusModalComponent
         isOpen={isActionModal}
-        setIsOpen={setIsActionModal}
+        setIsOpen={(isOpen) => {
+          setIsActionModal(isOpen);
+          if (!isOpen) {
+            updateUrlParams({ applicationId: null });
+          }
+        }}
         currentJobApplicationId={currentJobApplicationId}
         isReadOnly={true}
         jobPostingId={currentJobPostingId}
@@ -179,6 +219,9 @@ const PlacementComponent = () => {
                                   );
                                   setCurrentJobPostingId(item.job_posting_id);
                                   setIsActionModal(true);
+                                  updateUrlParams({
+                                    applicationId: item.job_application_id,
+                                  });
                                 }}
                               >
                                 View

@@ -28,6 +28,7 @@ import {
 import { Key, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/reduxUtils/store";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   checkIfApplied,
   insertJobApplication,
@@ -39,6 +40,8 @@ import { checkUserDocuments } from "@/utils/documentUtils";
 
 const AlumniDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [jobPostingPage, setJobPostingPage] = useState(1);
   const jobPostingRowsPerPage = 14;
@@ -76,11 +79,58 @@ const AlumniDashboardComponent = () => {
     totalActivities / activitiesRowsPerPage
   );
 
+  useEffect(() => {
+    if (!user) return;
+
+    const view = searchParams.get("view");
+    const jobId = searchParams.get("jobId");
+    const activityId = searchParams.get("activityId");
+
+    if (view && (view === "jobPostings" || view === "activities")) {
+      setCurrentView(view);
+    }
+
+    if (jobId) {
+      const job = jobPostings.find(
+        (j) => j.job_posting_id.toString() === jobId
+      );
+      if (job) {
+        setSelectedJob(job);
+        setIsJobPostingModalOpen(true);
+      }
+    }
+
+    if (activityId) {
+      const activity = activities.find(
+        (a) => a.activity_id.toString() === activityId
+      );
+      if (activity) {
+        setSelectedActivity(activity);
+        setIsActivityModalOpen(true);
+      }
+    }
+  }, [searchParams, user, jobPostings, activities]);
+
   const handleTabSelectionChange = (key: Key) => {
     const keyString = key.toString();
     if (keyString !== currentView) {
       setCurrentView(keyString);
+      updateUrlParams({ view: keyString });
     }
+  };
+
+  const updateUrlParams = (params: { [key: string]: string | null }) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    });
+
+    router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
   const jobPostingColumns = [
@@ -227,6 +277,9 @@ const AlumniDashboardComponent = () => {
                                     onClick={() => {
                                       setSelectedJob(item);
                                       setIsJobPostingModalOpen(true);
+                                      updateUrlParams({
+                                        jobId: item.job_posting_id.toString(),
+                                      });
                                     }}
                                   >
                                     View
@@ -302,6 +355,9 @@ const AlumniDashboardComponent = () => {
                                   onClick={() => {
                                     setSelectedActivity(item);
                                     setIsActivityModalOpen(true);
+                                    updateUrlParams({
+                                      activityId: item.activity_id.toString(),
+                                    });
                                   }}
                                 >
                                   View
@@ -332,7 +388,14 @@ const AlumniDashboardComponent = () => {
           userEmail={user?.email}
           userName={user?.user_metadata?.first_name}
           isOpen={isJobPostingModalOpen}
-          setIsOpen={setIsJobPostingModalOpen}
+          setIsOpen={(isOpen) => {
+            setIsJobPostingModalOpen(isOpen);
+            if (!isOpen) {
+              updateUrlParams({ jobId: null });
+            } else {
+              updateUrlParams({ jobId: selectedJob.job_posting_id.toString() });
+            }
+          }}
         />
       )}
 
@@ -340,7 +403,16 @@ const AlumniDashboardComponent = () => {
         <ActivityDetails
           activity={selectedActivity}
           isOpen={isActivityModalOpen}
-          setIsOpen={setIsActivityModalOpen}
+          setIsOpen={(isOpen) => {
+            setIsActivityModalOpen(isOpen);
+            if (!isOpen) {
+              updateUrlParams({ activityId: null });
+            } else {
+              updateUrlParams({
+                activityId: selectedActivity.activity_id.toString(),
+              });
+            }
+          }}
         />
       )}
     </>

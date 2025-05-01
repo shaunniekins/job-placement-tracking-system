@@ -21,6 +21,7 @@ import useUsers from "@/hooks/useUsers";
 import useBatchYears from "@/hooks/useBatchYears";
 import { colleges, programs } from "@/app/api/collegeAndProgramData";
 import { supabase } from "@/utils/supabase";
+import { capitalizeWords } from "@/utils/compUtils";
 
 interface AlumniReportDataRPC {
   user_id: string;
@@ -494,7 +495,8 @@ const AlumniUserComponent = () => {
                   if (columnKey === "full_name") {
                     return (
                       <TableCell className="text-center whitespace-nowrap">
-                        {item.meta_data.first_name} {item.meta_data.last_name}
+                        {capitalizeWords(item.meta_data.first_name || "")}{" "}
+                        {capitalizeWords(item.meta_data.last_name || "")}
                       </TableCell>
                     );
                   }
