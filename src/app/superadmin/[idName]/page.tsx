@@ -1,7 +1,6 @@
 "use client";
 
 import ProfileComponent from "@/components/Profile";
-import NotificationsComponent from "@/components/Notifications";
 import CalendarComponent from "@/components/superAdminComponents/Calendar";
 import DashboardComponent from "@/components/superAdminComponents/Dashboard";
 import ManageEvents from "@/components/superAdminComponents/ManageActivities";

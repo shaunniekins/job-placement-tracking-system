@@ -33,7 +33,11 @@ import { EyeFilledIcon } from "../../../public/icons/EyeFilledIcon";
 import { colleges } from "@/app/api/collegeAndProgramData";
 import AlumniProfileModal from "../agencyComponents/AlumniProfileModal";
 import { MdDelete } from "react-icons/md";
-import { sendEmailNotification } from "@/utils/compUtils";
+import {
+  sendEmailNotification,
+  formatDate,
+  formatDateTime,
+} from "@/utils/compUtils";
 import Papa from "papaparse";
 import { toast } from "react-toastify";
 
@@ -117,6 +121,8 @@ const UserComponent = () => {
   const agencyColumns = [
     { key: "company_name", label: "Company Name" },
     { key: "company_type", label: "Company Type" },
+    { key: "moa_duration", label: "MOA Duration" },
+    { key: "moa_file", label: "MOA File" },
     { key: "latest_profile_update", label: "Latest Profile Update" },
     { key: "action", label: "Action" },
   ];
@@ -421,7 +427,7 @@ const UserComponent = () => {
     }
   };
 
-  if (isLoadingUsers || isUploadingCSV) {
+  if (isUploadingCSV) {
     return (
       <div className="h-full w-full flex justify-center items-center">
         <Spinner
@@ -954,6 +960,40 @@ JPTS Team`,
                         </TableCell>
                       );
                     }
+
+                    if (columnKey === "moa_duration") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.moa_year_start &&
+                          item.meta_data.moa_year_end
+                            ? `${formatDate(
+                                item.meta_data.moa_year_start
+                              )} - ${formatDate(item.meta_data.moa_year_end)}`
+                            : "N/A"}
+                        </TableCell>
+                      );
+                    }
+
+                    if (columnKey === "moa_file") {
+                      return (
+                        <TableCell className="text-center">
+                          {item.meta_data.moa_file ? (
+                            <Button
+                              size="sm"
+                              color="primary"
+                              as="a"
+                              href={item.meta_data.moa_file}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View MOA
+                            </Button>
+                          ) : (
+                            "No MOA File"
+                          )}
+                        </TableCell>
+                      );
+                    }
                   }
 
                   if (currentView === "alumni" || currentView === "admin") {
@@ -977,7 +1017,7 @@ JPTS Team`,
                   if (columnKey === "latest_profile_update") {
                     return (
                       <TableCell className="text-center">
-                        {new Date(item.updated_at).toLocaleString()}
+                        {formatDateTime(item.updated_at)}
                       </TableCell>
                     );
                   }

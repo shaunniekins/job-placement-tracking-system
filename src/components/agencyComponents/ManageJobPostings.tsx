@@ -300,6 +300,7 @@ const ManageJobPostingsComponent = () => {
     { key: "industry", label: "Industry" },
     { key: "job_type", label: "Job Type" },
     { key: "application_deadline", label: "Application Deadline" },
+    { key: "job_status", label: "Status" }, // Added new column for job status
     { key: "action", label: "Action" },
   ];
 
@@ -600,6 +601,29 @@ const ManageJobPostingsComponent = () => {
                           return (
                             <TableCell className="text-center">
                               {formatDate(item.application_deadline)}
+                            </TableCell>
+                          );
+                        }
+
+                        if (columnKey === "job_status") {
+                          // Add conditional rendering for job status
+                          return (
+                            <TableCell className="text-center">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                  item.job_status === "approved"
+                                    ? "bg-green-100 text-green-700"
+                                    : item.job_status === "declined"
+                                    ? "bg-red-100 text-red-700"
+                                    : item.job_status === "pending"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : item.job_status === "closed"
+                                    ? "bg-gray-100 text-gray-700"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {item.job_status}
+                              </span>
                             </TableCell>
                           );
                         }

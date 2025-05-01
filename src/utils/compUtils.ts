@@ -12,14 +12,29 @@ export const capitalizeFirstLetter = (string: string) => {
 };
 
 // Function to format date
-export const formatDate = (dateString: string) => {
+export const formatDate = (
+  dateString: string,
+  formatString = "d MMM yyyy" // Default format changed to abbreviated month
+) => {
   if (!dateString) return "N/A";
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid Date";
-    return format(date, "dd MMM yyyy");
+    return format(date, formatString);
   } catch (error) {
     return "Invalid Date";
+  }
+};
+
+// Function to format date and time
+export const formatDateTime = (dateString: string) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date Time";
+    return format(date, "d MMM yyyy, h:mma"); // Format: 1 Jun 2024, 1:57PM
+  } catch (error) {
+    return "Invalid Date Time";
   }
 };
 

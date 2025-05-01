@@ -241,10 +241,14 @@ JPTS Team`,
                   onClick={async () => {
                     if (!currentJobPostingId) return;
 
+                    setDeleteModalOpen(false);
+
                     const response = await deleteJobPosting(
                       currentJobPostingId
                     );
-                    response && fetchJobPostings();
+                    if (response) {
+                      fetchJobPostings();
+                    }
                   }}
                 >
                   Delete
@@ -546,7 +550,7 @@ JPTS Team`,
                                   setDeleteModalOpen(true);
                                 }}
                               >
-                                <MdDelete />
+                                <MdDelete size={16} />
                               </Button>
                             )}
                           </>
