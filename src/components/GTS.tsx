@@ -24,6 +24,7 @@ import {
 } from "@/app/api/graduteTracerStudyIUD";
 import useGTS from "@/hooks/useGTS";
 import { deleteCOEIfSelfEmployed } from "@/utils/documentUtils";
+import { supabase } from "@/utils/supabase";
 
 interface EducationalBackground {
   degree: string;
@@ -63,6 +64,7 @@ interface GTSComponentProps {
   setOpenGPTSModal: (isOpen: boolean) => void;
   isReadOnly?: boolean;
   onEmploymentStatusChange?: (status: string) => void;
+  reloadUser?: () => void;
 }
 
 const GTSComponent: React.FC<GTSComponentProps> = ({
@@ -72,6 +74,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
   setOpenGPTSModal,
   isReadOnly = false,
   onEmploymentStatusChange,
+  reloadUser,
 }) => {
   const [currentView, setCurrentView] = useState("A");
   const initialFormState = useMemo(
@@ -128,8 +131,14 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     []
   );
 
-  const [formData, setFormData] = useState(initialFormState);
-  const [initialFormData, setInitialFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(() => ({
+    ...initialFormState,
+    birth_date: userInfo?.birth_date || "",
+  }));
+  const [initialFormData, setInitialFormData] = useState(() => ({
+    ...initialFormState,
+    birth_date: userInfo?.birth_date || "",
+  }));
 
   const { gts, loadingGTS, errorGTS } = useGTS(currentUserId);
 
@@ -142,19 +151,26 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         middle_name,
         contact_number,
         address,
-        birth_date,
         ...cleanedGTS
       } = gts[0];
 
-      const completeGTSData = { ...initialFormState, ...cleanedGTS };
+      const completeGTSData = {
+        ...initialFormState,
+        ...cleanedGTS,
+        birth_date: userInfo?.birth_date || cleanedGTS.birth_date || "",
+      };
 
       setFormData(completeGTSData);
       setInitialFormData(completeGTSData);
     } else {
-      setFormData(initialFormState);
-      setInitialFormData(initialFormState);
+      const initialDataWithBirthDate = {
+        ...initialFormState,
+        birth_date: userInfo?.birth_date || "",
+      };
+      setFormData(initialDataWithBirthDate);
+      setInitialFormData(initialDataWithBirthDate);
     }
-  }, [gts, initialFormState]);
+  }, [gts, initialFormState, userInfo]);
 
   const isFormChanged = () => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData);
@@ -286,7 +302,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       ...prevState,
       course_reasons: {
         ...prevState.course_reasons,
-        [`other${level.charAt(0).toUpperCase() + level.slice(1)}`]: value,
+        [`other_${level}`]: value,
       },
     }));
   };
@@ -533,6 +549,19 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
     try {
       const cleanedFormData = { ...formData, alumni_id: currentUserId };
 
+      if (formData.birth_date !== initialFormData.birth_date && !isReadOnly) {
+        const { error: userUpdateError } = await supabase.auth.updateUser({
+          data: { birth_date: formData.birth_date },
+        });
+        if (userUpdateError) {
+          console.error("Error updating user birth date:", userUpdateError);
+        } else {
+          if (reloadUser) {
+            reloadUser();
+          }
+        }
+      }
+
       if (formData.present_employment_status === "Self-employed") {
         await deleteCOEIfSelfEmployed(currentUserId);
       }
@@ -582,7 +611,6 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       size="xl"
       isOpen={openGPTSModal}
       onOpenChange={(isOpen) => {
-        // Prevent event propagation when closing this modal
         setOpenGPTSModal(isOpen);
       }}
       className="overflow-hidden"
@@ -710,11 +738,13 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                   </div>
                   <Input
                     label="8. Birthday"
-                    name="birthday"
+                    name="birth_date"
+                    type="date"
                     color="success"
                     variant="bordered"
-                    value={userInfo.birth_date}
-                    readOnly
+                    value={formData.birth_date}
+                    onChange={handleChange}
+                    readOnly={isReadOnly}
                   />
                   <div>
                     {!isReadOnly ? (
@@ -1321,65 +1351,74 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     readOnly={isReadOnly}
                   />
                   {!isReadOnly ? (
-                    <Select
-                      label="20. Major line of business of the company you are presently employed in."
-                      color="success"
-                      variant="bordered"
-                      defaultSelectedKeys={[formData.major_line_of_business]}
-                      value={formData.major_line_of_business}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          major_line_of_business: e.target.value,
-                        })
-                      }
-                    >
-                      <SelectItem key="Agriculture, Hunting and Forestry">
-                        Agriculture, Hunting and Forestry
-                      </SelectItem>
-                      <SelectItem key="Fishing">Fishing</SelectItem>
-                      <SelectItem key="Mining and Quarrying">
-                        Mining and Quarrying{" "}
-                      </SelectItem>
-                      <SelectItem key="Manufacturing">Manufacturing</SelectItem>
-                      <SelectItem key="Electricity, Gas and Water Supply">
-                        Electricity, Gas and Water Supply
-                      </SelectItem>
-                      <SelectItem key="Construction">Construction</SelectItem>
-                      <SelectItem key="Wholesale and Retail Trade">
-                        Wholesale and Retail Trade, repair of motor vehicles,
-                        motorcycles and personal and household goods
-                      </SelectItem>
-                      <SelectItem key="Hotels and Restaurants">
-                        Hotels and Restaurants
-                      </SelectItem>
-                      <SelectItem key="Transport Storage and Communication">
-                        Transport Storage and Communication
-                      </SelectItem>
-                      <SelectItem key="Financial Intermediation">
-                        Financial Intermediation
-                      </SelectItem>
-                      <SelectItem key="Real Estate, Renting and Business Activities">
-                        Real Estate, Renting and Business Activities
-                      </SelectItem>
-                      <SelectItem key="Public Administration and Defense">
-                        Public Administration and Defense; Compulsory Social
-                        Security
-                      </SelectItem>
-                      <SelectItem key="Education">Education</SelectItem>
-                      <SelectItem key="Health and Social Work">
-                        Health and Social Work
-                      </SelectItem>
-                      <SelectItem key="Other Community, Social and Personal Service Activities">
-                        Other Community, Social and Personal Service Activities
-                      </SelectItem>
-                      <SelectItem key="Private Households with Employed Persons">
-                        Private Households with Employed Persons
-                      </SelectItem>
-                      <SelectItem key="Extra-territorial Organizations and Bodies">
-                        Extra-territorial Organizations and Bodies
-                      </SelectItem>
-                    </Select>
+                    <div>
+                      <label className="block text-xs font-medium text-green-500 mb-1">
+                        20. Major line of business of the company you are
+                        presently employed in.
+                      </label>
+                      <Select
+                        placeholder="Select line of business"
+                        color="success"
+                        variant="bordered"
+                        defaultSelectedKeys={[formData.major_line_of_business]}
+                        value={formData.major_line_of_business}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            major_line_of_business: e.target.value,
+                          })
+                        }
+                      >
+                        <SelectItem key="Agriculture, Hunting and Forestry">
+                          Agriculture, Hunting and Forestry
+                        </SelectItem>
+                        <SelectItem key="Fishing">Fishing</SelectItem>
+                        <SelectItem key="Mining and Quarrying">
+                          Mining and Quarrying{" "}
+                        </SelectItem>
+                        <SelectItem key="Manufacturing">
+                          Manufacturing
+                        </SelectItem>
+                        <SelectItem key="Electricity, Gas and Water Supply">
+                          Electricity, Gas and Water Supply
+                        </SelectItem>
+                        <SelectItem key="Construction">Construction</SelectItem>
+                        <SelectItem key="Wholesale and Retail Trade">
+                          Wholesale and Retail Trade, repair of motor vehicles,
+                          motorcycles and personal and household goods
+                        </SelectItem>
+                        <SelectItem key="Hotels and Restaurants">
+                          Hotels and Restaurants
+                        </SelectItem>
+                        <SelectItem key="Transport Storage and Communication">
+                          Transport Storage and Communication
+                        </SelectItem>
+                        <SelectItem key="Financial Intermediation">
+                          Financial Intermediation
+                        </SelectItem>
+                        <SelectItem key="Real Estate, Renting and Business Activities">
+                          Real Estate, Renting and Business Activities
+                        </SelectItem>
+                        <SelectItem key="Public Administration and Defense">
+                          Public Administration and Defense; Compulsory Social
+                          Security
+                        </SelectItem>
+                        <SelectItem key="Education">Education</SelectItem>
+                        <SelectItem key="Health and Social Work">
+                          Health and Social Work
+                        </SelectItem>
+                        <SelectItem key="Other Community, Social and Personal Service Activities">
+                          Other Community, Social and Personal Service
+                          Activities
+                        </SelectItem>
+                        <SelectItem key="Private Households with Employed Persons">
+                          Private Households with Employed Persons
+                        </SelectItem>
+                        <SelectItem key="Extra-territorial Organizations and Bodies">
+                          Extra-territorial Organizations and Bodies
+                        </SelectItem>
+                      </Select>
+                    </div>
                   ) : (
                     <Input
                       label="20. Major line of business of the company you are presently employed in."
@@ -1868,38 +1907,44 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     </div>
                   </div>
                   {!isReadOnly ? (
-                    <Select
-                      label="31. What is your initial gross monthly earning in your first job after college?"
-                      color="success"
-                      variant="bordered"
-                      defaultSelectedKeys={[formData.initial_gross_first_job]}
-                      value={formData.initial_gross_first_job}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          initial_gross_first_job: e.target.value,
-                        })
-                      }
-                    >
-                      <SelectItem key={"Below P5,000.00"}>
-                        Below P5,000.00
-                      </SelectItem>
-                      <SelectItem key={"P5,000.00 to less than P10,000.00"}>
-                        P5,000.00 to less than P10,000.00
-                      </SelectItem>
-                      <SelectItem key={"P10,000.00 to less than P15,000.00"}>
-                        P10,000.00 to less than P15,000.00
-                      </SelectItem>
-                      <SelectItem key={"P15,000.00 to less than P20,000.00"}>
-                        P15,000.00 to less than P20,000.00
-                      </SelectItem>
-                      <SelectItem key={"P20,000.00 to less than P25,000.00"}>
-                        P20,000.00 to less than P25,000.00
-                      </SelectItem>
-                      <SelectItem key={"P25,000.00 and above"}>
-                        P25,000.00 and above
-                      </SelectItem>
-                    </Select>
+                    <div>
+                      <label className="block text-xs font-medium text-green-500 mb-1">
+                        31. What is your initial gross monthly earning in your
+                        first job after college?
+                      </label>
+                      <Select
+                        placeholder="Select gross monthly earning"
+                        color="success"
+                        variant="bordered"
+                        defaultSelectedKeys={[formData.initial_gross_first_job]}
+                        value={formData.initial_gross_first_job}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            initial_gross_first_job: e.target.value,
+                          })
+                        }
+                      >
+                        <SelectItem key={"Below P5,000.00"}>
+                          Below P5,000.00
+                        </SelectItem>
+                        <SelectItem key={"P5,000.00 to less than P10,000.00"}>
+                          P5,000.00 to less than P10,000.00
+                        </SelectItem>
+                        <SelectItem key={"P10,000.00 to less than P15,000.00"}>
+                          P10,000.00 to less than P15,000.00
+                        </SelectItem>
+                        <SelectItem key={"P15,000.00 to less than P20,000.00"}>
+                          P15,000.00 to less than P20,000.00
+                        </SelectItem>
+                        <SelectItem key={"P20,000.00 to less than P25,000.00"}>
+                          P20,000.00 to less than P25,000.00
+                        </SelectItem>
+                        <SelectItem key={"P25,000.00 and above"}>
+                          P25,000.00 and above
+                        </SelectItem>
+                      </Select>
+                    </div>
                   ) : (
                     <Input
                       label="31. What is your initial gross monthly earning in your first job after college?"
@@ -1911,24 +1956,30 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                     />
                   )}
                   {!isReadOnly ? (
-                    <Select
-                      label="32. Was the curriculum you had in college relevant to your first job?"
-                      color="success"
-                      variant="bordered"
-                      defaultSelectedKeys={[
-                        formData.is_curriculum_relevant_in_first_job,
-                      ]}
-                      value={formData.is_curriculum_relevant_in_first_job}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_curriculum_relevant_in_first_job: e.target.value,
-                        })
-                      }
-                    >
-                      <SelectItem key="Yes">Yes</SelectItem>
-                      <SelectItem key="No">No</SelectItem>
-                    </Select>
+                    <div>
+                      <label className="block text-xs font-medium text-green-500 mb-1">
+                        32. Was the curriculum you had in college relevant to
+                        your first job?
+                      </label>
+                      <Select
+                        placeholder="Select relevance"
+                        color="success"
+                        variant="bordered"
+                        defaultSelectedKeys={[
+                          formData.is_curriculum_relevant_in_first_job,
+                        ]}
+                        value={formData.is_curriculum_relevant_in_first_job}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_curriculum_relevant_in_first_job: e.target.value,
+                          })
+                        }
+                      >
+                        <SelectItem key="Yes">Yes</SelectItem>
+                        <SelectItem key="No">No</SelectItem>
+                      </Select>
+                    </div>
                   ) : (
                     <Input
                       label="32. Was the curriculum you had in college relevant to your first job?"
@@ -1996,16 +2047,25 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       </div>
                     </>
                   )}
-                  <Textarea
-                    label="34. List down suggestions to further improve your course curriculum"
-                    color="success"
-                    variant="bordered"
-                    value={formData.suggestions}
-                    onChange={(e) =>
-                      setFormData({ ...formData, suggestions: e.target.value })
-                    }
-                    isReadOnly={isReadOnly}
-                  />
+                  <div>
+                    <label className="block text-xs font-medium text-green-500 mb-1">
+                      34. List down suggestions to further improve your course
+                      curriculum
+                    </label>
+                    <Textarea
+                      placeholder="Enter your suggestions"
+                      color="success"
+                      variant="bordered"
+                      value={formData.suggestions}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          suggestions: e.target.value,
+                        })
+                      }
+                      isReadOnly={isReadOnly}
+                    />
+                  </div>
                 </>
               </ModalBody>
             )}

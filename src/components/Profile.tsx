@@ -263,10 +263,18 @@ const ProfileComponent = () => {
   }, [searchParams, user, isLoading]);
 
   const reloadUser = async () => {
+    setIsLoading(true); // Add loading state indication if desired
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
-    dispatch(setUser(user));
+    if (user) {
+      dispatch(setUser(user));
+    }
+    if (error) {
+      console.error("Error reloading user:", error);
+    }
+    setIsLoading(false);
   };
 
   const handleDeleteToggle = async () => {
@@ -511,6 +519,7 @@ const ProfileComponent = () => {
         openGPTSModal={openGPTSModal}
         setOpenGPTSModal={handleGTSModalChange}
         onEmploymentStatusChange={handleEmploymentStatusChange}
+        reloadUser={reloadUser} // Pass the reloadUser function
       />
       <DocumentComponent
         userID={user.id}
