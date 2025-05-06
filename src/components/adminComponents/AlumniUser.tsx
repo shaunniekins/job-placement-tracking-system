@@ -394,21 +394,21 @@ const AlumniUserComponent = () => {
               ))}
             </Select>
 
-            {(isProgramChair || isARO) && (
-              <Button
-                color="success"
-                size="sm"
-                className="text-white"
-                onClick={handleGenerateReport}
-                isLoading={isGeneratingReport}
-              >
-                {isGeneratingReport
-                  ? "Generating..."
-                  : isProgramChair
-                  ? "REPORT FOR PC"
-                  : "REPORT FOR ARO"}
-              </Button>
-            )}
+            {/* {(isProgramChair || isARO) && ( */}
+            <Button
+              color="success"
+              size="sm"
+              className="text-white"
+              onClick={handleGenerateReport}
+              isLoading={isGeneratingReport}
+            >
+              {isGeneratingReport
+                ? "Generating..."
+                : isProgramChair
+                ? "REPORT FOR PC"
+                : "REPORT FOR ARO"}
+            </Button>
+            {/* )} */}
           </div>
 
           <div className="w-full flex justify-end gap-3">

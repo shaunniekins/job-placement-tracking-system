@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -92,16 +92,13 @@ const CalendarComponent = () => {
     setCurrentMonth(month);
   };
 
-  if (loading) {
-    return (
-      <div className="h-full w-full flex justify-center items-center">
-        <Spinner color="success" />
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="h-full w-full overflow-y-auto relative">
+      {loading && (
+        <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-75 z-10">
+          <Spinner color="success" label="Loading events..." />
+        </div>
+      )}
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin]}
         initialView="dayGridMonth"
@@ -213,7 +210,6 @@ const CalendarComponent = () => {
                     </>
                   )}
 
-                  {/* <hr className="my-2" /> */}
                   <div className="h-32 overflow-y-auto">
                     <b>Description:</b>
                     <br />
