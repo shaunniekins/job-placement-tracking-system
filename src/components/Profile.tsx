@@ -65,6 +65,9 @@ const ProfileComponent = () => {
 
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
+  // Add state for the MOA file object
+  const [moaFileObject, setMoaFileObject] = useState<File | null>(null);
+
   // User info state
   const [userInfo, setUserInfo] = useState({
     profile_picture: "",
@@ -308,6 +311,7 @@ const ProfileComponent = () => {
       // If canceling, revert to old info
       setTempUserInfo(userInfo);
       setTempLoginInfo(loginInfo);
+      setMoaFileObject(null); // Reset MOA file object on cancel
 
       setIsUserChanged(false);
       setIsLoginChanged(false);
@@ -322,18 +326,47 @@ const ProfileComponent = () => {
 
   const handleUserSave = async () => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          ...tempUserInfo,
-        },
-      });
-      if (error) throw error;
+      setIsLoading(true);
+      let dataToUpdate = { ...tempUserInfo };
+      let moaUpdateSuccess = true;
 
-      reloadUser();
+      if (moaFileObject && userId) {
+        // console.log("Uploading MOA file:", moaFileObject.name);
+        const moaFileUrl = await insertMOAFiles(userId, moaFileObject);
+
+        if (moaFileUrl) {
+          // console.log("MOA file uploaded successfully, URL:", moaFileUrl);
+          dataToUpdate.moa_file = moaFileUrl;
+        } else {
+          moaUpdateSuccess = false;
+          console.error("MOA file upload failed. MOA not updated.");
+        }
+      }
+
+      // console.log("Updating user metadata with:", dataToUpdate);
+      const { error } = await supabase.auth.updateUser({
+        data: dataToUpdate,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!moaUpdateSuccess) {
+        alert(
+          "Your profile was updated but the MOA file could not be uploaded. Please try uploading the file again."
+        );
+      }
+
+      setMoaFileObject(null); // Reset MOA file object after saving
+      await reloadUser(); // Await the reload to ensure user data is refreshed
       setIsUserEditing(false);
       setIsUserChanged(false);
     } catch (error) {
       console.error("Error updating user information:", error);
+      alert("An error occurred while saving your profile. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -801,17 +834,8 @@ const ProfileComponent = () => {
                       className={`${!isUserEditing && "hidden"}`}
                       onChange={async (e) => {
                         if (e.target.files && e.target.files[0]) {
-                          const moaFileUrl = await insertMOAFiles(
-                            userId,
-                            e.target.files[0]
-                          );
-                          if (moaFileUrl) {
-                            setTempUserInfo({
-                              ...tempUserInfo,
-                              moa_file: moaFileUrl,
-                            });
-                            setIsUserChanged(true);
-                          }
+                          setMoaFileObject(e.target.files[0]);
+                          setIsUserChanged(true); // Enable save button
                         }
                       }}
                     />
@@ -822,6 +846,7 @@ const ProfileComponent = () => {
                         href={tempUserInfo.moa_file}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="mt-4"
                       >
                         View MOA
                       </Button>

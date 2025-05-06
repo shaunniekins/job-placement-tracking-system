@@ -11,6 +11,7 @@ import {
   updateNotification,
 } from "@/app/api/notificationsIUD";
 import { sendSMSNotification } from "@/utils/compUtils";
+import { toast } from "react-toastify";
 
 const AgencyDashboardComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -27,6 +28,12 @@ const AgencyDashboardComponent = () => {
 
       if (isMoaExpired && isSubscribed) {
         const notifData = await notificationCheckerToSendForSMS(user.id);
+
+        // Show a UI notification in addition to SMS
+        // Fix: Remove duration property as it's not supported in the toast library
+        toast.warning(
+          "Your MOA is expiring soon or has expired. Please update it in your profile."
+        );
 
         if (!notifData) {
           // No notification exists, create new one
