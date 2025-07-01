@@ -54,41 +54,41 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
   const [certificateTitle, setCertificateTitle] = useState("");
   const [isSelfEmployed, setIsSelfEmployed] = useState(false);
 
-  const fetchUser = async () => {
-    // Add check for valid userID
-    if (!userID || typeof userID !== "string" || userID.trim() === "") {
-      console.warn(
-        "fetchUser called with invalid userID in DocumentComponent. Skipping fetch."
-      );
-      setUserData({}); // Reset user data if ID is invalid
-      return;
-    }
-    try {
-      const userData1 = await getUserInfo(userID);
-      // Add null check for userData1 before accessing meta_data
-      if (userData1 && userData1.meta_data) {
-        setUserData(userData1.meta_data);
-
-        // Check if the user is self-employed from GTS
-        if (documentType === "Certificate of Employment") {
-          const selfEmployed = await isUserSelfEmployed(userID);
-          setIsSelfEmployed(selfEmployed);
-        }
-      } else {
-        // Handle case where getUserInfo returns null or meta_data is missing
-        console.error(
-          "Failed to fetch valid user data or meta_data missing for userID:",
-          userID
-        );
-        setUserData({}); // Reset or set to a default state
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      setUserData({}); // Reset user data on error
-    }
-  };
-
   useEffect(() => {
+    const fetchUser = async () => {
+      // Add check for valid userID
+      if (!userID || typeof userID !== "string" || userID.trim() === "") {
+        console.warn(
+          "fetchUser called with invalid userID in DocumentComponent. Skipping fetch."
+        );
+        setUserData({}); // Reset user data if ID is invalid
+        return;
+      }
+      try {
+        const userData1 = await getUserInfo(userID);
+        // Add null check for userData1 before accessing meta_data
+        if (userData1 && userData1.meta_data) {
+          setUserData(userData1.meta_data);
+
+          // Check if the user is self-employed from GTS
+          if (documentType === "Certificate of Employment") {
+            const selfEmployed = await isUserSelfEmployed(userID);
+            setIsSelfEmployed(selfEmployed);
+          }
+        } else {
+          // Handle case where getUserInfo returns null or meta_data is missing
+          console.error(
+            "Failed to fetch valid user data or meta_data missing for userID:",
+            userID
+          );
+          setUserData({}); // Reset or set to a default state
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setUserData({}); // Reset user data on error
+      }
+    };
+
     // Format the document type to match the key in metadata
     const formattedKey = formatDocumentKey(documentType);
     setFormattedDocType(formattedKey);
@@ -116,7 +116,12 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
       );
       setIsDocumentModalOpen(false);
     }
-  }, [isDocumentModalOpen, documentType, isSelfEmployed]);
+  }, [
+    isDocumentModalOpen,
+    documentType,
+    isSelfEmployed,
+    setIsDocumentModalOpen,
+  ]);
 
   const handleFileUpload = async () => {
     if (!documentFile) {
@@ -212,6 +217,28 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
       toast.error("Failed to upload document");
       console.error(error);
     } finally {
+      // Call fetchUser directly since it's now defined inline
+      const fetchUser = async () => {
+        if (!userID || typeof userID !== "string" || userID.trim() === "") {
+          setUserData({});
+          return;
+        }
+        try {
+          const userData1 = await getUserInfo(userID);
+          if (userData1 && userData1.meta_data) {
+            setUserData(userData1.meta_data);
+            if (documentType === "Certificate of Employment") {
+              const selfEmployed = await isUserSelfEmployed(userID);
+              setIsSelfEmployed(selfEmployed);
+            }
+          } else {
+            setUserData({});
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUserData({});
+        }
+      };
       fetchUser();
       reloadUser();
       setIsUploading(false);
@@ -302,6 +329,28 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
         toast.success("Document deleted successfully");
       }
 
+      // Call fetchUser directly since it's now defined inline
+      const fetchUser = async () => {
+        if (!userID || typeof userID !== "string" || userID.trim() === "") {
+          setUserData({});
+          return;
+        }
+        try {
+          const userData1 = await getUserInfo(userID);
+          if (userData1 && userData1.meta_data) {
+            setUserData(userData1.meta_data);
+            if (documentType === "Certificate of Employment") {
+              const selfEmployed = await isUserSelfEmployed(userID);
+              setIsSelfEmployed(selfEmployed);
+            }
+          } else {
+            setUserData({});
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUserData({});
+        }
+      };
       fetchUser();
       reloadUser();
     } catch (error) {

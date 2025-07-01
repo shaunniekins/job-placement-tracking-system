@@ -172,10 +172,6 @@ const useJobPostingsForAgency = (
                 }
                 break;
               case "UPDATE":
-                const jobExists = jobPostings.some(
-                  (item) => item.job_posting_id === newRecord.job_posting_id
-                );
-
                 if (shouldIncludeJob(newRecord)) {
                   const fullJobPosting = await fetchFullJobPosting(
                     newRecord.job_posting_id
@@ -189,13 +185,21 @@ const useJobPostingsForAgency = (
                       )
                     );
                   }
-                } else if (jobExists) {
-                  setJobPostings((prev) =>
-                    prev.filter(
-                      (item) => item.job_posting_id !== newRecord.job_posting_id
-                    )
-                  );
-                  setTotalJobPostings((prev) => prev - 1);
+                } else {
+                  // Check if job exists and remove it if it no longer belongs to this agency
+                  setJobPostings((prev) => {
+                    const jobExists = prev.some(
+                      (item) => item.job_posting_id === newRecord.job_posting_id
+                    );
+                    if (jobExists) {
+                      setTotalJobPostings((prevTotal) => prevTotal - 1);
+                      return prev.filter(
+                        (item) =>
+                          item.job_posting_id !== newRecord.job_posting_id
+                      );
+                    }
+                    return prev;
+                  });
                 }
                 break;
               case "DELETE":

@@ -43,7 +43,13 @@ const SigninComponent = ({ userType }: SigninComponentProps) => {
       if (user) {
         dispatch(setUser(user));
       }
-      router.push(`/${userType === "program-chair" ? "admin" : userType}`);
+      router.push(
+        `/${
+          userType === "program-chair"
+            ? "admin/dashboard"
+            : `${userType}/dashboard`
+        }`
+      );
     }
   };
 

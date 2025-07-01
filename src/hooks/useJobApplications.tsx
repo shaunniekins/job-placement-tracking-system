@@ -246,7 +246,7 @@ const useJobApplications = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agencyId, applicantId]);
+  }, [agencyId, applicantId, jobApplications, programFilter, searchQuery]);
 
   useEffect(() => {
     fetchJobApplications(); // Fetch initial data

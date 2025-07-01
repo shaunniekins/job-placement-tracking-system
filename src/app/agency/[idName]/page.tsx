@@ -1,34 +1,15 @@
-"use client";
+import AgencyClientRouter from "@/components/AgencyClientRouter";
 
-import ApplicationsComponent from "@/components/agencyComponents/Applications";
-import ManageJobPostingsComponent from "@/components/agencyComponents/ManageJobPostings";
-import ProfileComponent from "@/components/Profile";
-import NotificationsComponent from "@/components/Notifications";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import AgencyDashboardComponent from "@/components/agencyComponents/Dashboard";
+export async function generateStaticParams() {
+  return [
+    { idName: "dashboard" },
+    { idName: "managejobpostings" },
+    { idName: "applicants" },
+    { idName: "notifications" },
+    { idName: "profile" },
+  ];
+}
 
 export default function AgencySlugPage() {
-  const pathname = usePathname();
-  const [display, setDisplay] = useState<string | JSX.Element>("");
-
-  useEffect(() => {
-    if (pathname.startsWith("/agency/dashboard")) {
-      setDisplay(<AgencyDashboardComponent />);
-    } else if (pathname.startsWith("/agency/managejobpostings")) {
-      setDisplay(<ManageJobPostingsComponent />);
-    } else if (pathname.startsWith("/agency/applicants")) {
-      setDisplay(<ApplicationsComponent />);
-    } else if (pathname.startsWith("/agency/notifications")) {
-      setDisplay(<NotificationsComponent />);
-    } else if (pathname.startsWith("/agency/profile")) {
-      setDisplay(<ProfileComponent />);
-      // } else if (pathname.startsWith("/agency/settings")) {
-      //   setDisplay("Settings");
-    } else {
-      setDisplay("No page found");
-    }
-  }, [pathname]);
-
-  return <div className="h-full w-full">{display}</div>;
+  return <AgencyClientRouter />;
 }

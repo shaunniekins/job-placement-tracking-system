@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers"; // Assuming you have a providers file for NextUI etc.
-import { ValidationBadgeProvider } from "@/contexts/ValidationBadgeContext"; // Import the provider
-import { NotificationProvider } from "@/contexts/NotificationContext"; // Import the NotificationProvider
+import { Providers } from "./providers";
+import AuthWrapper from "@/components/AuthWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "JPTS",
-  description: "Job Placement Tracking System",
+  title: "Job Placement Tracking System",
+  description: "Track and manage job placements for alumni",
 };
 
 export default function RootLayout({
@@ -20,15 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Assuming Providers wraps NextUIProvider, Redux Provider, etc. */}
         <Providers>
-          <ValidationBadgeProvider>
-            <NotificationProvider>
-              {/* Your existing layout structure might be here, e.g., including Header, Sidebar */}
-              {children}
-              {/* End of existing layout structure */}
-            </NotificationProvider>
-          </ValidationBadgeProvider>
+          <AuthWrapper>{children}</AuthWrapper>
         </Providers>
       </body>
     </html>
