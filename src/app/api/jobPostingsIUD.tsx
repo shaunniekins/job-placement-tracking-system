@@ -70,9 +70,7 @@ export const incrementAcceptedApplicants = async (jobPostingId: number) => {
     if (error) {
       throw error;
     }
-    console.log(
-      `Incremented accepted_applicants for job_posting_id: ${jobPostingId}`
-    );
+
     return true;
   } catch (error: any) {
     console.error("Error incrementing accepted applicants:", error);

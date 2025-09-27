@@ -57,8 +57,6 @@ const useNotifications = (
   const subscribeToChanges = useCallback(() => {
     if (!userId) return () => {};
 
-    console.log(`[useNotifications] Setting up subscription for ${userId}`);
-
     // Create a unique channel name for this user to avoid conflicts
     const channelName = `notifications_user_${userId}_${Date.now()}`;
 
@@ -74,10 +72,6 @@ const useNotifications = (
         },
         async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
-          console.log(
-            `[useNotifications] Change detected: ${eventType}`,
-            payload
-          );
 
           // Update notifications list
           setNotifications((prevNotifications) => {
@@ -108,12 +102,10 @@ const useNotifications = (
         if (status !== "SUBSCRIBED") {
           console.error(`[useNotifications] Failed to subscribe: ${status}`);
         } else {
-          console.log(`[useNotifications] Successfully subscribed: ${status}`);
         }
       });
 
     return () => {
-      console.log(`[useNotifications] Cleaning up subscription for ${userId}`);
       supabase.removeChannel(channel);
     };
   }, [userId, refreshUnreadCount]);

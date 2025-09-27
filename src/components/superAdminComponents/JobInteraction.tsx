@@ -217,8 +217,6 @@ const JobInteractionComponent = () => {
         a.label.localeCompare(b.label)
       );
 
-      console.log(`Found ${formattedAgencies.length} unique agencies`);
-
       setAgencies([
         { key: "all", label: "All Agencies" },
         ...formattedAgencies,

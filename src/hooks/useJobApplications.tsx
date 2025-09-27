@@ -18,6 +18,18 @@ const useJobApplications = (
   >(null);
 
   const fetchJobApplications = useCallback(async () => {
+    // Don't fetch if we don't have either ID
+    if (
+      (!agencyId || agencyId.trim() === "") &&
+      (!applicantId || applicantId.trim() === "")
+    ) {
+      setLoadingJobApplications(false);
+      setJobApplications([]);
+      setTotalJobApplications(0);
+      setErrorJobApplications(null);
+      return;
+    }
+
     const offset = (currentPage - 1) * rowsPerPage;
     setLoadingJobApplications(true);
     setErrorJobApplications(null);
@@ -28,14 +40,18 @@ const useJobApplications = (
         .select("*", { count: "exact" })
         .order("application_date", { ascending: false });
 
-      if (agencyId && !applicantId) {
+      if (agencyId && agencyId.trim() !== "") {
         query = query.eq("agency_id", agencyId);
-      } else if (applicantId && !agencyId) {
+      } else if (applicantId && applicantId.trim() !== "") {
         query = query.eq("applicant_id", applicantId);
       } else {
-        throw new Error(
-          "Either agencyId or applicantId must be provided, but not both."
+        console.error(
+          "Filter error - agencyId:",
+          agencyId,
+          "applicantId:",
+          applicantId
         );
+        throw new Error("Either agencyId or applicantId must be provided.");
       }
 
       // Apply search filter
@@ -56,12 +72,14 @@ const useJobApplications = (
       );
 
       if (response.error) {
+        console.error("Supabase error:", response.error);
         throw response.error;
       }
 
       setJobApplications(response.data || []);
       setTotalJobApplications(response.count || 0);
     } catch (err) {
+      console.error("Error in fetchJobApplications:", err);
       if (err instanceof Error) {
         setErrorJobApplications(err.message || "Error fetching job postings");
       } else {
@@ -246,17 +264,20 @@ const useJobApplications = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agencyId, applicantId, jobApplications, programFilter, searchQuery]);
+  }, [agencyId, applicantId, programFilter, searchQuery]);
 
   useEffect(() => {
-    fetchJobApplications(); // Fetch initial data
+    fetchJobApplications();
+  }, [fetchJobApplications]);
 
-    const unsubscribe = subscribeToChanges(); // Set up real-time subscription
-
-    return () => {
-      if (unsubscribe) unsubscribe(); // Clean up on unmount
-    };
-  }, [fetchJobApplications, subscribeToChanges]);
+  // Temporarily disable real-time subscription to fix infinite loop
+  // TODO: Re-implement real-time subscription with proper dependency management
+  // useEffect(() => {
+  //   const unsubscribe = subscribeToChanges();
+  //   return () => {
+  //     if (unsubscribe) unsubscribe();
+  //   };
+  // }, [subscribeToChanges]);
 
   return {
     jobApplications,

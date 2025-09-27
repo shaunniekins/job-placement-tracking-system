@@ -34,14 +34,14 @@ export const ValidationBadgeProvider: React.FC<{
     try {
       // Fetch pending agency users
       const { count: agencyDataCount, error: agencyError } = await supabase
-        .from("users")
+        .from("ViewUsers")
         .select("*", { count: "exact", head: true })
         .eq("meta_data->>user_type", "agency")
         .eq("meta_data->>account_status", "pending");
 
       // Fetch pending alumni users
       const { count: alumniDataCount, error: alumniError } = await supabase
-        .from("users")
+        .from("ViewUsers")
         .select("*", { count: "exact", head: true })
         .eq("meta_data->>user_type", "alumni")
         .eq("meta_data->>account_status", "pending");

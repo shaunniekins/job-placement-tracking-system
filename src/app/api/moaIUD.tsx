@@ -10,8 +10,6 @@ export const insertMOAFiles = async (userId: string, fileData: any) => {
     const uniqueFilename = `${userId}_${timestamp}.${fileExt}`;
     const filePath = `public/${uniqueFilename}`;
 
-    // console.log(`Attempting to upload MOA file to ${BUCKET_NAME}/${filePath}`);
-
     // First try to find and delete any existing files for this user1
     const { data: existingFiles } = await supabase.storage
       .from(BUCKET_NAME)
@@ -21,10 +19,6 @@ export const insertMOAFiles = async (userId: string, fileData: any) => {
 
     // Delete existing files if any are found
     if (existingFiles && existingFiles.length > 0) {
-      // console.log(
-      //   `Found ${existingFiles.length} existing MOA files. Removing...`
-      // );
-
       const filesToRemove = existingFiles.map((file) => `public/${file.name}`);
 
       const { error: removeError } = await supabase.storage
@@ -54,7 +48,6 @@ export const insertMOAFiles = async (userId: string, fileData: any) => {
         .from(BUCKET_NAME)
         .getPublicUrl(data.path).data;
 
-      // console.log("MOA file uploaded successfully. Public URL:", publicUrl);
       return publicUrl;
     }
 

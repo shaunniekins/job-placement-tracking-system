@@ -44,9 +44,19 @@ const PlacementComponent = () => {
     totalJobApplications,
     loadingJobApplications,
     errorJobApplications,
-  } = useJobApplications(rowsPerPage, page, undefined, userId);
+  } = useJobApplications(rowsPerPage, page, undefined, userId || "");
 
   const totalPages = Math.ceil(totalJobApplications / rowsPerPage);
+
+  // Debug logging
+  useEffect(() => {}, [
+    user,
+    userId,
+    loadingJobApplications,
+    errorJobApplications,
+    jobApplications,
+    totalJobApplications,
+  ]);
 
   useEffect(() => {
     if (!user || loadingJobApplications) return;
@@ -79,10 +89,30 @@ const PlacementComponent = () => {
     router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
+  // Don't render anything until we have user data
+  if (!user) {
+    return (
+      <div className="h-full w-full flex justify-center items-center">
+        <Spinner color="success" />
+      </div>
+    );
+  }
+
   if (loadingJobApplications) {
     return (
       <div className="h-full w-full flex justify-center items-center">
         <Spinner color="success" />
+      </div>
+    );
+  }
+
+  if (errorJobApplications) {
+    return (
+      <div className="h-full w-full flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading job applications:</p>
+          <p className="text-red-400">{errorJobApplications}</p>
+        </div>
       </div>
     );
   }

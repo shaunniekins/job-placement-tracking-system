@@ -157,8 +157,6 @@ const AlumniUserComponent = () => {
         return [];
       }
 
-      // console.log(`RPC returned ${data?.length || 0} alumni records`);
-
       if (data && data.length > 0) {
         const userIds = data.map((item: any) => item.user_id);
 

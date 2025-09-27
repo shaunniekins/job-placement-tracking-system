@@ -114,7 +114,6 @@ const useUsers = (
         "postgres_changes",
         { event: "*", schema: "auth", table: "users" },
         (payload) => {
-          // console.log("Change received!", payload);
           fetchAndSubscribeUsers(); // Refetch data on any change
         }
       )

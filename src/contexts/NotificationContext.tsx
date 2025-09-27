@@ -39,7 +39,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      console.log(`[NotificationContext] Unread count: ${count}`);
       setUnreadCount(count || 0);
     } catch (err) {
       console.error("Error fetching unread count:", err);

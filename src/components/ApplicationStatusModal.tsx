@@ -147,9 +147,6 @@ const ApplicationStatusModalComponent: React.FC<
       );
 
       if (!response && newStatus) {
-        console.log(
-          `[handleUpdate] Attempting updateJobApplication for ID: ${currentJobApplicationId} with status: ${newStatus}`
-        );
         const responseJA = await updateJobApplication(
           parseInt(currentJobApplicationId),
           {
@@ -157,16 +154,7 @@ const ApplicationStatusModalComponent: React.FC<
           }
         );
 
-        console.log(
-          `[handleUpdate] Response from updateJobApplication:`,
-          responseJA
-        );
-
         if (responseJA && responseJA.length > 0) {
-          console.log(
-            `[handleUpdate] updateJobApplication successful for ID: ${currentJobApplicationId}. Proceeding with further actions.`
-          );
-
           if (isAccepted) {
             try {
               const apiResponse = await fetch("/api/update-user-employment", {
@@ -186,9 +174,9 @@ const ApplicationStatusModalComponent: React.FC<
                   errorData.error
                 );
               } else {
-                console.log(
-                  `Successfully marked user ${applicantId} as employed.`
-                );
+                // console.log(
+                //   `Successfully marked user ${applicantId} as employed.`
+                // );
               }
             } catch (apiError) {
               console.error("Error calling employment update API:", apiError);

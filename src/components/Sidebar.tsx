@@ -72,9 +72,9 @@ const SidebarComponent = ({
     }
   }, [user?.id]);
 
-  useEffect(() => {
-    console.log("[Sidebar] Current unread count:", unreadCount);
-  }, [unreadCount]);
+  // useEffect(() => {
+  //   console.log("[Sidebar] Current unread count:", unreadCount);
+  // }, [unreadCount]);
 
   const adminItems: MenuItem[] = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },

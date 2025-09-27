@@ -40,10 +40,6 @@ export async function deleteCOEIfSelfEmployed(userId: string): Promise<void> {
           [docKey]: "",
         },
       });
-
-      console.log(
-        "Certificate of Employment deleted due to self-employment status"
-      );
     }
   } catch (error) {
     console.error("Error deleting COE:", error);
@@ -120,7 +116,6 @@ export const checkUserDocuments = async (
       }
 
       if (!documentExists(userMetaData, requirement)) {
-        console.log(`Missing required document: ${requirement}`);
         return false; // Found a missing document
       }
     }
