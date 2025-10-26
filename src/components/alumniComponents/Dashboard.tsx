@@ -526,7 +526,7 @@ const JobPostingDetails = ({
         await insertNotification({
           receiver_id: job.agency_id,
           message: `New application for job posting: ${job.job_title} by ${userName}.`,
-          url: `/agency/applications?applicationId=${response[0].job_application_id}`,
+          url: `/agency/applicants?applicationId=${response[0].job_application_id}`,
         });
 
         const agencySendEmailData = {

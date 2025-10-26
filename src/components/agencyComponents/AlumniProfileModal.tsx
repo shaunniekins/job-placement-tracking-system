@@ -27,6 +27,7 @@ interface AlumniProfileModalProps {
   setOpenAlumniProfile: (isOpen: boolean) => void;
   userType?: string | "alumni";
   setUserType?: (userType: string) => void;
+  viewerType?: string; // Who is viewing the profile (agency, admin, etc.)
 }
 
 interface AlumniData {
@@ -54,6 +55,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   setOpenAlumniProfile,
   userType = "alumni",
   setUserType = () => {},
+  viewerType = "alumni", // Default to alumni if not specified
 }) => {
   const { alumniData } = useAlumni(alumniId, userType);
 
@@ -66,8 +68,11 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   const [availableDocuments, setAvailableDocuments] = useState<string[]>([]);
   const [employmentStatus, setEmploymentStatus] = useState("");
 
-  // Define all document options (including GTS)
-  const allDocumentOptions = [...documentFiles, "GTS"];
+  // Define all document options based on viewer type (who is viewing)
+  const allDocumentOptions =
+    viewerType === "agency"
+      ? documentFiles // Agency viewers can only see document files (no GTS)
+      : [...documentFiles, "GTS"]; // Alumni and admin viewers can see all documents including GTS
 
   useEffect(() => {
     // Check employment status from GTS
@@ -128,12 +133,17 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
             }
           });
 
-          // Always add GTS as an available option since it's a form
-          setAvailableDocuments([...available, "GTS"]);
+          // Add GTS only if viewerType is not agency
+          if (viewerType !== "agency") {
+            setAvailableDocuments([...available, "GTS"]);
+          } else {
+            // For agency viewers, only show document files
+            setAvailableDocuments(available);
+          }
         }
       }
     }
-  }, [alumniData, alumniId, employmentStatus]);
+  }, [alumniData, alumniId, employmentStatus, userType, viewerType]);
 
   const handleOpenDocument = () => {
     if (!selectedDocumentType) return;
@@ -148,8 +158,8 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   };
 
   const isDocumentAvailable = (docType: string) => {
-    // GTS is always available
-    if (docType === "GTS") return true;
+    // GTS is only available for non-agency viewers
+    if (docType === "GTS") return viewerType !== "agency";
 
     return availableDocuments.includes(docType);
   };
@@ -345,7 +355,9 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
               <ModalFooter className="flex justify-between items-center gap-2">
                 <div
                   className={`${
-                    userType !== "alumni" && "invisible"
+                    userType !== "alumni" &&
+                    userType !== "agency" &&
+                    "invisible"
                   } flex gap-2 items-center`}
                 >
                   <div className="flex flex-col md:flex-row gap-2 items-center">
@@ -395,7 +407,7 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
         </ModalContent>
       </Modal>
 
-      {userType === "alumni" && (
+      {userType === "alumni" && viewerType !== "agency" && (
         <>
           <GTSComponent
             userInfo={cleanAlumniData}
@@ -418,6 +430,20 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
             employmentStatus={employmentStatus}
           />
         </>
+      )}
+
+      {(userType === "alumni" || userType === "agency") && (
+        <DocumentComponent
+          userID={alumniId}
+          isDocumentModalOpen={isDocumentModalOpen}
+          setIsDocumentModalOpen={setIsDocumentModalOpen}
+          reloadUser={() => {}}
+          documentFile={null}
+          setDocumentFile={() => {}}
+          documentType={selectedDocumentType}
+          isReadOnly={true}
+          employmentStatus={employmentStatus}
+        />
       )}
     </>
   );
