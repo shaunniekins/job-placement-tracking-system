@@ -78,3 +78,23 @@ export const deleteJobApplication = async (jobApplicationId: any) => {
     return null;
   }
 };
+
+export const getJobApplicationById = async (jobApplicationId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("ViewJobApplicationsWithDetails")
+      .select("*")
+      .eq("job_application_id", jobApplicationId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching job application:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching job application by ID:", error);
+    return null;
+  }
+};

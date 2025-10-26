@@ -24,6 +24,7 @@ import { formatDate } from "@/utils/compUtils";
 import AlumniProfileModal from "./AlumniProfileModal";
 import ApplicationStatusModalComponent from "../ApplicationStatusModal";
 import { programs } from "@/app/api/collegeAndProgramData";
+import { getJobApplicationById } from "@/app/api/jobApplicationsIUD";
 
 const ApplicationsComponent = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -48,6 +49,7 @@ const ApplicationsComponent = () => {
   );
   const [searchInput, setSearchInput] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
+  const [viewerUserType, setViewerUserType] = useState("agency");
 
   useEffect(() => {
     if (user) {
@@ -68,31 +70,47 @@ const ApplicationsComponent = () => {
   const totalPages = Math.ceil(totalJobApplications / rowsPerPage);
 
   useEffect(() => {
-    if (!user || loadingJobApplications) return;
+    if (!user) return;
 
     const applicationId = searchParams.get("applicationId");
     const alumniId = searchParams.get("alumniId");
 
-    if (applicationId && jobApplications.length > 0) {
-      const application = jobApplications.find(
-        (app) => app.job_application_id === applicationId
-      );
-      if (application) {
-        setCurrentJobApplicationId(application.job_application_id);
-        setCurrentJobTitle(application.job_title);
-        setCurrentApplicantId(application.applicant_id);
-        setCurrentApplicantEmail(application.applicant_email);
-        setCurrentApplicantFirstName(application.applicant_first_name);
-        setCurrentApplicantLastName(application.applicant_last_name);
-        setCurrentJobPostingId(application.job_posting_id);
-        setIsActionModal(true);
-      }
-    }
-
+    // Handle alumni profile modal
     if (alumniId) {
       setCurrentAlumniId(alumniId);
       setIsAlumniProfileOpen(true);
     }
+
+    // Handle application status modal
+    const handleApplicationModal = async () => {
+      if (applicationId && !loadingJobApplications) {
+        // First try to find in current page
+        let application = jobApplications.find(
+          (app) => app.job_application_id === applicationId
+        );
+
+        // If not found in current page, fetch it directly
+        if (!application) {
+          application = await getJobApplicationById(applicationId);
+        }
+
+        if (application) {
+          setCurrentJobApplicationId(application.job_application_id);
+          setCurrentJobTitle(application.job_title);
+          setCurrentApplicantId(application.applicant_id);
+          setCurrentApplicantEmail(application.applicant_email);
+          setCurrentApplicantFirstName(application.applicant_first_name);
+          setCurrentApplicantLastName(application.applicant_last_name);
+          setCurrentJobPostingId(application.job_posting_id);
+          setIsActionModal(true);
+        } else {
+          // Application not found, clear the URL parameter
+          updateUrlParams({ applicationId: null });
+        }
+      }
+    };
+
+    handleApplicationModal();
   }, [searchParams, user, jobApplications, loadingJobApplications]);
 
   const updateUrlParams = (params: { [key: string]: string | null }) => {
@@ -128,6 +146,8 @@ const ApplicationsComponent = () => {
             updateUrlParams({ alumniId: null });
           }
         }}
+        userType="alumni"
+        viewerType={viewerUserType}
       />
       <ApplicationStatusModalComponent
         isOpen={isActionModal}
@@ -288,6 +308,7 @@ const ApplicationsComponent = () => {
                                   setIsAlumniProfileOpen(true);
                                   updateUrlParams({
                                     alumniId: item.applicant_id,
+                                    applicationId: null, // Clear applicationId to prevent status modal from opening
                                   });
                                 }}
                               >
