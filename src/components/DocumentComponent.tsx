@@ -156,23 +156,22 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
       // Create path: documents/documentType/filename
       const filePath = `${documentType}/${fileName}`;
 
-      const formData = new FormData();
-      formData.append("file", documentFile);
-      formData.append("filePath", filePath);
+      // Upload file to Supabase storage
+      const { data, error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, documentFile);
 
-      const response = await fetch("/api/buckets/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        console.error("Failed to upload document: response:", response);
+      if (uploadError) {
+        console.error("Failed to upload document:", uploadError);
         throw new Error("File upload failed");
       }
 
-      const { path } = await response.json();
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from("documents")
+        .getPublicUrl(filePath);
 
-      const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/documents/${path}`;
+      const fileUrl = publicUrlData.publicUrl;
 
       // For training certificates, append to the array with metadata
       if (isMultipleDocumentType(documentType)) {
@@ -288,16 +287,12 @@ const DocumentComponent: React.FC<DocumentComponentProps> = ({
 
       const filePath = urlParts[1];
 
-      // Delete the file from storage
-      const response = await fetch("/api/buckets/delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ filePath }),
-      });
+      // Delete the file from Supabase storage
+      const { error: deleteError } = await supabase.storage
+        .from("documents")
+        .remove([filePath]);
 
-      if (!response.ok) {
+      if (deleteError) {
         throw new Error("Failed to delete document from storage");
       }
 

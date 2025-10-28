@@ -69,10 +69,10 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   const [employmentStatus, setEmploymentStatus] = useState("");
 
   // Define all document options based on viewer type (who is viewing)
+  // NOTE: GTS should be visible to alumni viewers (viewerType === 'alumni').
+  // We intentionally restrict GTS to alumni viewers so alumni users can view all files.
   const allDocumentOptions =
-    viewerType === "agency"
-      ? documentFiles // Agency viewers can only see document files (no GTS)
-      : [...documentFiles, "GTS"]; // Alumni and admin viewers can see all documents including GTS
+    viewerType === "alumni" ? [...documentFiles, "GTS"] : documentFiles;
 
   useEffect(() => {
     // Check employment status from GTS
@@ -133,11 +133,11 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
             }
           });
 
-          // Add GTS only if viewerType is not agency
-          if (viewerType !== "agency") {
+          // Add GTS only if the viewer is an alumni
+          if (viewerType === "alumni") {
             setAvailableDocuments([...available, "GTS"]);
           } else {
-            // For agency viewers, only show document files
+            // For non-alumni viewers (agency/admin/others), only show document files
             setAvailableDocuments(available);
           }
         }
@@ -158,8 +158,8 @@ const AlumniProfileModal: React.FC<AlumniProfileModalProps> = ({
   };
 
   const isDocumentAvailable = (docType: string) => {
-    // GTS is only available for non-agency viewers
-    if (docType === "GTS") return viewerType !== "agency";
+    // GTS is only available for alumni viewers
+    if (docType === "GTS") return viewerType === "alumni";
 
     return availableDocuments.includes(docType);
   };

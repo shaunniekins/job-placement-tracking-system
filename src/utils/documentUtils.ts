@@ -24,14 +24,14 @@ export async function deleteCOEIfSelfEmployed(userId: string): Promise<void> {
       if (urlParts.length === 2) {
         const filePath = urlParts[1];
 
-        // Delete the file from storage
-        await fetch("/api/buckets/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ filePath }),
-        });
+        // Delete the file from Supabase storage
+        const { error: deleteError } = await supabase.storage
+          .from("documents")
+          .remove([filePath]);
+
+        if (deleteError) {
+          console.error("Error deleting file from storage:", deleteError);
+        }
       }
 
       // Update user metadata to remove the COE reference
@@ -55,7 +55,7 @@ export async function isUserSelfEmployed(userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("GraduateTracerStudy")
-      .select("profile_of_employment")
+      .select("present_employment_status")
       .eq("alumni_id", userId)
       .single();
 
@@ -70,7 +70,7 @@ export async function isUserSelfEmployed(userId: string): Promise<boolean> {
       return false;
     }
 
-    return data?.profile_of_employment === "Self-employed";
+    return data?.present_employment_status === "Self-employed";
   } catch (err) {
     console.error("Unexpected error during self-employment check:", err);
     return false;
