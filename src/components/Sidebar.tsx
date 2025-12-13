@@ -80,13 +80,14 @@ const SidebarComponent = ({
     { path: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
     { path: "/admin/alumni", label: "Alumni", icon: <FaUsers /> },
     { path: "/admin/reports", label: "Reports", icon: <FaChartBar /> },
+    { path: "/admin/gts", label: "GTS", icon: <FaChartBar /> },
     { path: "/admin/profile", label: "Profile", icon: <FaUser /> },
     { path: "/admin/orgchart", label: "Org Chart", icon: <FaSitemap /> },
     { path: "/admin/calendar", label: "Calendar", icon: <FaCalendarAlt /> },
   ];
 
   const standardAdminItems: MenuItem[] = adminItems.filter(
-    (item) => item.label !== "Reports"
+    (item) => item.label !== "Reports" && item.label !== "GTS"
   );
 
   const superAdminItems: MenuItem[] = [
