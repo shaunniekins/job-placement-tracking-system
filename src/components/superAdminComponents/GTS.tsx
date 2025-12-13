@@ -15,8 +15,7 @@ import { FaDownload } from "react-icons/fa";
 import { colleges, programs } from "@/app/api/collegeAndProgramData";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { supabase } from "@/utils/supabase";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // Correct import for jspdf-autotable
+import * as XLSX from "xlsx";
 
 const GTSComponent = () => {
   const [selectedCollege, setSelectedCollege] = useState<string | null>(null);
@@ -94,195 +93,30 @@ const GTSComponent = () => {
     }
   };
 
-  const generatePDF = (alumniData: any) => {
-    if (!alumniData || !alumniData.gts) return null;
-
-    try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.width;
-      let yPos = 15;
-      const lineHeight = 7;
-      const indent = 14;
-      const labelWidth = 80; // Increased label width
-      const valueIndent = indent + labelWidth;
-
-      // Helper function to format array of objects
-      const formatArrayOfObjects = (arr: any[]): string[] => {
-        if (!Array.isArray(arr) || arr.length === 0) return ["N/A"];
-        return arr.map((item, index) => {
-          const entries = Object.entries(item)
+  const formatArrayToText = (arr: any[]): string => {
+    if (!Array.isArray(arr) || arr.length === 0) return "N/A";
+    return arr
+      .map((item, index) => {
+        if (typeof item === "object") {
+          return `${index + 1}. ${Object.entries(item)
             .map(([key, value]) => `${key}: ${value || "N/A"}`)
-            .join(", ");
-          return `${index + 1}. ${entries}`;
-        });
-      };
-
-      // Helper function to format nested object
-      const formatNestedObject = (obj: any): string[] => {
-        if (!obj || typeof obj !== "object") return ["N/A"];
-        return Object.entries(obj).map(([key, value]) => {
-          if (Array.isArray(value)) {
-            return `${key}: ${value.join(", ") || "N/A"}`;
-          }
-          return `${key}: ${value || "N/A"}`;
-        });
-      };
-
-      // Modified addField function to handle complex data
-      const addField = (label: string, value: any) => {
-        doc.setFontSize(10);
-        doc.text(label, indent, yPos);
-        doc.text(": ", valueIndent - 5, yPos);
-
-        let lines: string[] = [];
-        if (Array.isArray(value) && typeof value[0] === "object") {
-          lines = formatArrayOfObjects(value);
-        } else if (
-          value &&
-          typeof value === "object" &&
-          !Array.isArray(value)
-        ) {
-          lines = formatNestedObject(value);
-        } else {
-          lines = [String(value || "N/A")];
+            .join(", ")}`;
         }
+        return item;
+      })
+      .join("\n");
+  };
 
-        // Print each line with proper spacing
-        lines.forEach((line, index) => {
-          if (yPos > 280) {
-            doc.addPage();
-            yPos = 15;
-          }
-          doc.text(line, valueIndent, yPos);
-          yPos += lineHeight;
-        });
-
-        // Add extra spacing after multi-line fields
-        if (lines.length > 1) yPos += lineHeight / 2;
-      };
-
-      // Title (centered)
-      doc.setFontSize(16);
-      const title = "Graduate Tracer Study Report";
-      const titleWidth =
-        (doc.getStringUnitWidth(title) * 16) / doc.internal.scaleFactor;
-      doc.text(title, (pageWidth - titleWidth) / 2, yPos);
-      yPos += lineHeight * 2;
-
-      // Basic Information
-      doc.setFontSize(12);
-      doc.text("Personal Information", indent, yPos);
-      yPos += lineHeight;
-
-      const fullName = `${alumniData.lastName}, ${alumniData.firstName} ${
-        alumniData.middleName ? alumniData.middleName.charAt(0) + "." : ""
-      }`;
-      addField("Name", fullName);
-      addField("Email", alumniData.email);
-
-      // GTS Data - Include all fields
-      const gts = alumniData.gts;
-      addField("Contact Numbers", gts.contact_numbers);
-      addField("Civil Status", gts.civil_status);
-      addField("Sex", gts.sex);
-      addField("Region", gts.region);
-      addField("Province", gts.province);
-      addField("Location of Residence", gts.location_of_residence);
-
-      // Educational Background Section
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("Educational Background", indent, yPos);
-      yPos += lineHeight;
-      addField("Educational Background", gts.educational_background);
-      addField("Professional Examination", gts.professional_examination);
-      addField("Course Reasons", gts.course_reasons);
-
-      // Training Section
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("Training and Professional Development", indent, yPos);
-      yPos += lineHeight;
-      addField("Training After College", gts.training_after_college);
-
-      // Job Levels Section
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("Career Progression", indent, yPos);
-      yPos += lineHeight;
-      addField("Job Levels", gts.job_levels);
-
-      // Employment Information
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("Employment Information", indent, yPos);
-      yPos += lineHeight;
-      addField("Employment Status", gts.employment_status);
-      addField("Unemployment Reasons", gts.unemployment_reasons);
-      addField("Other Unemployment Reason", gts.other_unemployment_reason);
-      addField("Present Employment Status", gts.present_employment_status);
-      addField("Present Occupation", gts.present_occupation);
-      addField("Major Line of Business", gts.major_line_of_business);
-      addField("Place of Work", gts.place_of_work);
-
-      // First Job Information
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("First Job Information", indent, yPos);
-      yPos += lineHeight;
-      addField("First Job After College", gts.is_first_time_job_after_college);
-      addField("Staying on Job Reasons", gts.staying_on_job_reasons);
-      addField("Other Staying on Job Reason", gts.other_staying_on_job_reason);
-      addField(
-        "First Job Related to Course",
-        gts.is_first_job_related_to_course
-      );
-      addField(
-        "First Job Related Reasons",
-        gts.first_job_related_to_course_reasons
-      );
-      addField(
-        "Other Related Reason",
-        gts.other_first_job_related_to_course_reason
-      );
-      addField("Leaving Job Reasons", gts.leaving_job_reasons);
-      addField("Other Leaving Job Reason", gts.other_leaving_job_reason);
-      addField("Duration in First Job", gts.staying_duration_in_first_job);
-      addField(
-        "Other Duration in First Job",
-        gts.other_staying_duration_in_first_job
-      );
-      addField("First Job Found Through", gts.first_job_found_through);
-      addField(
-        "Other First Job Found Through",
-        gts.other_first_job_found_through
-      );
-      addField("Duration Before First Job", gts.duration_before_first_job);
-      addField(
-        "Other Duration Before First Job",
-        gts.other_duration_before_first_job
-      );
-      addField("Job Levels", gts.job_levels);
-      addField("Initial Gross Monthly Earning", gts.initial_gross_first_job);
-      addField(
-        "Curriculum Relevant to First Job",
-        gts.is_curriculum_relevant_in_first_job
-      );
-
-      // Competencies and Suggestions
-      yPos += lineHeight;
-      doc.setFontSize(12);
-      doc.text("Competencies and Suggestions", indent, yPos);
-      yPos += lineHeight;
-      addField("Learned Competencies", gts.learned_competencies);
-      addField("Other Learned Competencies", gts.other_learned_competencies);
-      addField("Suggestions", gts.suggestions);
-
-      return doc;
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      return null;
-    }
+  const formatObjectToText = (obj: any): string => {
+    if (!obj || typeof obj !== "object") return "N/A";
+    return Object.entries(obj)
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}: ${value.join(", ") || "N/A"}`;
+        }
+        return `${key}: ${value || "N/A"}`;
+      })
+      .join("\n");
   };
 
   const handleDownload = async (programKey: string) => {
@@ -300,21 +134,124 @@ const GTSComponent = () => {
         return;
       }
 
-      // Get program name for filename
       const programDetail = programs.find((p) => p.key === programKey);
+      const collegeDetail = colleges.find((c) => c.key === selectedCollege);
 
-      // Generate individual PDFs for each alumni
-      gtsData.data.forEach((alumniData: any) => {
-        const doc = generatePDF(alumniData);
-        if (doc) {
-          const fullName = `${alumniData.lastName}_${alumniData.firstName}`;
-          const filename = `GTS_${programDetail?.label.replace(
-            /\s+/g,
-            "_"
-          )}_${selectedYear}_${fullName}.pdf`;
-          doc.save(filename);
-        }
+      const collegeLabel = collegeDetail?.key.toUpperCase() || "COLLEGE";
+      const programLabel = programDetail?.key.toUpperCase() || "PROGRAM";
+      const filename =
+        `${collegeLabel} REPORT ${programLabel} ${selectedYear}`.trim();
+
+      const headers = [
+        "No.",
+        "Name",
+        "Email",
+        "Contact Numbers",
+        "Civil Status",
+        "Sex",
+        "Region",
+        "Province",
+        "Location of Residence",
+        "Educational Background",
+        "Professional Examination",
+        "Course Reasons",
+        "Training After College",
+        "Employment Status",
+        "Unemployment Reasons",
+        "Other Unemployment Reason",
+        "Present Employment Status",
+        "Present Occupation",
+        "Major Line of Business",
+        "Place of Work",
+        "First Job After College",
+        "Staying on Job Reasons",
+        "Other Staying on Job Reason",
+        "First Job Related to Course",
+        "First Job Related Reasons",
+        "Other Related Reason",
+        "Leaving Job Reasons",
+        "Other Leaving Job Reason",
+        "Duration in First Job",
+        "Other Duration in First Job",
+        "First Job Found Through",
+        "Other First Job Found Through",
+        "Duration Before First Job",
+        "Other Duration Before First Job",
+        "Job Levels",
+        "Initial Gross Monthly Earning",
+        "Curriculum Relevant to First Job",
+        "Learned Competencies",
+        "Other Learned Competencies",
+        "Suggestions",
+      ];
+
+      const dataRows = gtsData.data.map((alumni: any, index: number) => {
+        const gts = alumni.gts || {};
+        const fullName = `${alumni.lastName}, ${alumni.firstName} ${
+          alumni.middleName ? alumni.middleName.charAt(0) + "." : ""
+        }`;
+
+        return [
+          index + 1,
+          fullName,
+          alumni.email,
+          gts.contact_numbers || "N/A",
+          gts.civil_status || "N/A",
+          gts.sex || "N/A",
+          gts.region || "N/A",
+          gts.province || "N/A",
+          gts.location_of_residence || "N/A",
+          formatArrayToText(gts.educational_background),
+          formatArrayToText(gts.professional_examination),
+          formatObjectToText(gts.course_reasons),
+          formatArrayToText(gts.training_after_college),
+          gts.employment_status || "N/A",
+          formatArrayToText(gts.unemployment_reasons),
+          gts.other_unemployment_reason || "N/A",
+          gts.present_employment_status || "N/A",
+          gts.present_occupation || "N/A",
+          gts.major_line_of_business || "N/A",
+          gts.place_of_work || "N/A",
+          gts.is_first_time_job_after_college || "N/A",
+          formatArrayToText(gts.staying_on_job_reasons),
+          gts.other_staying_on_job_reason || "N/A",
+          gts.is_first_job_related_to_course || "N/A",
+          formatArrayToText(gts.first_job_related_to_course_reasons),
+          gts.other_first_job_related_to_course_reason || "N/A",
+          formatArrayToText(gts.leaving_job_reasons),
+          gts.other_leaving_job_reason || "N/A",
+          formatArrayToText(gts.staying_duration_in_first_job),
+          gts.other_staying_duration_in_first_job || "N/A",
+          formatArrayToText(gts.first_job_found_through),
+          gts.other_first_job_found_through || "N/A",
+          formatArrayToText(gts.duration_before_first_job),
+          gts.other_duration_before_first_job || "N/A",
+          formatObjectToText(gts.job_levels),
+          gts.initial_gross_first_job || "N/A",
+          gts.is_curriculum_relevant_in_first_job || "N/A",
+          formatArrayToText(gts.learned_competencies),
+          gts.other_learned_competencies || "N/A",
+          gts.suggestions || "N/A",
+        ];
       });
+
+      const finalData = [
+        [filename], // Row 1: Filename / Title
+        headers, // Row 2: Headers
+        ...dataRows, // Row 3+: Data
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(finalData);
+
+      // Set column widths (optional, but good for readability)
+      const wscols = headers.map(() => ({ wch: 20 }));
+      wscols[1] = { wch: 30 }; // Name
+      wscols[2] = { wch: 30 }; // Email
+      ws["!cols"] = wscols;
+
+      XLSX.utils.book_append_sheet(wb, ws, "GTS Report");
+      XLSX.writeFile(wb, `${filename}.xlsx`);
     } catch (error) {
       console.error("Error downloading GTS:", error);
       alert(

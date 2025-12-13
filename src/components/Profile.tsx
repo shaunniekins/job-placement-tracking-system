@@ -39,6 +39,7 @@ import {
   scholarships,
 } from "@/app/api/collegeAndProgramData";
 import GTSComponent from "./GTS";
+import useGTS from "@/hooks/useGTS";
 import { deleteGraduateTracerStudy } from "@/app/api/graduteTracerStudyIUD";
 import { IoOptionsOutline } from "react-icons/io5";
 import { insertMOAFiles } from "@/app/api/moaIUD";
@@ -57,6 +58,7 @@ const ProfileComponent = () => {
   const searchParams = useSearchParams();
 
   const [openGPTSModal, setOpenGPTSModal] = useState(false);
+  const { gts, loadingGTS, refetchGTS } = useGTS(user?.id);
 
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState("");
@@ -552,7 +554,10 @@ const ProfileComponent = () => {
         openGPTSModal={openGPTSModal}
         setOpenGPTSModal={handleGTSModalChange}
         onEmploymentStatusChange={handleEmploymentStatusChange}
-        reloadUser={reloadUser} // Pass the reloadUser function
+        reloadUser={() => {
+          reloadUser();
+          refetchGTS();
+        }}
       />
       <DocumentComponent
         userID={user.id}
@@ -733,15 +738,17 @@ const ProfileComponent = () => {
                   }
                 >
                   <PopoverTrigger>
-                    {displayImage.profile_picture ? (
-                      <Avatar
-                        src={displayImage.profile_picture}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full object-cover cursor-pointer"
-                      />
-                    ) : (
-                      <FaUserCircle size="8rem" className="text-gray-500" />
-                    )}
+                    <div className="cursor-pointer" tabIndex={0}>
+                      {displayImage.profile_picture ? (
+                        <Avatar
+                          src={displayImage.profile_picture}
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover"
+                        />
+                      ) : (
+                        <FaUserCircle size="8rem" className="text-gray-500" />
+                      )}
+                    </div>
                   </PopoverTrigger>
                   <PopoverContent className="p-3 flex flex-col items-start gap-3">
                     <label

@@ -399,9 +399,11 @@ const ActivityDetails = ({
           onOpenChange={() => togglePopover(activity.activity_id)}
         >
           <PopoverTrigger>
-            <Button variant="light">
-              <BsThreeDotsVertical />
-            </Button>
+            <div tabIndex={0}>
+              <Button variant="light">
+                <BsThreeDotsVertical />
+              </Button>
+            </div>
           </PopoverTrigger>
 
           <PopoverContent className="gap-2 p-2">

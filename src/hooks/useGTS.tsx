@@ -11,7 +11,10 @@ const useGTS = (alumniId: string) => {
     setLoadingGTS(true);
     setErrorGTS(null);
 
-    if (!alumniId) return;
+    if (!alumniId) {
+      setLoadingGTS(false);
+      return;
+    }
 
     try {
       const response: PostgrestResponse<any> = await supabase
@@ -19,17 +22,12 @@ const useGTS = (alumniId: string) => {
         .select("*")
         .eq("alumni_id", alumniId);
 
-      if (response.error) {
-        throw response.error;
-      }
-
       setGTS(response.data || []);
-    } catch (err) {
-      if (err instanceof Error) {
-        setErrorGTS(err.message || "Error fetching GTS");
-      } else {
-        setErrorGTS("An unknown error occurred");
+      if (response.error) {
+        setErrorGTS(response.error.message);
       }
+    } catch (error: any) {
+      setErrorGTS(error.message);
     } finally {
       setLoadingGTS(false);
     }
@@ -39,7 +37,7 @@ const useGTS = (alumniId: string) => {
     fetchGTS();
   }, [fetchGTS]);
 
-  return { gts, loadingGTS, errorGTS };
+  return { gts, loadingGTS, errorGTS, refetchGTS: fetchGTS };
 };
 
 export default useGTS;

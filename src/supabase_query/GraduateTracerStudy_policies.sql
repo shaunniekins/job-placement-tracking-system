@@ -1,3 +1,5 @@
+-- THERE'S NEW UPDATED VERSION OF THIS
+
 -- Create RLS policies for GraduateTracerStudy table to allow authenticated users to read data
 
 -- Enable RLS on the table (if not already enabled)

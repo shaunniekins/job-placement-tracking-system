@@ -65,6 +65,7 @@ interface GTSComponentProps {
   isReadOnly?: boolean;
   onEmploymentStatusChange?: (status: string) => void;
   reloadUser?: () => void;
+  preventClose?: boolean;
 }
 
 const GTSComponent: React.FC<GTSComponentProps> = ({
@@ -75,6 +76,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
   isReadOnly = false,
   onEmploymentStatusChange,
   reloadUser,
+  preventClose = false,
 }) => {
   const [currentView, setCurrentView] = useState("A");
   const initialFormState = useMemo(
@@ -611,11 +613,14 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       size="xl"
       isOpen={openGPTSModal}
       onOpenChange={(isOpen) => {
-        setOpenGPTSModal(isOpen);
+        if (!preventClose) {
+          setOpenGPTSModal(isOpen);
+        }
       }}
       className="overflow-hidden"
-      isDismissable={true}
-      isKeyboardDismissDisabled={false}
+      isDismissable={!preventClose}
+      isKeyboardDismissDisabled={preventClose}
+      hideCloseButton={preventClose}
     >
       <ModalContent
         className="h-full w-full"
@@ -682,6 +687,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <RadioGroup
                           color="success"
                           orientation="horizontal"
+                          label="6. Civil Status"
                           value={formData.civil_status}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleRadioChange("civil_status", e.target.value)
@@ -715,6 +721,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <RadioGroup
                           color="success"
                           orientation="horizontal"
+                          label="7. Sex"
                           value={formData.sex}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleRadioChange("sex", e.target.value)
@@ -759,26 +766,52 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             setFormData({ ...formData, region: e.target.value })
                           }
                         >
-                          <SelectItem key={"NCR"}>{"NCR"}</SelectItem>
-                          <SelectItem key={"CAR"}>{"CAR"}</SelectItem>
-                          <SelectItem key={"ARMM"}>{"ARMM"}</SelectItem>
-                          <SelectItem key={"CARAGA"}>{"CARAGA"}</SelectItem>
-                          <SelectItem key={"Region 1"}>{"Region 1"}</SelectItem>
-                          <SelectItem key={"Region 2"}>{"Region 2"}</SelectItem>
-                          <SelectItem key={"Region 3"}>{"Region 3"}</SelectItem>
-                          <SelectItem key={"Region 4"}>{"Region 4"}</SelectItem>
-                          <SelectItem key={"Region 5"}>{"Region 5"}</SelectItem>
-                          <SelectItem key={"Region 6"}>{"Region 6"}</SelectItem>
-                          <SelectItem key={"Region 7"}>{"Region 7"}</SelectItem>
-                          <SelectItem key={"Region 8"}>{"Region 8"}</SelectItem>
-                          <SelectItem key={"Region 9"}>{"Region 9"}</SelectItem>
-                          <SelectItem key={"Region 10"}>
+                          <SelectItem key={"NCR"} textValue="NCR">
+                            {"NCR"}
+                          </SelectItem>
+                          <SelectItem key={"CAR"} textValue="CAR">
+                            {"CAR"}
+                          </SelectItem>
+                          <SelectItem key={"ARMM"} textValue="ARMM">
+                            {"ARMM"}
+                          </SelectItem>
+                          <SelectItem key={"CARAGA"} textValue="CARAGA">
+                            {"CARAGA"}
+                          </SelectItem>
+                          <SelectItem key={"Region 1"} textValue="Region 1">
+                            {"Region 1"}
+                          </SelectItem>
+                          <SelectItem key={"Region 2"} textValue="Region 2">
+                            {"Region 2"}
+                          </SelectItem>
+                          <SelectItem key={"Region 3"} textValue="Region 3">
+                            {"Region 3"}
+                          </SelectItem>
+                          <SelectItem key={"Region 4"} textValue="Region 4">
+                            {"Region 4"}
+                          </SelectItem>
+                          <SelectItem key={"Region 5"} textValue="Region 5">
+                            {"Region 5"}
+                          </SelectItem>
+                          <SelectItem key={"Region 6"} textValue="Region 6">
+                            {"Region 6"}
+                          </SelectItem>
+                          <SelectItem key={"Region 7"} textValue="Region 7">
+                            {"Region 7"}
+                          </SelectItem>
+                          <SelectItem key={"Region 8"} textValue="Region 8">
+                            {"Region 8"}
+                          </SelectItem>
+                          <SelectItem key={"Region 9"} textValue="Region 9">
+                            {"Region 9"}
+                          </SelectItem>
+                          <SelectItem key={"Region 10"} textValue="Region 10">
                             {"Region 10"}
                           </SelectItem>
-                          <SelectItem key={"Region 11"}>
+                          <SelectItem key={"Region 11"} textValue="Region 11">
                             {"Region 11"}
                           </SelectItem>
-                          <SelectItem key={"Region 12"}>
+                          <SelectItem key={"Region 12"} textValue="Region 12">
                             {"Region 12"}
                           </SelectItem>
                         </Select>
@@ -813,6 +846,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         <RadioGroup
                           color="success"
                           orientation="horizontal"
+                          label="11. Location of Residence"
                           value={formData.location_of_residence}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleRadioChange(
@@ -1180,6 +1214,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                   <RadioGroup
                     color="success"
                     isReadOnly={isReadOnly}
+                    label="15b. What made you pursue advance studies?"
                     value={formData.advance_studies_reason}
                     onValueChange={handleAdvanceStudiesReasonChange}
                   >
@@ -1222,9 +1257,16 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         })
                       }
                     >
-                      <SelectItem key={"Yes"}>Yes</SelectItem>
-                      <SelectItem key={"No"}>No</SelectItem>
-                      <SelectItem key={"Never Employed"}>
+                      <SelectItem key={"Yes"} textValue="Yes">
+                        Yes
+                      </SelectItem>
+                      <SelectItem key={"No"} textValue="No">
+                        No
+                      </SelectItem>
+                      <SelectItem
+                        key={"Never Employed"}
+                        textValue="Never Employed"
+                      >
                         Never Employed
                       </SelectItem>
                     </Select>
@@ -1310,13 +1352,25 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         })
                       }
                     >
-                      <SelectItem key={"Regular"}>
+                      <SelectItem
+                        key={"Regular"}
+                        textValue="Regular or Permanent"
+                      >
                         Regular or Permanent
                       </SelectItem>
-                      <SelectItem key={"Temporary"}>Temporary</SelectItem>
-                      <SelectItem key={"Casual"}>Casual</SelectItem>
-                      <SelectItem key={"Contractual"}>Contractual</SelectItem>
-                      <SelectItem key={"Self-employed"}>
+                      <SelectItem key={"Temporary"} textValue="Temporary">
+                        Temporary
+                      </SelectItem>
+                      <SelectItem key={"Casual"} textValue="Casual">
+                        Casual
+                      </SelectItem>
+                      <SelectItem key={"Contractual"} textValue="Contractual">
+                        Contractual
+                      </SelectItem>
+                      <SelectItem
+                        key={"Self-employed"}
+                        textValue="Self-employed"
+                      >
                         Self-employed
                       </SelectItem>
                     </Select>
@@ -1357,6 +1411,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         presently employed in.
                       </label>
                       <Select
+                        aria-label="20. Major line of business"
                         placeholder="Select line of business"
                         color="success"
                         variant="bordered"
@@ -1369,52 +1424,100 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           })
                         }
                       >
-                        <SelectItem key="Agriculture, Hunting and Forestry">
+                        <SelectItem
+                          key="Agriculture, Hunting and Forestry"
+                          textValue="Agriculture, Hunting and Forestry"
+                        >
                           Agriculture, Hunting and Forestry
                         </SelectItem>
-                        <SelectItem key="Fishing">Fishing</SelectItem>
-                        <SelectItem key="Mining and Quarrying">
+                        <SelectItem key="Fishing" textValue="Fishing">
+                          Fishing
+                        </SelectItem>
+                        <SelectItem
+                          key="Mining and Quarrying"
+                          textValue="Mining and Quarrying"
+                        >
                           Mining and Quarrying{" "}
                         </SelectItem>
-                        <SelectItem key="Manufacturing">
+                        <SelectItem
+                          key="Manufacturing"
+                          textValue="Manufacturing"
+                        >
                           Manufacturing
                         </SelectItem>
-                        <SelectItem key="Electricity, Gas and Water Supply">
+                        <SelectItem
+                          key="Electricity, Gas and Water Supply"
+                          textValue="Electricity, Gas and Water Supply"
+                        >
                           Electricity, Gas and Water Supply
                         </SelectItem>
-                        <SelectItem key="Construction">Construction</SelectItem>
-                        <SelectItem key="Wholesale and Retail Trade">
+                        <SelectItem key="Construction" textValue="Construction">
+                          Construction
+                        </SelectItem>
+                        <SelectItem
+                          key="Wholesale and Retail Trade"
+                          textValue="Wholesale and Retail Trade"
+                        >
                           Wholesale and Retail Trade, repair of motor vehicles,
                           motorcycles and personal and household goods
                         </SelectItem>
-                        <SelectItem key="Hotels and Restaurants">
+                        <SelectItem
+                          key="Hotels and Restaurants"
+                          textValue="Hotels and Restaurants"
+                        >
                           Hotels and Restaurants
                         </SelectItem>
-                        <SelectItem key="Transport Storage and Communication">
+                        <SelectItem
+                          key="Transport Storage and Communication"
+                          textValue="Transport Storage and Communication"
+                        >
                           Transport Storage and Communication
                         </SelectItem>
-                        <SelectItem key="Financial Intermediation">
+                        <SelectItem
+                          key="Financial Intermediation"
+                          textValue="Financial Intermediation"
+                        >
                           Financial Intermediation
                         </SelectItem>
-                        <SelectItem key="Real Estate, Renting and Business Activities">
+                        <SelectItem
+                          key="Real Estate, Renting and Business Activities"
+                          textValue="Real Estate, Renting and Business Activities"
+                        >
                           Real Estate, Renting and Business Activities
                         </SelectItem>
-                        <SelectItem key="Public Administration and Defense">
+                        <SelectItem
+                          key="Public Administration and Defense"
+                          textValue="Public Administration and Defense"
+                        >
                           Public Administration and Defense; Compulsory Social
                           Security
                         </SelectItem>
-                        <SelectItem key="Education">Education</SelectItem>
-                        <SelectItem key="Health and Social Work">
+                        <SelectItem key="Education" textValue="Education">
+                          Education
+                        </SelectItem>
+                        <SelectItem
+                          key="Health and Social Work"
+                          textValue="Health and Social Work"
+                        >
                           Health and Social Work
                         </SelectItem>
-                        <SelectItem key="Other Community, Social and Personal Service Activities">
+                        <SelectItem
+                          key="Other Community, Social and Personal Service Activities"
+                          textValue="Other Community, Social and Personal Service Activities"
+                        >
                           Other Community, Social and Personal Service
                           Activities
                         </SelectItem>
-                        <SelectItem key="Private Households with Employed Persons">
+                        <SelectItem
+                          key="Private Households with Employed Persons"
+                          textValue="Private Households with Employed Persons"
+                        >
                           Private Households with Employed Persons
                         </SelectItem>
-                        <SelectItem key="Extra-territorial Organizations and Bodies">
+                        <SelectItem
+                          key="Extra-territorial Organizations and Bodies"
+                          textValue="Extra-territorial Organizations and Bodies"
+                        >
                           Extra-territorial Organizations and Bodies
                         </SelectItem>
                       </Select>
@@ -1443,8 +1546,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         })
                       }
                     >
-                      <SelectItem key="Local">Local</SelectItem>
-                      <SelectItem key="Abroad">Abroad</SelectItem>
+                      <SelectItem key="Local" textValue="Local">
+                        Local
+                      </SelectItem>
+                      <SelectItem key="Abroad" textValue="Abroad">
+                        Abroad
+                      </SelectItem>
                     </Select>
                   ) : (
                     <Input
@@ -1472,8 +1579,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         })
                       }
                     >
-                      <SelectItem key="Yes">Yes</SelectItem>
-                      <SelectItem key="No">No</SelectItem>
+                      <SelectItem key="Yes" textValue="Yes">
+                        Yes
+                      </SelectItem>
+                      <SelectItem key="No" textValue="No">
+                        No
+                      </SelectItem>
                     </Select>
                   ) : (
                     <Input
@@ -1557,8 +1668,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                             })
                           }
                         >
-                          <SelectItem key="Yes">Yes</SelectItem>
-                          <SelectItem key="No">No</SelectItem>
+                          <SelectItem key="Yes" textValue="Yes">
+                            Yes
+                          </SelectItem>
+                          <SelectItem key="No" textValue="No">
+                            No
+                          </SelectItem>
                         </Select>
                       ) : (
                         <Input
@@ -1913,6 +2028,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         first job after college?
                       </label>
                       <Select
+                        aria-label="31. Initial gross monthly earning"
                         placeholder="Select gross monthly earning"
                         color="success"
                         variant="bordered"
@@ -1925,22 +2041,40 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           })
                         }
                       >
-                        <SelectItem key={"Below P5,000.00"}>
+                        <SelectItem
+                          key={"Below P5,000.00"}
+                          textValue="Below P5,000.00"
+                        >
                           Below P5,000.00
                         </SelectItem>
-                        <SelectItem key={"P5,000.00 to less than P10,000.00"}>
+                        <SelectItem
+                          key={"P5,000.00 to less than P10,000.00"}
+                          textValue="P5,000.00 to less than P10,000.00"
+                        >
                           P5,000.00 to less than P10,000.00
                         </SelectItem>
-                        <SelectItem key={"P10,000.00 to less than P15,000.00"}>
+                        <SelectItem
+                          key={"P10,000.00 to less than P15,000.00"}
+                          textValue="P10,000.00 to less than P15,000.00"
+                        >
                           P10,000.00 to less than P15,000.00
                         </SelectItem>
-                        <SelectItem key={"P15,000.00 to less than P20,000.00"}>
+                        <SelectItem
+                          key={"P15,000.00 to less than P20,000.00"}
+                          textValue="P15,000.00 to less than P20,000.00"
+                        >
                           P15,000.00 to less than P20,000.00
                         </SelectItem>
-                        <SelectItem key={"P20,000.00 to less than P25,000.00"}>
+                        <SelectItem
+                          key={"P20,000.00 to less than P25,000.00"}
+                          textValue="P20,000.00 to less than P25,000.00"
+                        >
                           P20,000.00 to less than P25,000.00
                         </SelectItem>
-                        <SelectItem key={"P25,000.00 and above"}>
+                        <SelectItem
+                          key={"P25,000.00 and above"}
+                          textValue="P25,000.00 and above"
+                        >
                           P25,000.00 and above
                         </SelectItem>
                       </Select>
@@ -1962,6 +2096,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                         your first job?
                       </label>
                       <Select
+                        aria-label="32. Curriculum relevance"
                         placeholder="Select relevance"
                         color="success"
                         variant="bordered"
@@ -1976,8 +2111,12 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                           })
                         }
                       >
-                        <SelectItem key="Yes">Yes</SelectItem>
-                        <SelectItem key="No">No</SelectItem>
+                        <SelectItem key="Yes" textValue="Yes">
+                          Yes
+                        </SelectItem>
+                        <SelectItem key="No" textValue="No">
+                          No
+                        </SelectItem>
                       </Select>
                     </div>
                   ) : (
