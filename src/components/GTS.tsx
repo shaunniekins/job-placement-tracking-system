@@ -631,6 +631,10 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         onEmploymentStatusChange(formData.present_employment_status);
       }
 
+      if (reloadUser) {
+        reloadUser();
+      }
+
       setOpenGPTSModal(false);
     } catch (error) {
       console.error("Error during submission:", error);

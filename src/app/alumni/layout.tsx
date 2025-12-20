@@ -12,7 +12,7 @@ import useGTS from "@/hooks/useGTS";
 import GTSComponent from "@/components/GTS";
 import { setUser } from "@/app/reduxUtils/userSlice";
 import { supabase } from "@/utils/supabase";
-import { isGTSComplete } from "@/utils/gtsValidation";
+import { isGTSComplete, validateGTS } from "@/utils/gtsValidation";
 
 export default function AlumniSlugLayout({
   children,
@@ -34,8 +34,18 @@ export default function AlumniSlugLayout({
         setShowGTSModal(true);
       } else {
         // Record exists, check if complete
-        const isComplete = isGTSComplete(gts[0]);
+        // Merge user metadata (birth_date) which is not in GTS table
+        const gtsDataToCheck = {
+          ...gts[0],
+          birth_date: gts[0].birth_date || user.user_metadata?.birth_date,
+        };
+
+        const isComplete = isGTSComplete(gtsDataToCheck);
         if (!isComplete) {
+          console.log(
+            "GTS Persistent Modal Open. Validation Errors:",
+            validateGTS(gtsDataToCheck).errors
+          );
           setShowGTSModal(true);
         } else {
           setShowGTSModal(false);

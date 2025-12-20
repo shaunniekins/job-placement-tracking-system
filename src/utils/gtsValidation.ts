@@ -83,13 +83,23 @@ export const validateGTS = (
         data.duration_before_first_job.length === 0
       )
         errors.push("Section D: how long to land first job");
-      if (!data.job_levels?.first_job || data.job_levels.first_job.length === 0)
-        errors.push("Section D: first job level position");
       if (
-        !data.job_levels?.current_job ||
-        data.job_levels.current_job.length === 0
-      )
-        errors.push("Section D: current job level position");
+        !data.job_levels?.first_job ||
+        data.job_levels.first_job.length === 0
+      ) {
+        errors.push("Section D: first job level position");
+      }
+
+      // If it's NOT their first job, they must also specify their current job level
+      // If it IS their first job, 'first_job' covers it, so 'current_job' is optional/redundant
+      if (data.is_first_time_job_after_college === "No") {
+        if (
+          !data.job_levels?.current_job ||
+          data.job_levels.current_job.length === 0
+        ) {
+          errors.push("Section D: current job level position");
+        }
+      }
 
       if (!data.initial_gross_first_job)
         errors.push("Section D: initial gross monthly earning");
