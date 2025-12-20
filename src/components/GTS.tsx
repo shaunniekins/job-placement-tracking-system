@@ -25,6 +25,7 @@ import {
 import useGTS from "@/hooks/useGTS";
 import { deleteCOEIfSelfEmployed } from "@/utils/documentUtils";
 import { supabase } from "@/utils/supabase";
+import { isGTSComplete, validateGTS } from "@/utils/gtsValidation";
 
 interface EducationalBackground {
   degree: string;
@@ -56,6 +57,13 @@ interface JobLevels {
   first_job: string[];
   current_job: string[];
 }
+
+const levels = [
+  "Rank or Clerical",
+  "Professional, Technical or Supervisory",
+  "Managerial or Executive",
+  "Self-employed",
+];
 
 interface GTSComponentProps {
   userInfo: any;
@@ -160,6 +168,29 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
         ...initialFormState,
         ...cleanedGTS,
         birth_date: userInfo?.birth_date || cleanedGTS.birth_date || "",
+        educational_background: cleanedGTS.educational_background || [],
+        professional_examination: cleanedGTS.professional_examination || [],
+        training_after_college: cleanedGTS.training_after_college || [],
+        unemployment_reasons: cleanedGTS.unemployment_reasons || [],
+        staying_on_job_reasons: cleanedGTS.staying_on_job_reasons || [],
+        first_job_related_to_course_reasons:
+          cleanedGTS.first_job_related_to_course_reasons || [],
+        leaving_job_reasons: cleanedGTS.leaving_job_reasons || [],
+        staying_duration_in_first_job:
+          cleanedGTS.staying_duration_in_first_job || [],
+        first_job_found_through: cleanedGTS.first_job_found_through || [],
+        duration_before_first_job: cleanedGTS.duration_before_first_job || [],
+        job_levels: cleanedGTS.job_levels || {
+          first_job: [],
+          current_job: [],
+        },
+        learned_competencies: cleanedGTS.learned_competencies || [],
+        course_reasons: cleanedGTS.course_reasons || {
+          undergraduate: [],
+          graduate: [],
+          other_undergraduate: "",
+          other_graduate: "",
+        },
       };
 
       setFormData(completeGTSData);
@@ -548,6 +579,18 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
   };
 
   const handleSubmit = async () => {
+    console.log("Submitting formData:", formData);
+    const validation = validateGTS(formData);
+    if (!validation.isValid) {
+      console.log("Validation errors:", validation.errors);
+      alert(
+        `Please fill in the following required fields:\n- ${validation.errors.join(
+          "\n- "
+        )}`
+      );
+      return;
+    }
+
     try {
       const cleanedFormData = { ...formData, alumni_id: currentUserId };
 
@@ -623,7 +666,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
       hideCloseButton={preventClose}
     >
       <ModalContent
-        className="h-full w-full"
+        className="h-[calc(100vh-5rem)] w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {(onClose) => (
@@ -1139,7 +1182,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       startContent={<IoAddOutline />}
                       onClick={addTraining}
                     >
-                      Add Training
+                      Add
                     </Button>
                   </div>
                   {formData.training_after_college.map((training, index) => (
@@ -1755,7 +1798,7 @@ const GTSComponent: React.FC<GTSComponentProps> = ({
                       )}
                     </>
                   )}
-                  {formData.is_first_job_related_to_course === "Yes" && (
+                  {formData.is_first_time_job_after_college === "No" && (
                     <>
                       <div className="flex flex-col justify-start items-start lg:flex-row lg:justify-between lg:items-center gap-2">
                         <label className="text-xs font-medium text-green-500">

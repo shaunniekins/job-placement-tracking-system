@@ -12,6 +12,7 @@ import useGTS from "@/hooks/useGTS";
 import GTSComponent from "@/components/GTS";
 import { setUser } from "@/app/reduxUtils/userSlice";
 import { supabase } from "@/utils/supabase";
+import { isGTSComplete } from "@/utils/gtsValidation";
 
 export default function AlumniSlugLayout({
   children,
@@ -27,14 +28,19 @@ export default function AlumniSlugLayout({
   const [showGTSModal, setShowGTSModal] = useState(false);
 
   useEffect(() => {
-    if (
-      user &&
-      !loadingGTS &&
-      gts &&
-      gts.length === 0 &&
-      user.user_metadata?.user_type === "alumni"
-    ) {
-      setShowGTSModal(true);
+    if (user && !loadingGTS && user.user_metadata?.user_type === "alumni") {
+      if (gts.length === 0) {
+        // No record at all
+        setShowGTSModal(true);
+      } else {
+        // Record exists, check if complete
+        const isComplete = isGTSComplete(gts[0]);
+        if (!isComplete) {
+          setShowGTSModal(true);
+        } else {
+          setShowGTSModal(false);
+        }
+      }
     } else {
       setShowGTSModal(false);
     }
